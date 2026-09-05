@@ -1,4 +1,4 @@
-# Glimmer Games — 小游戏站
+# Mini Games — 小游戏站
 
 一个纯静态网站，不需要构建工具、不需要 npm、不需要服务器。
 直接把这个文件夹推到 GitHub，连上 Cloudflare Pages 就能上线。
@@ -23,9 +23,9 @@ games/crystal-sweeper/
 
 | 搜索 | 替换为 | 出现在 |
 |---|---|---|
-| `YOURDOMAIN.com` | 你的真实域名 | index.html、games/、privacy.html、robots.txt、sitemap.xml |
-| `hello@YOURDOMAIN.com` | 你要公开的邮箱 | index.html、privacy.html |
-| `Glimmer Games` | 你想好的站名 | index.html、404.html、privacy.html、各游戏页 title |
+| `games.dearcharles.cn` | 你的真实域名 | index.html、games/、privacy.html、robots.txt、sitemap.xml |
+| `dearcharles.liu@gmail.com` | 你要公开的邮箱 | index.html、privacy.html |
+| `Mini Games` | 你想好的站名 | index.html、404.html、privacy.html、各游戏页 title |
 
 改完在本地起个小服务器自测（别直接双击 index.html，绝对路径会失效）：
 

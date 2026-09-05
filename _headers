@@ -1,0 +1,17 @@
+# 静态资源长缓存（文件名不变时浏览器不再重复下载）
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/games/*/cover.png
+  Cache-Control: public, max-age=604800
+
+# HTML 每次校验，保证改完就能看到新版
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 基础安全响应头
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
