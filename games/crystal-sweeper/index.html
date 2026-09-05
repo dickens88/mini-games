@@ -52,8 +52,11 @@
     --pill-active-text:#F1E7FF;
     --spark-color:#ffffff;
 
-    --n1:#6FD1F0; --n2:#6EE7C0; --n3:#FF8FB6; --n4:#B47CFF;
-    --n5:#FFCE54; --n6:#4FC3C7; --n7:#E4569E; --n8:#9C8FC2;
+    /* Numbers are read on the pale dug-up tile, not on the dark cave, so
+       they use deep, saturated versions of the palette — every one clears
+       4.5:1 against --tile-revealed-1. */
+    --n1:#1668B0; --n2:#0E6B51; --n3:#B32552; --n4:#6A2FBF;
+    --n5:#8A4F0B; --n6:#0B6C74; --n7:#8E1A66; --n8:#4A4260;
 
     color-scheme: dark;
   }
@@ -92,8 +95,8 @@
     --pill-active-text:#4A2A3A;
     --spark-color:#FFE9A8;
 
-    --n1:#4FA3D9; --n2:#5FAE5A; --n3:#E8735C; --n4:#B47CFF;
-    --n5:#D99A1B; --n6:#3FA79A; --n7:#C25577; --n8:#8A7A63;
+    --n1:#1C6FA8; --n2:#2E7D32; --n3:#C0392B; --n4:#6A2FBF;
+    --n5:#8F5D08; --n6:#10706A; --n7:#A32C58; --n8:#5C4A34;
 
     color-scheme: light;
   }
@@ -210,6 +213,8 @@
     display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
     width:100%;
   }
+  /* A double-tap on a pill should switch caves, not select its label. */
+  .diff-pill, .theme-pill, .mode-btn{ user-select:none; -webkit-user-select:none; }
   .diff-pill{
     appearance:none; border:1px solid var(--line);
     background:var(--cave-panel);
@@ -239,6 +244,43 @@
     box-shadow:0 8px 22px -8px rgba(var(--orchid-rgb),.65);
   }
   .diff-pill.active .diff-sub{ color:var(--pill-active-text); opacity:.85; }
+
+  /* Touch has no right-click, so this segmented switch decides what a plain
+     tap does. Right-click and long-press keep working either way. */
+  .mode-row{
+    display:flex; gap:5px;
+    background:var(--cave-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:4px;
+  }
+  .mode-btn{
+    appearance:none; border:1px solid transparent; background:transparent;
+    color:var(--text-muted);
+    border-radius:10px;
+    padding:6px 14px;
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.78rem;
+    cursor:pointer;
+    display:flex; align-items:center; gap:7px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .mode-btn:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  .mode-btn.active{
+    background:linear-gradient(150deg, var(--orchid), var(--orchid-2));
+    color:var(--pill-active-text);
+    box-shadow:0 6px 16px -8px rgba(var(--orchid-rgb),.7);
+  }
+  .mode-swatch{
+    width:15px; height:15px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .mode-swatch .marker{ width:100%; height:100%; }
+  .swatch-dig{
+    border-radius:5px;
+    border:1px solid var(--line-strong);
+    background:linear-gradient(155deg, var(--cave-raised-2), var(--cave-raised));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+  }
 
   .console-wrap{
     width:100%; max-width:420px;
@@ -321,14 +363,17 @@
     -ms-overflow-style:none;
   }
   .board-frame::-webkit-scrollbar{ display:none; width:0; height:0; }
+  /* Tapping a tile must not steal the page scroll — the 16×30 cave is
+     taller than a phone screen — so only the double-tap zoom is blocked. */
   .board{
     display:grid;
     gap:var(--gap, 3px);
     margin:0 auto;
-    touch-action:none;
+    touch-action:manipulation;
   }
   .cell{
     appearance:none; padding:0; margin:0; cursor:pointer;
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
     width:var(--cell); height:var(--cell);
     border-radius:7px;
     border:1px solid var(--line);
@@ -425,6 +470,7 @@
     background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='cb' x1='0.15' y1='0.05' x2='0.85' y2='0.95'%3E%3Cstop offset='0' stop-color='%23FFCE8E'/%3E%3Cstop offset='0.32' stop-color='%23FFA24A'/%3E%3Cstop offset='0.72' stop-color='%23F47B1E'/%3E%3Cstop offset='1' stop-color='%23D65B0F'/%3E%3C/linearGradient%3E%3CradialGradient id='cg' cx='0.36' cy='0.3' r='0.6'%3E%3Cstop offset='0' stop-color='%23FFE3B8' stop-opacity='0.95'/%3E%3Cstop offset='1' stop-color='%23FFE3B8' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='lf' x1='0.2' y1='1' x2='0.8' y2='0'%3E%3Cstop offset='0' stop-color='%233F8C22'/%3E%3Cstop offset='0.55' stop-color='%236CC63F'/%3E%3Cstop offset='1' stop-color='%23A6E86A'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M43,34 C34,31 25,23 21,12 C33,13 43,21 48,31 Z' fill='url(%23lf)' stroke='%233C7F22' stroke-opacity='0.35' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M57,34 C66,31 75,23 79,12 C67,13 57,21 52,31 Z' fill='url(%23lf)' stroke='%233C7F22' stroke-opacity='0.35' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M45,33 C43,21 46,10 50,3 C54,10 57,21 55,33 Z' fill='url(%23lf)' stroke='%233C7F22' stroke-opacity='0.3' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M49,97 C42,85 35,68 33.5,53 C32,40 38,30 50,30 C62,30 68,40 66.5,53 C65,68 57,85 49,97 Z' fill='url(%23cb)'/%3E%3Cellipse cx='43' cy='50' rx='13' ry='19' fill='url(%23cg)'/%3E%3Cpath d='M61,42 C58.5,55 56,67 52.5,79' stroke='%23FFF4E0' stroke-opacity='0.65' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M39,48 C42,46 45,46 48,47.5' stroke='%23C0530E' stroke-opacity='0.28' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M53,60 C56,58.5 59,58 61,59' stroke='%23C0530E' stroke-opacity='0.28' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M38,68 C41,66.5 44,66 46,67' stroke='%23C0530E' stroke-opacity='0.28' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cpath d='M52,78 C54.5,77 57,76.5 58.5,77.5' stroke='%23C0530E' stroke-opacity='0.24' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='34.5' cy='63' rx='5' ry='3.2' fill='%23FF7A6B' opacity='0.45'/%3E%3Cellipse cx='64' cy='63' rx='5' ry='3.2' fill='%23FF7A6B' opacity='0.45'/%3E%3Cellipse cx='43' cy='53' rx='7' ry='8.2' fill='%23FFFFFF'/%3E%3Cellipse cx='57' cy='53' rx='7' ry='8.2' fill='%23FFFFFF'/%3E%3Ccircle cx='44.2' cy='54.4' r='4' fill='%233B2412'/%3E%3Ccircle cx='58.2' cy='54.4' r='4' fill='%233B2412'/%3E%3Ccircle cx='42.7' cy='52.4' r='1.6' fill='%23FFFFFF'/%3E%3Ccircle cx='56.7' cy='52.4' r='1.6' fill='%23FFFFFF'/%3E%3Cpath d='M45,66 Q50,71 55,66' stroke='%233B2412' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
   }
   body[data-theme="bunny"] .marker::after{ content:none; }
+  body[data-theme="bunny"] .mode-swatch .marker{ width:100%; height:100%; }
 
   .cell.neighbor-glow:not(.revealed){
     box-shadow:inset 0 2px 1px rgba(255,255,255,.16), inset 0 -3px 4px rgba(0,0,0,.32),
@@ -535,6 +581,22 @@
     .console{ padding:7px 10px; }
     .lcd{ min-width:46px; font-size:.98rem; }
     .face-btn{ width:36px; height:36px; }
+
+    /* Reclaim side margin so the tiles stay tappable. */
+    .page{ padding:18px 10px 34px; gap:12px; }
+    .board-frame{ padding:8px; border-radius:18px; }
+
+    /* The three caves share one row: the pills shrink to thirds and the
+       "spirits"/"carrots" word drops, leaving "16×30 · 99". */
+    .diff-row{ flex-wrap:nowrap; gap:6px; }
+    .diff-pill{ flex:1 1 0; min-width:0; padding:7px 4px; }
+    .diff-name{ font-size:.75rem; white-space:nowrap; }
+    .diff-pill .diff-sub{ font-size:.6rem; white-space:nowrap; }
+    .diff-unit{ display:none; }
+  }
+  @media (max-width:360px){
+    .diff-name{ font-size:.68rem; }
+    .diff-pill .diff-sub{ font-size:.56rem; }
   }
 </style>
 
@@ -581,9 +643,9 @@
   </div>
 
   <div class="diff-row" role="group" aria-label="Choose a cave to explore">
-    <button class="diff-pill" data-diff="easy"><span class="diff-name">Pebble Patch</span><span class="diff-sub">9×9 · 10 spirits</span></button>
-    <button class="diff-pill" data-diff="medium"><span class="diff-name">Geode Grotto</span><span class="diff-sub">16×16 · 40 spirits</span></button>
-    <button class="diff-pill" data-diff="hard"><span class="diff-name">Crystal Cavern</span><span class="diff-sub">30×16 · 99 spirits</span></button>
+    <button class="diff-pill" data-diff="easy"><span class="diff-name">Pebble Patch</span><span class="diff-sub"><span class="diff-size">9×9</span> · <span class="diff-count">10</span> <span class="diff-unit">spirits</span></span></button>
+    <button class="diff-pill" data-diff="medium"><span class="diff-name">Geode Grotto</span><span class="diff-sub"><span class="diff-size">16×16</span> · <span class="diff-count">40</span> <span class="diff-unit">spirits</span></span></button>
+    <button class="diff-pill" data-diff="hard"><span class="diff-name">Crystal Cavern</span><span class="diff-sub"><span class="diff-size">16×30</span> · <span class="diff-count">99</span> <span class="diff-unit">spirits</span></span></button>
   </div>
 
   <div class="console-wrap">
@@ -603,6 +665,15 @@
       </div>
     </div>
     <p class="best-time" id="bestTime"></p>
+  </div>
+
+  <div class="mode-row" role="group" aria-label="What a tap does">
+    <button class="mode-btn active" data-mode="dig" aria-pressed="true">
+      <span class="mode-swatch swatch-dig" aria-hidden="true"></span><span class="mode-label">Dig</span>
+    </button>
+    <button class="mode-btn" data-mode="flag" aria-pressed="false">
+      <span class="mode-swatch" aria-hidden="true"><span class="marker"></span></span><span class="mode-label">Mark</span>
+    </button>
   </div>
 
   <div class="board-frame">
@@ -647,7 +718,10 @@
   var DIFFICULTIES = {
     easy:   { cols:9,  rows:9,  mines:10, cell:38 },
     medium: { cols:16, rows:16, mines:40, cell:29 },
-    hard:   { cols:30, rows:16, mines:99, cell:26 }
+    // Portrait rather than the classic landscape 30×16: 16 columns leave
+    // each tile big enough to hit on a phone, and the extra height just
+    // scrolls with the page.
+    hard:   { cols:16, rows:30, mines:99, cell:30 }
   };
 
   var THEMES = {
@@ -655,7 +729,7 @@
       name:'Crystal Cave',
       heroTitle:'Crystal Sweeper',
       tagline:"Dig through the geode, uncover every safe gem, and don't wake the grumpy rock spirits hiding underneath.",
-      hint:'Tap a stone to dig it up. Press and hold — or right-click — to plant a crystal marker where you think a spirit is hiding.',
+      hint:'Tap a stone to dig it up. To plant a crystal marker where a spirit hides, switch to Mark above — or press and hold, or right-click.',
       counterLabel:'Spirits',
       creaturePlural:'spirits',
       cellAria:'Cave stone',
@@ -673,7 +747,7 @@
       name:'Bunny Meadow',
       heroTitle:'Bunny Burrow',
       tagline:'Hop across the meadow and uncover every safe patch of clover — but watch out for the cheeky carrots hiding underground!',
-      hint:'Tap a patch to dig it up. Press and hold — or right-click — to plant a carrot marker where you think a cheeky carrot is hiding.',
+      hint:'Tap a patch to dig it up. To plant a carrot marker where a cheeky carrot hides, switch to Mark above — or press and hold, or right-click.',
       counterLabel:'Carrots',
       creaturePlural:'carrots',
       cellAria:'Meadow patch',
@@ -797,7 +871,8 @@
   // frame and never needs a scrollbar — capped at each level's ideal size.
   function sizeBoard(){
     var d = DIFFICULTIES[currentDiffKey];
-    var avail = boardFrame.clientWidth - 24; // frame padding, both sides
+    var fs = window.getComputedStyle(boardFrame);
+    var avail = boardFrame.clientWidth - (parseFloat(fs.paddingLeft) || 0) - (parseFloat(fs.paddingRight) || 0);
     if (!avail || avail < 80){
       avail = Math.min(window.innerWidth - 64, 900);
     }
@@ -1055,7 +1130,11 @@
     }, 400);
   }
 
-  // Pointer interaction: tap/click reveals, long-press or right-click flags.
+  // Pointer interaction: a tap does whatever the Dig/Mark switch says,
+  // and long-press (or right-click) always does the other one — so a
+  // phone with no right mouse button can still plant markers.
+  var flagMode = false;
+
   boardEl.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 
   boardEl.addEventListener('pointerdown', function(e){
@@ -1071,14 +1150,14 @@
 
     pressCell = target;
     pressHandled = false;
-    if (!grid[r][c].flagged) setFace('worried');
+    if (!flagMode && !grid[r][c].flagged) setFace('worried');
     target.classList.add('pressed');
 
     pressTimer = setTimeout(function(){
       pressHandled = true;
-      toggleFlag(r,c);
+      if (flagMode) revealCell(r,c); else toggleFlag(r,c);
       target.classList.remove('pressed');
-      setFace('idle');
+      if (!gameOver) setFace('idle');
     }, 450);
   });
 
@@ -1094,7 +1173,7 @@
     if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
     if (target && pressCell === target && !pressHandled && e.button !== 2){
       var r = +target.dataset.r, c = +target.dataset.c;
-      revealCell(r,c);
+      if (flagMode) toggleFlag(r,c); else revealCell(r,c);
     }
     clearPress();
   });
@@ -1157,7 +1236,7 @@
     var r = +target.dataset.r, c = +target.dataset.c;
     if (e.key === 'Enter' || e.key === ' '){
       e.preventDefault();
-      revealCell(r,c);
+      if (flagMode) toggleFlag(r,c); else revealCell(r,c);
     } else if (e.key === 'f' || e.key === 'F'){
       e.preventDefault();
       toggleFlag(r,c);
@@ -1169,6 +1248,24 @@
       buildBoard(btn.dataset.diff);
     });
   });
+
+  // Dig / Mark switch, remembered per browser.
+  var modeButtons = Array.prototype.slice.call(document.querySelectorAll('.mode-btn'));
+  function setMode(mode){
+    flagMode = mode === 'flag';
+    modeButtons.forEach(function(btn){
+      var on = (btn.dataset.mode === 'flag') === flagMode;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    try{ localStorage.setItem('crystalSweeper.tapMode', flagMode ? 'flag' : 'dig'); } catch(e){}
+  }
+  modeButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){ setMode(btn.dataset.mode); });
+  });
+  var storedMode = 'dig';
+  try{ storedMode = localStorage.getItem('crystalSweeper.tapMode') || 'dig'; } catch(e){}
+  setMode(storedMode);
 
   // Theme switching: re-skins colors, the marker, the hidden creature and
   // all the copy on the page, then starts a fresh game in the new world.
@@ -1185,7 +1282,9 @@
       var dk = btn.dataset.diff;
       var d = DIFFICULTIES[dk];
       btn.querySelector('.diff-name').textContent = t.diff[dk].label;
-      btn.querySelector('.diff-sub').textContent = d.cols + '×' + d.rows + ' · ' + d.mines + ' ' + t.creaturePlural;
+      btn.querySelector('.diff-size').textContent = d.cols + '×' + d.rows;
+      btn.querySelector('.diff-count').textContent = d.mines;
+      btn.querySelector('.diff-unit').textContent = t.creaturePlural;
     });
     themeButtons.forEach(function(btn){
       btn.classList.toggle('active', btn.dataset.theme === currentThemeKey);
