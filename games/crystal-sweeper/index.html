@@ -680,7 +680,7 @@
     <div class="board" id="board" role="grid" aria-label="Crystal cave grid"></div>
   </div>
 
-  <p class="hint" id="hint">Tap a stone to dig it up. Press and hold — or right-click — to plant a crystal marker where you think a spirit is hiding.</p>
+  <p class="hint" id="hint">Tap a stone to dig it up. Press and hold — or right-click — to plant a crystal marker where you think a spirit is hiding. Double-click a number once all its markers are placed to clear the stones around it.</p>
 
   <label class="settings-row">
     <span class="toggle">
@@ -729,7 +729,7 @@
       name:'Crystal Cave',
       heroTitle:'Crystal Sweeper',
       tagline:"Dig through the geode, uncover every safe gem, and don't wake the grumpy rock spirits hiding underneath.",
-      hint:'Tap a stone to dig it up. To plant a crystal marker where a spirit hides, switch to Mark above — or press and hold, or right-click.',
+      hint:'Tap a stone to dig it up. To plant a crystal marker where a spirit hides, switch to Mark above — or press and hold, or right-click. Double-click a number once all its markers are placed to clear the stones around it.',
       counterLabel:'Spirits',
       creaturePlural:'spirits',
       cellAria:'Cave stone',
@@ -747,7 +747,7 @@
       name:'Bunny Meadow',
       heroTitle:'Bunny Burrow',
       tagline:'Hop across the meadow and uncover every safe patch of clover — but watch out for the cheeky carrots hiding underground!',
-      hint:'Tap a patch to dig it up. To plant a carrot marker where a cheeky carrot hides, switch to Mark above — or press and hold, or right-click.',
+      hint:'Tap a patch to dig it up. To plant a carrot marker where a cheeky carrot hides, switch to Mark above — or press and hold, or right-click. Double-click a number once all its markers are placed to clear the patches around it.',
       counterLabel:'Carrots',
       creaturePlural:'carrots',
       cellAria:'Meadow patch',
@@ -1054,6 +1054,42 @@
     checkFlagWin();
   }
 
+  // Classic Minesweeper "chord": on a dug-up number whose marker count
+  // already matches it, clear all the untouched stones around it in one go.
+  // Triggered by a double-click, or by holding both mouse buttons at once.
+  function chordCell(r,c){
+    if (gameOver) return;
+    var cell = grid[r][c];
+    if (!cell.revealed || cell.mine || cell.adjacent === 0) return;
+
+    var d = DIFFICULTIES[currentDiffKey];
+    var around = neighbors(r,c,d.rows,d.cols);
+    var flagged = 0, pending = [];
+    around.forEach(function(pos){
+      var n = grid[pos[0]][pos[1]];
+      if (n.flagged) flagged++;
+      else if (!n.revealed) pending.push(pos);
+    });
+
+    if (flagged !== cell.adjacent){
+      flashCells(pending);
+      return;
+    }
+    for (var i=0; i<pending.length; i++){
+      revealCell(pending[i][0], pending[i][1]);
+      if (gameOver) return;
+    }
+  }
+
+  // Not enough markers yet - nudge the stones so the click still feels heard.
+  function flashCells(positions){
+    positions.forEach(function(pos){
+      var el = cellEls[pos[0]][pos[1]];
+      el.classList.add('pressed');
+      setTimeout(function(){ el.classList.remove('pressed'); }, 140);
+    });
+  }
+
   function checkWin(){
     var d = DIFFICULTIES[currentDiffKey];
     if (revealedCount === d.rows * d.cols - d.mines){
@@ -1142,6 +1178,13 @@
     if (!target || gameOver) return;
     var r = +target.dataset.r, c = +target.dataset.c;
 
+    // Left and right buttons held together: chord the cell under the cursor.
+    if ((e.buttons & 3) === 3){
+      clearPress();
+      pressHandled = true;
+      chordCell(r,c);
+      return;
+    }
     if (e.button === 2){
       toggleFlag(r,c);
       return;
@@ -1159,6 +1202,14 @@
       target.classList.remove('pressed');
       if (!gameOver) setFace('idle');
     }, 450);
+  });
+
+  // Double-click a number to chord it - works with a trackpad or a
+  // double tap, where holding both buttons isn't an option.
+  boardEl.addEventListener('dblclick', function(e){
+    var target = e.target.closest('.cell');
+    if (!target || gameOver) return;
+    chordCell(+target.dataset.r, +target.dataset.c);
   });
 
   function clearPress(){
