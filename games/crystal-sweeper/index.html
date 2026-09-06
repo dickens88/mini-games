@@ -363,7 +363,7 @@
     -ms-overflow-style:none;
   }
   .board-frame::-webkit-scrollbar{ display:none; width:0; height:0; }
-  /* Tapping a tile must not steal the page scroll — the 16×30 cave is
+  /* Tapping a tile must not steal the page scroll — the 20×24 cave is
      taller than a phone screen — so only the double-tap zoom is blocked. */
   .board{
     display:grid;
@@ -587,7 +587,7 @@
     .board-frame{ padding:8px; border-radius:18px; }
 
     /* The three caves share one row: the pills shrink to thirds and the
-       "spirits"/"carrots" word drops, leaving "16×30 · 99". */
+       "spirits"/"carrots" word drops, leaving "20×24 · 99". */
     .diff-row{ flex-wrap:nowrap; gap:6px; }
     .diff-pill{ flex:1 1 0; min-width:0; padding:7px 4px; }
     .diff-name{ font-size:.75rem; white-space:nowrap; }
@@ -645,7 +645,7 @@
   <div class="diff-row" role="group" aria-label="Choose a cave to explore">
     <button class="diff-pill" data-diff="easy"><span class="diff-name">Pebble Patch</span><span class="diff-sub"><span class="diff-size">9×9</span> · <span class="diff-count">10</span> <span class="diff-unit">spirits</span></span></button>
     <button class="diff-pill" data-diff="medium"><span class="diff-name">Geode Grotto</span><span class="diff-sub"><span class="diff-size">16×16</span> · <span class="diff-count">40</span> <span class="diff-unit">spirits</span></span></button>
-    <button class="diff-pill" data-diff="hard"><span class="diff-name">Crystal Cavern</span><span class="diff-sub"><span class="diff-size">16×30</span> · <span class="diff-count">99</span> <span class="diff-unit">spirits</span></span></button>
+    <button class="diff-pill" data-diff="hard"><span class="diff-name">Crystal Cavern</span><span class="diff-sub"><span class="diff-size">20×24</span> · <span class="diff-count">99</span> <span class="diff-unit">spirits</span></span></button>
   </div>
 
   <div class="console-wrap">
@@ -718,10 +718,10 @@
   var DIFFICULTIES = {
     easy:   { cols:9,  rows:9,  mines:10, cell:38 },
     medium: { cols:16, rows:16, mines:40, cell:29 },
-    // Portrait rather than the classic landscape 30×16: 16 columns leave
+    // Portrait rather than the classic landscape 30×16: 20 columns leave
     // each tile big enough to hit on a phone, and the extra height just
     // scrolls with the page.
-    hard:   { cols:16, rows:30, mines:99, cell:30 }
+    hard:   { cols:20, rows:24, mines:99, cell:30 }
   };
 
   var THEMES = {
