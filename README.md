@@ -15,6 +15,9 @@ assets/og-cover.png            首页分享到社交平台时的预览图
 games/crystal-sweeper/
   ├── index.html               扫雷游戏（自包含，单文件）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/sudoku/
+  ├── index.html               数独游戏（自包含，单文件；四个难度，题目在浏览器里现生成）
+  └── cover.png                首页卡片 + 分享预览用的封面
 ```
 
 ## 上线前必须替换的三处

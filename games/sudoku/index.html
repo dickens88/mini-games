@@ -1,0 +1,2000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lantern Sudoku — classic sudoku with four difficulties</title>
+<meta name="description" content="Classic 9×9 sudoku, made cosy: four difficulties, pencil notes, hints and undo. Every puzzle is freshly made and has exactly one answer. Free, no sign-up.">
+<meta name="theme-color" content="#16213B">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/sudoku/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lantern Sudoku — classic sudoku with four difficulties">
+<meta property="og:description" content="A fresh sudoku every time, from gentle to expert. Pencil notes, hints, undo — and always exactly one answer.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/sudoku/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/sudoku/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cave-black:#0C1322;
+    --cave-deep:#16213B;
+    --bg-glow:#1F2E52;
+    --bg-ground:#0C1322;
+    --cave-panel:#1B2740;
+    --cave-raised:#2A3855;
+    --cave-raised-2:#354667;
+    --line:rgba(255,255,255,.09);
+    --line-strong:rgba(255,255,255,.18);
+    --orchid:#FFB443;
+    --orchid-2:#F08A2E;
+    --orchid-soft:#FFD08A;
+    --orchid-rgb:255,180,67;
+    --rose:#FF8FB6;
+    --gold:#FFCE54;
+    --gold-2:#FFA95E;
+    --gold-rgb:255,206,84;
+    --mint:#6EE7C0;
+    --ivory:#F2F7FF;
+    --ink:#0C1322;
+    --danger:#FF6E7F;
+    --text:#EAF1FF;
+    --text-muted:#9DB0D4;
+    --face-btn-1:#2A3855;
+    --face-btn-2:#1B2740;
+    --face-ink:#EAF1FF;
+    --pill-active-text:#2A1B06;
+    --spark-color:#FFE9A8;
+
+    /* Digits are read on the cell fill, never on the night sky behind it.
+       Every ink below clears 4.5:1 against all four cell fills — plain,
+       selected, peer-tinted and same-digit — in both worlds. */
+    --cell-bg:#22304E;
+    --given-ink:#F2F7FF;
+    --entry-ink:#8EDCFF;
+    --hint-ink:#8CEFCC;
+    --note-ink:#C1CFEB;
+    --cell-sel:#33528F;
+    --cell-peer:#2A3A62;
+    --cell-match:#2E4C82;
+    --cell-bad:#5E2231;
+    --bad-ink:#FFA9B4;
+    --grid-line:rgba(255,255,255,.11);
+    --grid-line-bold:rgba(255,255,255,.46);
+    --lcd-bg:#0B1120;
+
+    color-scheme: dark;
+  }
+
+  body[data-theme="blossom"]{
+    --cave-black:#FFF6F0;
+    --cave-deep:#FFF1E6;
+    --bg-glow:#FFFDF8;
+    --bg-ground:#FBE3D4;
+    --cave-panel:#FFFFFF;
+    --cave-raised:#F7DFCC;
+    --cave-raised-2:#FCEDE0;
+    --line:rgba(120,80,60,.14);
+    --line-strong:rgba(120,80,60,.26);
+    --orchid:#FF7AA8;
+    --orchid-2:#EF5389;
+    --orchid-soft:#FFB6CF;
+    --orchid-rgb:255,122,168;
+    --rose:#FF8B6B;
+    --gold:#FFC94D;
+    --gold-2:#FFB020;
+    --gold-rgb:255,201,77;
+    --mint:#4FBF98;
+    --ivory:#FFFDF6;
+    --ink:#3B2A20;
+    --danger:#D8394F;
+    --text:#3B2A20;
+    --text-muted:#8A6F60;
+    --face-btn-1:#FFE7F2;
+    --face-btn-2:#FFC7DF;
+    --face-ink:#5B4636;
+    --pill-active-text:#FFF6FA;
+    --spark-color:#FFD9A8;
+
+    --cell-bg:#FFFFFF;
+    --given-ink:#3B2A20;
+    --entry-ink:#0F5A8C;
+    --hint-ink:#0A6349;
+    --note-ink:#75594A;
+    --cell-sel:#FFDCE8;
+    --cell-peer:#FFF3EA;
+    --cell-match:#FFECC9;
+    --cell-bad:#FFD5D9;
+    --bad-ink:#A81328;
+    --grid-line:rgba(120,80,60,.22);
+    --grid-line-bold:rgba(120,80,60,.68);
+    --lcd-bg:#4A3628;
+
+    color-scheme: light;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(120% 90% at 50% -10%, var(--bg-glow) 0%, var(--cave-deep) 45%, var(--cave-black) 100%);
+    color:var(--text);
+    font-family:'Quicksand', ui-rounded, 'Nunito', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    position:relative;
+    transition:background .3s ease, color .3s ease;
+  }
+  body[data-theme="blossom"]{
+    background:
+      linear-gradient(180deg, var(--bg-glow) 0%, var(--cave-deep) 45%, var(--bg-ground) 100%);
+  }
+
+  #sparkleField{
+    position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+  }
+  .spark{
+    position:absolute; border-radius:50%;
+    background:radial-gradient(circle, var(--spark-color) 0%, transparent 70%);
+    opacity:.5;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .spark{ animation:twinkle linear infinite; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .spark{ opacity:.35 !important; }
+  }
+  @keyframes twinkle{
+    0%,100%{ opacity:.12; transform:scale(.8); }
+    50%{ opacity:.95; transform:scale(1.15); }
+  }
+
+  .page{
+    position:relative; z-index:1;
+    max-width:620px;
+    margin:0 auto;
+    padding:22px 20px 40px;
+    display:flex; flex-direction:column; align-items:center;
+    gap:13px;
+  }
+
+  .hero{
+    text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  .hero-title{
+    display:flex; align-items:center; gap:7px;
+    margin:0;
+    font-family:'Baloo 2', 'Segoe UI', sans-serif;
+    font-weight:800;
+    font-size:clamp(1.4rem, 3.6vw, 1.9rem);
+    letter-spacing:.3px;
+    text-wrap:balance;
+    background:linear-gradient(120deg, var(--orchid-soft), var(--rose) 55%, var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .star-icon{
+    flex:none;
+    width:.8em; height:.8em;
+    background:linear-gradient(160deg, var(--gold), var(--rose));
+    clip-path:polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+  .tagline{
+    margin:0;
+    max-width:50ch;
+    font-size:.84rem;
+    line-height:1.4;
+    color:var(--text-muted);
+    text-wrap:balance;
+  }
+
+  .theme-row, .diff-row{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+    width:100%;
+  }
+  /* A double-tap on a pill should switch level, not select its label. */
+  .diff-pill, .theme-pill, .mode-btn, .pad-key, .act-btn{
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  }
+  .theme-pill{
+    appearance:none; border:1px solid var(--line);
+    background:var(--cave-panel);
+    color:var(--text);
+    border-radius:12px;
+    padding:6px 13px 6px 8px;
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:.78rem;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .theme-pill:hover{ transform:translateY(-2px); border-color:var(--line-strong); }
+  .theme-pill:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  .theme-pill.active{
+    border-color:transparent;
+    box-shadow:0 0 0 2px rgba(var(--orchid-rgb),.6), 0 8px 18px -10px rgba(var(--orchid-rgb),.6);
+  }
+  .theme-swatch{
+    width:15px; height:15px; border-radius:50%; flex:none;
+    border:1px solid rgba(0,0,0,.15);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+  .swatch-lantern{ background:linear-gradient(135deg, #FFB443, #23335A); }
+  .swatch-blossom{ background:linear-gradient(135deg, #FFD9EC, #FFE3B8); }
+
+  .diff-pill{
+    appearance:none; border:1px solid var(--line);
+    background:var(--cave-panel);
+    color:var(--text);
+    border-radius:13px;
+    padding:7px 14px;
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:.82rem;
+    cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:1px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .diff-pill .diff-sub{
+    display:block;
+    font-weight:600;
+    font-size:.66rem;
+    color:var(--text-muted);
+  }
+  .diff-pill:hover{ transform:translateY(-2px); border-color:var(--line-strong); }
+  .diff-pill:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  .diff-pill.active{
+    background:linear-gradient(150deg, var(--orchid), var(--orchid-2));
+    border-color:transparent;
+    color:var(--pill-active-text);
+    box-shadow:0 8px 22px -8px rgba(var(--orchid-rgb),.65);
+  }
+  .diff-pill.active .diff-sub{ color:var(--pill-active-text); opacity:.85; }
+
+  .console-wrap{
+    width:100%; max-width:420px;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+  }
+  .console{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+    background:var(--cave-panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:8px 14px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 12px 30px -18px rgba(0,0,0,.6);
+  }
+  .counter-unit{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .counter-label{
+    font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .lcd{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:700; font-size:1.1rem;
+    letter-spacing:.08em;
+    font-variant-numeric:tabular-nums;
+    background:var(--lcd-bg);
+    color:var(--gold);
+    text-shadow:0 0 10px rgba(var(--gold-rgb),.55);
+    border-radius:8px;
+    padding:4px 8px;
+    min-width:54px;
+    text-align:center;
+    border:1px solid rgba(0,0,0,.5);
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.5);
+  }
+
+  .face-btn{
+    appearance:none; border:none; cursor:pointer;
+    width:44px; height:44px; border-radius:50%;
+    background:transparent;
+    padding:0;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));
+    flex:none;
+    transition:transform .12s ease;
+  }
+  .face-btn:active{ transform:scale(.92); }
+  .face-btn:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:3px; }
+  /* The reset button is a proper cartoon smiley: it grins while you solve,
+     wears a star on a win and goes cross-eyed when the third slip lands. */
+  .face{
+    display:block;
+    position:relative; width:100%; height:100%;
+    background-repeat:no-repeat; background-position:center; background-size:contain;
+  }
+  .face[data-state="idle"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='36' cy='43' rx='5' ry='6.5' fill='%234A3324'/%3E%3Cellipse cx='64' cy='43' rx='5' ry='6.5' fill='%234A3324'/%3E%3Cpath d='M35,58 Q50,74 65,58' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  .face[data-state="worried"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cpath d='M27,30 L42,35' stroke='%234A3324' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M73,30 L58,35' stroke='%234A3324' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='36' cy='46' rx='6' ry='7.5' fill='%234A3324'/%3E%3Cellipse cx='64' cy='46' rx='6' ry='7.5' fill='%234A3324'/%3E%3Cellipse cx='50' cy='68' rx='7.5' ry='8.5' fill='%234A3324'/%3E%3C/svg%3E"); }
+  .face[data-state="win"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cpath d='M28,45 Q36,33 44,45' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M56,45 Q64,33 72,45' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M33,56 Q50,80 67,56 Z' fill='%234A3324'/%3E%3Cpath d='M44,71 Q50,79 56,71 Z' fill='%23FF8FA8'/%3E%3Cpath d='M84,13 L86.6,20.4 L94,23 L86.6,25.6 L84,33 L81.4,25.6 L74,23 L81.4,20.4 Z' fill='%23FFF0A6'/%3E%3C/svg%3E"); }
+  .face[data-state="lose"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cpath d='M30,37 L42,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M42,37 L30,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M58,37 L70,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M70,37 L58,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M37,71 Q50,59 63,71' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+
+  .best-time{
+    margin:0; font-size:.7rem; font-weight:600; color:var(--text-muted);
+    min-height:1em; text-align:center;
+  }
+  .best-time strong{ color:var(--gold); font-weight:700; }
+
+  .board-frame{
+    width:100%;
+    display:flex; justify-content:center;
+    padding:12px;
+    background:var(--cave-panel);
+    border:1px solid var(--line);
+    border-radius:22px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 18px 40px -22px rgba(0,0,0,.7);
+  }
+  /* Only the double-tap zoom is blocked here — the page still has to scroll
+     when a thumb starts its swipe on the grid. */
+  .board{
+    display:grid;
+    grid-template-columns:repeat(9, var(--cell, 38px));
+    background:var(--cell-bg);
+    border:2px solid var(--grid-line-bold);
+    border-radius:10px;
+    overflow:hidden;
+    touch-action:manipulation;
+  }
+  .board.busy{ opacity:.45; }
+  .cell{
+    appearance:none; padding:0; margin:0; cursor:pointer;
+    width:var(--cell, 38px); height:var(--cell, 38px);
+    background:var(--cell-bg);
+    border:0;
+    border-right:1px solid var(--grid-line);
+    border-bottom:1px solid var(--grid-line);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    color:var(--entry-ink);
+    transition:background .12s ease;
+  }
+  /* The 3×3 boxes are drawn with the cells' own borders, so every cell keeps
+     exactly one --cell of outer width no matter how thick its edge is. */
+  .cell[data-c="2"], .cell[data-c="5"]{ border-right:2px solid var(--grid-line-bold); }
+  .cell[data-c="8"]{ border-right:0; }
+  .cell[data-r="2"], .cell[data-r="5"]{ border-bottom:2px solid var(--grid-line-bold); }
+  .cell[data-r="8"]{ border-bottom:0; }
+  .cell:focus{ outline:none; }
+  .cell:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:-2px; z-index:3; }
+
+  .cell.peer{ background:var(--cell-peer); }
+  .cell.match{ background:var(--cell-match); }
+  .cell.sel{ background:var(--cell-sel); }
+  .cell.bad{ background:var(--cell-bad); }
+
+  .val{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:700;
+    font-size:calc(var(--cell, 38px) * .56);
+    line-height:1;
+    color:var(--entry-ink);
+  }
+  .cell.given .val{ color:var(--given-ink); }
+  .cell.hinted .val{ color:var(--hint-ink); }
+  .cell.bad .val{ color:var(--bad-ink); }
+
+  .notes{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    grid-template-rows:repeat(3, 1fr);
+    width:100%; height:100%;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:calc(var(--cell, 38px) * .24);
+    line-height:1;
+    color:var(--note-ink);
+  }
+  .notes span{ display:flex; align-items:center; justify-content:center; }
+  .notes span.note-match{ color:var(--gold); font-weight:700; }
+
+  @keyframes cellShake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-3px); }
+    75%{ transform:translateX(3px); }
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .cell.shake{ animation:cellShake .28s ease; }
+  }
+
+  .pad{
+    display:grid;
+    grid-template-columns:repeat(9, 1fr);
+    gap:6px;
+    width:100%;
+  }
+  .pad-key{
+    appearance:none; cursor:pointer;
+    position:relative;
+    padding:0;
+    aspect-ratio:1 / 1.18;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:linear-gradient(155deg, var(--cave-raised-2), var(--cave-raised));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 6px 14px -10px rgba(0,0,0,.8);
+    color:var(--text);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:700;
+    font-size:clamp(.95rem, 3.4vw, 1.25rem);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s ease, filter .1s ease;
+  }
+  .pad-key:hover{ filter:brightness(1.1); }
+  .pad-key:active{ transform:scale(.94); }
+  .pad-key:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  /* How many of this digit are still missing — small, but the whole
+     reason a player reaches for one key over another. */
+  .pad-key .left{
+    position:absolute; right:4px; bottom:1px;
+    font-family:'Quicksand', sans-serif; font-weight:700;
+    font-size:.58rem;
+    color:var(--text-muted);
+  }
+  .pad-key.done{ opacity:.34; }
+  body[data-notes="on"] .pad-key{ color:var(--note-ink); font-weight:600; }
+  body[data-notes="on"] .pad-key::after{
+    content:""; position:absolute; left:6px; top:5px;
+    width:5px; height:5px; border-radius:50%;
+    background:var(--orchid);
+  }
+
+  .act-row{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+    width:100%;
+  }
+  .act-btn{
+    appearance:none; cursor:pointer;
+    flex:1 1 0; min-width:0;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:8px 6px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:var(--cave-panel);
+    color:var(--text-muted);
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.7rem;
+    transition:transform .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .act-btn svg{ width:19px; height:19px; }
+  .act-btn:hover:not([disabled]){ transform:translateY(-2px); color:var(--text); border-color:var(--line-strong); }
+  .act-btn:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  .act-btn[disabled]{ opacity:.38; cursor:default; }
+  .act-btn.on{
+    background:linear-gradient(150deg, var(--orchid), var(--orchid-2));
+    border-color:transparent;
+    color:var(--pill-active-text);
+    box-shadow:0 8px 20px -10px rgba(var(--orchid-rgb),.7);
+  }
+
+  .hint{
+    margin:0; text-align:center; font-size:.74rem; color:var(--text-muted); max-width:54ch; line-height:1.45;
+  }
+
+  .settings-row{
+    display:flex; align-items:center; gap:8px; cursor:pointer;
+    user-select:none;
+  }
+  .toggle{ position:relative; width:34px; height:19px; flex:none; }
+  .toggle input{ position:absolute; inset:0; margin:0; opacity:0; cursor:pointer; }
+  .toggle-track{
+    position:absolute; inset:0;
+    background:var(--cave-raised);
+    border:1px solid var(--line-strong);
+    border-radius:999px;
+    transition:background .2s ease;
+  }
+  .toggle-thumb{
+    position:absolute; top:2px; left:2px;
+    width:13px; height:13px; border-radius:50%;
+    background:var(--ivory);
+    box-shadow:0 1px 2px rgba(0,0,0,.35);
+    transition:transform .2s ease;
+  }
+  .toggle input:checked ~ .toggle-track{ background:var(--orchid); border-color:transparent; }
+  .toggle input:checked ~ .toggle-track .toggle-thumb{ transform:translateX(15px); }
+  .toggle input:focus-visible ~ .toggle-track{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  .settings-label{ font-size:.74rem; font-weight:600; color:var(--text-muted); }
+
+  .overlay{
+    position:fixed; inset:0; z-index:20;
+    background:rgba(8,12,26,.72);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .overlay[hidden]{ display:none; }
+  .modal{
+    background:var(--cave-panel);
+    border:1px solid var(--line-strong);
+    border-radius:24px;
+    padding:32px 30px 28px;
+    max-width:340px; width:100%;
+    text-align:center;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.7);
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .modal-face-wrap{ width:64px; height:64px; filter:drop-shadow(0 5px 8px rgba(0,0,0,.3)); }
+  .modal h2{
+    margin:2px 0 0; font-family:'Baloo 2', sans-serif; font-weight:800;
+    font-size:1.35rem; text-wrap:balance; color:var(--text);
+  }
+  .modal p{ margin:0; color:var(--text-muted); font-size:.92rem; line-height:1.5; }
+  .modal p strong{ color:var(--gold); }
+  .cta{
+    margin-top:6px;
+    appearance:none; border:none; cursor:pointer;
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.98rem;
+    color:var(--ink);
+    background:linear-gradient(150deg, var(--gold), var(--gold-2));
+    padding:11px 26px; border-radius:14px;
+    box-shadow:0 10px 24px -10px rgba(var(--gold-rgb),.6);
+    transition:transform .12s ease;
+  }
+  .cta:hover{ transform:translateY(-2px); }
+  .cta:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:3px; }
+  .modal-actions{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+    margin-top:4px;
+  }
+  .cta-secondary{
+    background:transparent;
+    color:var(--text-muted);
+    border:1px solid var(--line-strong);
+    box-shadow:none;
+    padding:10px 18px;
+  }
+  .cta-secondary:hover{ color:var(--text); border-color:var(--orchid); }
+
+  #confettiCanvas{ position:fixed; inset:0; z-index:25; pointer-events:none; }
+
+  @media (max-width:480px){
+    .page{ padding:18px 10px 34px; gap:11px; }
+    .board-frame{ padding:8px; border-radius:18px; }
+    .console{ padding:7px 10px; }
+    .lcd{ min-width:46px; font-size:.98rem; }
+    .face-btn{ width:36px; height:36px; }
+
+    /* The four levels share one row, so the pills shrink to quarters and
+       the technique line wraps inside its own pill rather than pushing a
+       level onto a second row. */
+    .diff-row{ flex-wrap:nowrap; gap:5px; }
+    .diff-pill{ flex:1 1 0; min-width:0; padding:7px 3px; }
+    .diff-name{ font-size:.74rem; white-space:nowrap; }
+    .diff-pill .diff-sub{ font-size:.55rem; line-height:1.15; text-align:center; }
+
+    .pad{ gap:4px; }
+    .act-btn{ padding:7px 4px; font-size:.64rem; }
+    .act-btn svg{ width:17px; height:17px; }
+  }
+  @media (max-width:360px){
+    .diff-name{ font-size:.67rem; }
+    .diff-pill .diff-sub{ font-size:.54rem; }
+  }
+</style>
+
+<style>
+  .site-nav{
+    position:relative; z-index:3;
+    max-width:960px; margin:0 auto; padding:14px 20px 0;
+    display:flex; align-items:center; gap:8px;
+  }
+  .site-nav a{
+    display:inline-flex; align-items:center; gap:7px;
+    text-decoration:none; color:var(--text-muted);
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.82rem;
+    background:var(--cave-panel); border:1px solid var(--line);
+    border-radius:999px; padding:7px 15px 7px 11px;
+    transition:transform .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .site-nav a:hover{ transform:translateX(-2px); color:var(--text); border-color:var(--line-strong); }
+  .site-nav a:focus-visible{ outline:2px solid var(--orchid-soft); outline-offset:2px; }
+  .site-nav svg{ width:14px; height:14px; }
+</style>
+</head>
+<body data-theme="lantern" data-notes="off">
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+</nav>
+
+<div id="sparkleField"></div>
+
+<div class="page">
+  <header class="hero">
+    <h1 class="hero-title"><span class="star-icon" aria-hidden="true"></span><span id="heroTitleText">Lantern Sudoku</span><span class="star-icon" aria-hidden="true"></span></h1>
+    <p class="tagline" id="tagline">Fill every row, column and little 3×3 box with the numbers 1 to 9 — no repeats. Every puzzle is made fresh, and every one has exactly one answer.</p>
+  </header>
+
+  <div class="theme-row" role="group" aria-label="Choose a world">
+    <button class="theme-pill active" data-theme="lantern"><span class="theme-swatch swatch-lantern" aria-hidden="true"></span>Night Lanterns</button>
+    <button class="theme-pill" data-theme="blossom"><span class="theme-swatch swatch-blossom" aria-hidden="true"></span>Blossom Garden</button>
+  </div>
+
+  <div class="diff-row" role="group" aria-label="Choose a difficulty">
+    <button class="diff-pill" data-diff="easy"><span class="diff-name">Gentle</span><span class="diff-sub">one at a time</span></button>
+    <button class="diff-pill" data-diff="medium"><span class="diff-name">Steady</span><span class="diff-sub">along the lines</span></button>
+    <button class="diff-pill" data-diff="hard"><span class="diff-name">Tricky</span><span class="diff-sub">spot the pairs</span></button>
+    <button class="diff-pill" data-diff="expert"><span class="diff-name">Expert</span><span class="diff-sub">triples &amp; wings</span></button>
+  </div>
+
+  <div class="console-wrap">
+    <div class="console">
+      <div class="counter-unit">
+        <span class="counter-label">Slips</span>
+        <div class="lcd" id="mistakeCounter" aria-live="off">0/3</div>
+      </div>
+      <button class="face-btn" id="faceBtn" aria-label="Start a new puzzle">
+        <span class="face" id="face" data-state="idle"></span>
+      </button>
+      <div class="counter-unit">
+        <span class="counter-label">Time</span>
+        <div class="lcd" id="timer" aria-live="off">0:00</div>
+      </div>
+    </div>
+    <p class="best-time" id="bestTime"></p>
+  </div>
+
+  <div class="board-frame">
+    <div class="board" id="board" role="grid" aria-label="Sudoku grid"></div>
+  </div>
+
+  <div class="pad" id="pad" role="group" aria-label="Numbers"></div>
+
+  <div class="act-row">
+    <button class="act-btn" id="undoBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7H15a5 5 0 0 1 0 10H7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4 8.5 7 12 10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Undo</span>
+    </button>
+    <button class="act-btn" id="eraseBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 16.5 14 9l4.5 4.5-5 5H8.5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 20.5h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="m11.5 6.5 4.5-2.5 4 4-3 3" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>
+      <span>Erase</span>
+    </button>
+    <button class="act-btn" id="notesBtn" type="button" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 17.5 16.5 5l3 3L7 20.5H4z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>
+      <span id="notesLabel">Notes</span>
+    </button>
+    <button class="act-btn" id="hintBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 18h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1.2.9 1.9v.2h5.2v-.2c0-.7.3-1.4.9-1.9A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>
+      <span id="hintLabel">Hint 3</span>
+    </button>
+  </div>
+
+  <p class="hint" id="hintText">Tap a square, then tap a number. Turn on Notes to pencil in the numbers a square might be — placing a real number rubs that pencil mark out of its row, column and box for you.</p>
+
+  <label class="settings-row">
+    <span class="toggle">
+      <input type="checkbox" id="checkToggle" checked>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+    </span>
+    <span class="settings-label">Tell me straight away when a number is wrong</span>
+  </label>
+
+  <label class="settings-row">
+    <span class="toggle">
+      <input type="checkbox" id="highlightToggle" checked>
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+    </span>
+    <span class="settings-label">Highlight the row, column, box and matching numbers</span>
+  </label>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" role="alertdialog" aria-labelledby="modalTitle" aria-describedby="modalMsg">
+    <div class="modal-face-wrap">
+      <span class="face" id="modalFace" data-state="win"></span>
+    </div>
+    <h2 id="modalTitle">Solved!</h2>
+    <p id="modalMsg">Every square filled in 6:12.</p>
+    <div class="modal-actions">
+      <button class="cta" id="playAgainBtn">New puzzle</button>
+      <button class="cta cta-secondary" id="reviewBtn" hidden>See the board</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confettiCanvas"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  var REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* =====================================================================
+     Lookup tables. A digit d lives in bit d-1, so a set of candidates is
+     a 9-bit mask and ALL (511) means "anything still possible".
+     ===================================================================== */
+  var N = 81, ALL = 511;
+  var ROW = new Uint8Array(N), COL = new Uint8Array(N), BOX = new Uint8Array(N);
+  var PEERS = new Uint8Array(N * 20);          // 20 peers per cell, flat
+  var UNITS = new Uint8Array(27 * 9);          // 9 rows, 9 columns, 9 boxes
+  var POPCNT = new Uint8Array(512);
+  var LOWIDX = new Int8Array(512);             // single-bit mask -> digit
+
+  (function buildTables(){
+    var i, j, d, r, c, b, k;
+    for (i = 0; i < N; i++){
+      r = (i / 9) | 0; c = i % 9;
+      ROW[i] = r; COL[i] = c; BOX[i] = ((r / 3) | 0) * 3 + ((c / 3) | 0);
+    }
+    for (r = 0; r < 9; r++){
+      for (c = 0; c < 9; c++){
+        UNITS[r * 9 + c] = r * 9 + c;            // unit r      = row r
+        UNITS[(9 + r) * 9 + c] = c * 9 + r;      // unit 9 + r  = column r
+      }
+    }
+    for (b = 0; b < 9; b++){
+      var br = ((b / 3) | 0) * 3, bc = (b % 3) * 3;
+      k = 0;
+      for (r = 0; r < 3; r++){
+        for (c = 0; c < 3; c++){
+          UNITS[(18 + b) * 9 + k] = (br + r) * 9 + (bc + c);
+          k++;
+        }
+      }
+    }
+    for (i = 0; i < N; i++){
+      var n = 0;
+      for (j = 0; j < N; j++){
+        if (j === i) continue;
+        if (ROW[j] === ROW[i] || COL[j] === COL[i] || BOX[j] === BOX[i]){
+          PEERS[i * 20 + n] = j; n++;
+        }
+      }
+    }
+    for (i = 0; i < 512; i++){
+      var cnt = 0, v = i;
+      while (v){ cnt += v & 1; v >>= 1; }
+      POPCNT[i] = cnt;
+    }
+    for (d = 1; d <= 9; d++) LOWIDX[1 << (d - 1)] = d;
+  })();
+
+  /* =====================================================================
+     Brute-force half of the engine: one bitmask DFS used both to build a
+     finished grid and to prove a puzzle has exactly one answer.
+     ===================================================================== */
+  var rowM = new Uint16Array(9), colM = new Uint16Array(9), boxM = new Uint16Array(9);
+  var work = new Int8Array(N);
+
+  function loadMasks(g){
+    var i, d, m;
+    for (i = 0; i < 9; i++){ rowM[i] = 0; colM[i] = 0; boxM[i] = 0; }
+    for (i = 0; i < N; i++){
+      d = g[i];
+      if (d){
+        m = 1 << (d - 1);
+        rowM[ROW[i]] |= m; colM[COL[i]] |= m; boxM[BOX[i]] |= m;
+      }
+    }
+  }
+  function candMask(i){
+    return ~(rowM[ROW[i]] | colM[COL[i]] | boxM[BOX[i]]) & ALL;
+  }
+  function put(g, i, d){
+    var m = 1 << (d - 1);
+    g[i] = d; rowM[ROW[i]] |= m; colM[COL[i]] |= m; boxM[BOX[i]] |= m;
+  }
+  function take(g, i, d){
+    var m = ~(1 << (d - 1));
+    g[i] = 0; rowM[ROW[i]] &= m; colM[COL[i]] &= m; boxM[BOX[i]] &= m;
+  }
+
+  // Always expands the most constrained empty cell first, which is what
+  // keeps a 22-clue grid down to a fraction of a millisecond.
+  function pickCell(g){
+    var best = -1, bestMask = 0, bestCount = 10, i, m, c;
+    for (i = 0; i < N; i++){
+      if (g[i]) continue;
+      m = candMask(i); c = POPCNT[m];
+      if (c === 0) return -2;
+      if (c < bestCount){ bestCount = c; best = i; bestMask = m; if (c === 1) break; }
+    }
+    pickCell.mask = bestMask;
+    return best;
+  }
+
+  function dfsCount(g, limit){
+    var i = pickCell(g);
+    if (i === -2) return 0;
+    if (i === -1) return 1;
+    var mask = pickCell.mask, total = 0, bit, d;
+    while (mask){
+      bit = mask & -mask; mask ^= bit; d = LOWIDX[bit];
+      put(g, i, d);
+      total += dfsCount(g, limit);
+      take(g, i, d);
+      if (total >= limit) return total;
+    }
+    return total;
+  }
+
+  // Returns min(number of solutions, limit) — callers pass 2 and only ask
+  // "is it still unique?".
+  function countSolutions(g, limit){
+    var i;
+    for (i = 0; i < N; i++) work[i] = g[i];
+    loadMasks(work);
+    return dfsCount(work, limit);
+  }
+
+  function shuffleBits(mask, out){
+    var n = 0, bit, i, j, t;
+    while (mask){
+      bit = mask & -mask; mask ^= bit;
+      out[n++] = LOWIDX[bit];
+    }
+    for (i = n - 1; i > 0; i--){
+      j = (Math.random() * (i + 1)) | 0;
+      t = out[i]; out[i] = out[j]; out[j] = t;
+    }
+    return n;
+  }
+
+  function fillFrom(g){
+    var i = pickCell(g);
+    if (i === -2) return false;
+    if (i === -1) return true;
+    var order = new Array(9);
+    var n = shuffleBits(pickCell.mask, order), k;
+    for (k = 0; k < n; k++){
+      put(g, i, order[k]);
+      if (fillFrom(g)) return true;
+      take(g, i, order[k]);
+    }
+    return false;
+  }
+
+  // A randomised fill of an empty grid: every finished sudoku is reachable,
+  // and it costs about as little as permuting one canned grid would.
+  function fillGrid(sol){
+    var i;
+    for (i = 0; i < N; i++) sol[i] = 0;
+    loadMasks(sol);
+    fillFrom(sol);
+    return sol;
+  }
+
+  function shuffledOrder(){
+    var a = new Array(N), i, j, t;
+    for (i = 0; i < N; i++) a[i] = i;
+    for (i = N - 1; i > 0; i--){
+      j = (Math.random() * (i + 1)) | 0;
+      t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // Walks the shuffled order once, clearing a cell (or a 180°-symmetric
+  // pair) only when the puzzle still has a single answer afterwards. Each
+  // successful removal is recorded so the caller can put clues back when it
+  // has dug past the difficulty it wanted.
+  function dig(puz, targetClues, symmetric, order, removed, ceiling){
+    var clues = 0, i, k, a, b, va, vb, ok;
+    for (i = 0; i < N; i++) if (puz[i]) clues++;
+    for (k = 0; k < order.length; k++){
+      if (clues <= targetClues) break;
+      a = order[k];
+      if (!puz[a]) continue;
+      b = symmetric ? (80 - a) : a;
+      va = puz[a]; vb = puz[b];
+      puz[a] = 0; if (b !== a) puz[b] = 0;
+      ok = countSolutions(puz, 2) === 1;
+      // The ceiling is what actually sets the difficulty: a clue only goes
+      // if the puzzle can still be finished with techniques the level
+      // allows. Digging until no such removal is left leaves a puzzle
+      // sitting right on that boundary.
+      if (ok && clues <= 46) ok = solveLogical(puz, ceiling).solved;
+      if (ok){
+        if (b !== a && vb){ removed.push([a, b]); clues -= 2; }
+        else { removed.push([a]); clues -= 1; }
+      } else {
+        puz[a] = va; if (b !== a) puz[b] = vb;
+      }
+    }
+    return clues;
+  }
+
+  /* =====================================================================
+     The human half of the engine. This solver only uses techniques a
+     person can actually spot, and reports the hardest one it needed —
+     that grade, not the clue count, is what the four pills promise.
+     ===================================================================== */
+  var lv = new Int8Array(N);       // values while grading
+  var lc = new Uint16Array(N);     // candidate masks while grading
+
+  function initCandidates(g){
+    var i, k, p, m;
+    for (i = 0; i < N; i++) lv[i] = g[i];
+    for (i = 0; i < N; i++){
+      if (lv[i]){ lc[i] = 0; continue; }
+      m = ALL;
+      for (k = 0; k < 20; k++){
+        p = PEERS[i * 20 + k];
+        if (lv[p]) m &= ~(1 << (lv[p] - 1));
+      }
+      lc[i] = m;
+    }
+  }
+
+  function assign(i, d){
+    var k, p, m = ~(1 << (d - 1));
+    lv[i] = d; lc[i] = 0;
+    for (k = 0; k < 20; k++){
+      p = PEERS[i * 20 + k];
+      lc[p] &= m;
+    }
+  }
+
+  // Tier 1 — naked singles (one candidate left in a cell) and hidden
+  // singles (one home left in a unit for a digit).
+  function tierSingles(){
+    var changed = 0, i, u, k, c, d, bit, cnt, where, placed;
+    for (i = 0; i < N; i++){
+      if (!lv[i] && POPCNT[lc[i]] === 1){ assign(i, LOWIDX[lc[i]]); changed++; }
+    }
+    for (u = 0; u < 27; u++){
+      for (d = 1; d <= 9; d++){
+        bit = 1 << (d - 1); cnt = 0; where = -1; placed = false;
+        for (k = 0; k < 9; k++){
+          c = UNITS[u * 9 + k];
+          if (lv[c] === d){ placed = true; break; }
+          if (!lv[c] && (lc[c] & bit)){ cnt++; where = c; }
+        }
+        if (!placed && cnt === 1){ assign(where, d); changed++; }
+      }
+    }
+    return changed;
+  }
+
+  // Tier 2 — locked candidates, both directions.
+  function tierLocked(){
+    var changed = 0, b, u, d, bit, k, j, c, rmask, cmask, bmask, seen, placed, rr, cc, bb, inUnit;
+    for (b = 0; b < 9; b++){
+      for (d = 1; d <= 9; d++){
+        bit = 1 << (d - 1); rmask = 0; cmask = 0; seen = false; placed = false;
+        for (k = 0; k < 9; k++){
+          c = UNITS[(18 + b) * 9 + k];
+          if (lv[c] === d){ placed = true; break; }
+          if (!lv[c] && (lc[c] & bit)){ rmask |= 1 << ROW[c]; cmask |= 1 << COL[c]; seen = true; }
+        }
+        if (placed || !seen) continue;
+        if (POPCNT[rmask] === 1){
+          rr = LOWIDX[rmask] - 1;
+          for (k = 0; k < 9; k++){
+            c = rr * 9 + k;
+            if (BOX[c] !== b && !lv[c] && (lc[c] & bit)){ lc[c] &= ~bit; changed++; }
+          }
+        }
+        if (POPCNT[cmask] === 1){
+          cc = LOWIDX[cmask] - 1;
+          for (k = 0; k < 9; k++){
+            c = k * 9 + cc;
+            if (BOX[c] !== b && !lv[c] && (lc[c] & bit)){ lc[c] &= ~bit; changed++; }
+          }
+        }
+      }
+    }
+    for (u = 0; u < 18; u++){
+      for (d = 1; d <= 9; d++){
+        bit = 1 << (d - 1); bmask = 0; seen = false; placed = false;
+        for (k = 0; k < 9; k++){
+          c = UNITS[u * 9 + k];
+          if (lv[c] === d){ placed = true; break; }
+          if (!lv[c] && (lc[c] & bit)){ bmask |= 1 << BOX[c]; seen = true; }
+        }
+        if (placed || !seen || POPCNT[bmask] !== 1) continue;
+        bb = LOWIDX[bmask] - 1;
+        for (k = 0; k < 9; k++){
+          c = UNITS[(18 + bb) * 9 + k];
+          inUnit = false;
+          for (j = 0; j < 9; j++){ if (UNITS[u * 9 + j] === c){ inUnit = true; break; } }
+          if (!inUnit && !lv[c] && (lc[c] & bit)){ lc[c] &= ~bit; changed++; }
+        }
+      }
+    }
+    return changed;
+  }
+
+  function stripUnit(u, mask, keep){
+    var changed = 0, k, j, c, skip;
+    for (k = 0; k < 9; k++){
+      c = UNITS[u * 9 + k];
+      if (lv[c]) continue;
+      skip = false;
+      for (j = 0; j < keep.length; j++){ if (keep[j] === c){ skip = true; break; } }
+      if (skip) continue;
+      if (lc[c] & mask){ lc[c] &= ~mask; changed++; }
+    }
+    return changed;
+  }
+
+  // Tier 3 — naked pairs/triples.
+  function tierNaked(size){
+    var changed = 0, u, k, c, cells, n, i1, i2, i3, un;
+    for (u = 0; u < 27; u++){
+      cells = [];
+      for (k = 0; k < 9; k++){
+        c = UNITS[u * 9 + k];
+        if (!lv[c]) cells.push(c);
+      }
+      n = cells.length;
+      if (n <= size) continue;
+      for (i1 = 0; i1 < n; i1++){
+        for (i2 = i1 + 1; i2 < n; i2++){
+          if (size === 2){
+            un = lc[cells[i1]] | lc[cells[i2]];
+            if (POPCNT[un] !== 2) continue;
+            changed += stripUnit(u, un, [cells[i1], cells[i2]]);
+          } else {
+            for (i3 = i2 + 1; i3 < n; i3++){
+              un = lc[cells[i1]] | lc[cells[i2]] | lc[cells[i3]];
+              if (POPCNT[un] !== 3) continue;
+              changed += stripUnit(u, un, [cells[i1], cells[i2], cells[i3]]);
+            }
+          }
+        }
+      }
+    }
+    return changed;
+  }
+
+  function restrictCells(u, posMask, digitMask){
+    var changed = 0, k, c;
+    for (k = 0; k < 9; k++){
+      if (!(posMask & (1 << k))) continue;
+      c = UNITS[u * 9 + k];
+      if (lv[c]) continue;
+      if (lc[c] & ~digitMask){ lc[c] &= digitMask; changed++; }
+    }
+    return changed;
+  }
+
+  // Tier 3 (pairs) / tier 4 (triples) — hidden subsets.
+  function tierHidden(size){
+    var changed = 0, u, k, c, d, i1, i2, i3, comb, pos = new Array(10);
+    for (u = 0; u < 27; u++){
+      for (d = 1; d <= 9; d++) pos[d] = 0;
+      for (k = 0; k < 9; k++){
+        c = UNITS[u * 9 + k];
+        if (lv[c]) pos[lv[c]] = -1;
+      }
+      for (k = 0; k < 9; k++){
+        c = UNITS[u * 9 + k];
+        if (lv[c]) continue;
+        for (d = 1; d <= 9; d++){
+          if (pos[d] === -1) continue;
+          if (lc[c] & (1 << (d - 1))) pos[d] |= 1 << k;
+        }
+      }
+      for (i1 = 1; i1 <= 9; i1++){
+        if (pos[i1] <= 0 || POPCNT[pos[i1]] > size) continue;
+        for (i2 = i1 + 1; i2 <= 9; i2++){
+          if (pos[i2] <= 0 || POPCNT[pos[i2]] > size) continue;
+          if (size === 2){
+            comb = pos[i1] | pos[i2];
+            if (POPCNT[comb] !== 2) continue;
+            changed += restrictCells(u, comb, (1 << (i1 - 1)) | (1 << (i2 - 1)));
+          } else {
+            for (i3 = i2 + 1; i3 <= 9; i3++){
+              if (pos[i3] <= 0 || POPCNT[pos[i3]] > size) continue;
+              comb = pos[i1] | pos[i2] | pos[i3];
+              if (POPCNT[comb] !== 3) continue;
+              changed += restrictCells(u, comb, (1 << (i1 - 1)) | (1 << (i2 - 1)) | (1 << (i3 - 1)));
+            }
+          }
+        }
+      }
+    }
+    return changed;
+  }
+
+  function isPeer(a, b){
+    return ROW[a] === ROW[b] || COL[a] === COL[b] || BOX[a] === BOX[b];
+  }
+
+  // Tier 4 — Y-Wing. A pivot holding {A,B} sees one cell holding {A,C} and
+  // another holding {B,C}; whichever way the pivot falls, one wing must be
+  // C, so nothing that sees both wings can be C.
+  function tierYWing(){
+    var changed = 0, i, k, p, pm, bivalue = [], wings, w1, w2, m1, m2, shared, x, y, z;
+    for (i = 0; i < N; i++) if (!lv[i] && POPCNT[lc[i]] === 2) bivalue.push(i);
+    for (x = 0; x < bivalue.length; x++){
+      p = bivalue[x]; pm = lc[p];
+      wings = [];
+      for (y = 0; y < bivalue.length; y++){
+        if (bivalue[y] !== p && isPeer(p, bivalue[y]) && POPCNT[pm & lc[bivalue[y]]] === 1){
+          wings.push(bivalue[y]);
+        }
+      }
+      for (y = 0; y < wings.length; y++){
+        w1 = wings[y]; m1 = lc[w1];
+        for (z = y + 1; z < wings.length; z++){
+          w2 = wings[z]; m2 = lc[w2];
+          if ((pm & m1) === (pm & m2)) continue;      // the wings must lean on different pivot digits
+          shared = m1 & m2 & ~pm & ALL;
+          if (POPCNT[shared] !== 1) continue;
+          for (k = 0; k < N; k++){
+            if (lv[k] || k === p || k === w1 || k === w2) continue;
+            if (!(lc[k] & shared)) continue;
+            if (isPeer(k, w1) && isPeer(k, w2)){ lc[k] &= ~shared; changed++; }
+          }
+        }
+      }
+    }
+    return changed;
+  }
+
+  // Tier 4 — X-Wing, in both orientations.
+  function tierXWing(){
+    var changed = 0, d, bit, i, a, b, k, c, cell, rowsPos = new Array(9), colsPos = new Array(9);
+    for (d = 1; d <= 9; d++){
+      bit = 1 << (d - 1);
+      for (i = 0; i < 9; i++){ rowsPos[i] = 0; colsPos[i] = 0; }
+      for (i = 0; i < N; i++){
+        if (lv[i]) continue;
+        if (lc[i] & bit){ rowsPos[ROW[i]] |= 1 << COL[i]; colsPos[COL[i]] |= 1 << ROW[i]; }
+      }
+      for (a = 0; a < 9; a++){
+        if (POPCNT[rowsPos[a]] !== 2) continue;
+        for (b = a + 1; b < 9; b++){
+          if (rowsPos[b] !== rowsPos[a]) continue;
+          for (c = 0; c < 9; c++){
+            if (!(rowsPos[a] & (1 << c))) continue;
+            for (k = 0; k < 9; k++){
+              if (k === a || k === b) continue;
+              cell = k * 9 + c;
+              if (!lv[cell] && (lc[cell] & bit)){ lc[cell] &= ~bit; changed++; }
+            }
+          }
+        }
+      }
+      for (a = 0; a < 9; a++){
+        if (POPCNT[colsPos[a]] !== 2) continue;
+        for (b = a + 1; b < 9; b++){
+          if (colsPos[b] !== colsPos[a]) continue;
+          for (c = 0; c < 9; c++){
+            if (!(colsPos[a] & (1 << c))) continue;
+            for (k = 0; k < 9; k++){
+              if (k === a || k === b) continue;
+              cell = c * 9 + k;
+              if (!lv[cell] && (lc[cell] & bit)){ lc[cell] &= ~bit; changed++; }
+            }
+          }
+        }
+      }
+    }
+    return changed;
+  }
+
+  // Applies the cheapest technique that still bites, never reaching for a
+  // harder one than maxTier, and reports the hardest tier it had to use.
+  function solveLogical(g, maxTier){
+    initCandidates(g);
+    var used = 1, guard = 0, i, solved = true;
+    for (;;){
+      guard++; if (guard > 500) break;
+      if (tierSingles()) continue;
+      if (maxTier >= 2 && tierLocked()){ if (used < 2) used = 2; continue; }
+      if (maxTier >= 3){
+        if (tierNaked(2)){ if (used < 3) used = 3; continue; }
+        if (tierHidden(2)){ if (used < 3) used = 3; continue; }
+      }
+      if (maxTier >= 4){
+        if (tierNaked(3)){ used = 4; continue; }
+        if (tierHidden(3)){ used = 4; continue; }
+        if (tierYWing()){ used = 4; continue; }
+        if (tierXWing()){ used = 4; continue; }
+      }
+      break;
+    }
+    for (i = 0; i < N; i++){ if (!lv[i]){ solved = false; break; } }
+    return { solved: solved, tier: used };
+  }
+
+  function gradePuzzle(g){ return solveLogical(g, 4); }
+
+  /* =====================================================================
+     Generation: dig to the level's clue target, grade, and keep digging
+     while the puzzle is still too gentle for the pill the player picked.
+     ===================================================================== */
+  // "floor" is how far this level is allowed to dig before difficulty is
+  // measured. Clue count alone is a poor guide — plenty of 30-clue grids
+  // fall to singles — so each level digs past its target, grades, and then
+  // puts clues back until the grade is the one the pill promises.
+  var LEVELS = {
+    easy:   { label:'Gentle', tier:1, floor:34, symmetric:true,
+              blurb:'singles only, a friendly solve' },
+    medium: { label:'Steady', tier:2, floor:17, symmetric:true,
+              blurb:'you will need to spot a locked digit or two' },
+    hard:   { label:'Tricky', tier:3, floor:17, symmetric:false,
+              blurb:'pairs come out to play' },
+    expert: { label:'Expert', tier:4, floor:17, symmetric:false,
+              blurb:'triples, Y-Wings and X-Wings, bring notes' }
+  };
+
+  function nowMs(){
+    return (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+  }
+
+  // 1..4 are the technique tiers; 5 means "needs more than a person should
+  // have to do", which is always dug back out again.
+  function effTier(puz){
+    var g = gradePuzzle(puz);
+    return g.solved ? g.tier : 5;
+  }
+
+  function countClues(puz){
+    var n = 0, i;
+    for (i = 0; i < N; i++) if (puz[i]) n++;
+    return n;
+  }
+
+  function digToBoundary(puz, floor, symmetric, removed, ceiling){
+    var before, passes = 0;
+    do {
+      before = removed.length;
+      dig(puz, floor, symmetric, shuffledOrder(), removed, ceiling);
+      passes++;
+    } while (removed.length > before && passes < 3);
+    return removed.length;
+  }
+
+  function attemptPuzzle(key){
+    var L = LEVELS[key], i;
+    var sol = new Int8Array(N);
+    fillGrid(sol);
+    var puz = new Int8Array(N);
+    for (i = 0; i < N; i++) puz[i] = sol[i];
+    var removed = [];
+    digToBoundary(puz, L.floor, L.symmetric, removed, L.tier);
+    var g = gradePuzzle(puz);
+    var tier = g.solved ? g.tier : 5;
+    return {
+      puzzle: puz,
+      solution: sol,
+      clues: countClues(puz),
+      tier: tier,
+      solvable: tier <= 4,
+      // "exact" is the grade the player asked for. Roughly one dig in eight
+      // lands on it; the rest are thrown back. Anything else is only kept as
+      // a fallback in case the clock runs out.
+      exact: tier === L.tier
+    };
+  }
+
+  function scoreOf(key, r){
+    return (r.solvable ? 0 : 20) + Math.abs(r.tier - LEVELS[key].tier);
+  }
+
+  // Attempts are spread across animation frames with a 12 ms slice each, so
+  // even a stubborn Expert never freezes the page. If the budget runs out,
+  // the closest puzzle found is dealt anyway — it is always unique and
+  // always solvable, just possibly a notch off the requested grade.
+  function generateAsync(key, cb){
+    var best = null, attempts = 0, t0 = nowMs();
+    var MAX_ATTEMPTS = 80, MAX_MS = 2500;
+    function tick(){
+      var sliceStart = nowMs(), r;
+      do {
+        attempts++;
+        r = attemptPuzzle(key);
+        if (r.exact){ cb(r); return; }
+        if (!best || scoreOf(key, r) < scoreOf(key, best)) best = r;
+      } while (nowMs() - sliceStart < 12 && attempts < MAX_ATTEMPTS && nowMs() - t0 < MAX_MS);
+      if (attempts >= MAX_ATTEMPTS || nowMs() - t0 >= MAX_MS){ cb(best); return; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* =====================================================================
+     The game itself.
+     ===================================================================== */
+  var MAX_MISTAKES = 3, MAX_HINTS = 3;
+
+  var boardEl = document.getElementById('board');
+  var boardFrame = document.querySelector('.board-frame');
+  var padEl = document.getElementById('pad');
+  var mistakeEl = document.getElementById('mistakeCounter');
+  var timerEl = document.getElementById('timer');
+  var bestTimeEl = document.getElementById('bestTime');
+  var faceEl = document.getElementById('face');
+  var faceBtn = document.getElementById('faceBtn');
+  var modalFace = document.getElementById('modalFace');
+  var overlayEl = document.getElementById('overlay');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalMsg = document.getElementById('modalMsg');
+  var playAgainBtn = document.getElementById('playAgainBtn');
+  var reviewBtn = document.getElementById('reviewBtn');
+  var undoBtn = document.getElementById('undoBtn');
+  var eraseBtn = document.getElementById('eraseBtn');
+  var notesBtn = document.getElementById('notesBtn');
+  var hintBtn = document.getElementById('hintBtn');
+  var hintLabel = document.getElementById('hintLabel');
+  var hintText = document.getElementById('hintText');
+  var checkToggle = document.getElementById('checkToggle');
+  var highlightToggle = document.getElementById('highlightToggle');
+  var diffButtons = [].slice.call(document.querySelectorAll('.diff-pill'));
+  var themeButtons = [].slice.call(document.querySelectorAll('.theme-pill'));
+
+  var cells = [], padKeys = [];
+  var currentLevel = 'easy', currentTheme = 'lantern';
+  var notesOn = false, highlightOn = true, checkOn = true;
+  var timerHandle = null, generating = false;
+
+  var S = {
+    puzzle: new Int8Array(N),
+    solution: new Int8Array(N),
+    given: new Uint8Array(N),
+    values: new Int8Array(N),
+    notes: new Uint16Array(N),
+    wrong: new Uint8Array(N),
+    hinted: new Uint8Array(N),
+    sel: -1, mistakes: 0, hintsLeft: MAX_HINTS,
+    elapsed: 0, started: false, done: false,
+    undoStack: []
+  };
+
+  /* ---------- storage, all optional ---------- */
+  function readJSON(key){
+    try{
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
+  }
+  function readStr(key){
+    try{ return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function writeStr(key, value){
+    try{ localStorage.setItem(key, value); } catch(e){}
+  }
+  function dropKey(key){
+    try{ localStorage.removeItem(key); } catch(e){}
+  }
+
+  function bestTimes(){ return readJSON('sudoku.bestTimes') || {}; }
+  function writeBestTime(level, seconds){
+    var all = bestTimes(), prev = all[level];
+    if (prev === undefined || seconds < prev){
+      all[level] = seconds;
+      writeJSON('sudoku.bestTimes', all);
+      return true;
+    }
+    return false;
+  }
+  function fmtTime(sec){
+    var m = (sec / 60) | 0, s = sec % 60;
+    return m + ':' + (s < 10 ? '0' + s : s);
+  }
+  function showBestTime(){
+    var best = bestTimes()[currentLevel], L = LEVELS[currentLevel];
+    bestTimeEl.innerHTML = (best !== undefined)
+      ? 'Best on ' + L.label + ': <strong>' + fmtTime(best) + '</strong>'
+      : 'No time yet on ' + L.label + ' — ' + L.blurb + '.';
+  }
+
+  /* ---------- board construction ---------- */
+  function buildCells(){
+    var i, el, frag = document.createDocumentFragment();
+    for (i = 0; i < N; i++){
+      el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'cell';
+      el.setAttribute('data-i', i);
+      el.setAttribute('data-r', ROW[i]);
+      el.setAttribute('data-c', COL[i]);
+      el.setAttribute('role', 'gridcell');
+      cells.push(el);
+      frag.appendChild(el);
+    }
+    boardEl.appendChild(frag);
+
+    var padFrag = document.createDocumentFragment();
+    for (i = 1; i <= 9; i++){
+      el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'pad-key';
+      el.setAttribute('data-d', i);
+      el.innerHTML = i + '<span class="left"></span>';
+      padKeys.push(el);
+      padFrag.appendChild(el);
+    }
+    padEl.appendChild(padFrag);
+  }
+
+  // Squares are sized to the frame so the grid always fits without a
+  // scrollbar, and never grows past a comfortable desktop size.
+  function sizeBoard(){
+    var fs = window.getComputedStyle(boardFrame);
+    var avail = boardFrame.clientWidth - (parseFloat(fs.paddingLeft) || 0) - (parseFloat(fs.paddingRight) || 0);
+    if (!avail || avail < 80) avail = Math.min(window.innerWidth - 44, 560);
+    var cell = Math.floor((avail - 4) / 9);           // 4px = the board's own border
+    cell = Math.max(26, Math.min(cell, 56));
+    boardEl.style.setProperty('--cell', cell + 'px');
+  }
+
+  /* ---------- rendering ---------- */
+  function cellLabel(i, v){
+    var where = 'Row ' + (ROW[i] + 1) + ', column ' + (COL[i] + 1);
+    if (!v) return where + ', empty';
+    return where + ', ' + v + (S.given[i] ? ' (clue)' : '');
+  }
+
+  function renderCell(i, sel, hl){
+    var el = cells[i], v = S.values[i], cls = 'cell', d, html;
+    if (S.given[i]) cls += ' given';
+    if (S.hinted[i]) cls += ' hinted';
+    if (sel >= 0){
+      if (i === sel) cls += ' sel';
+      else if (highlightOn){
+        if (ROW[i] === ROW[sel] || COL[i] === COL[sel] || BOX[i] === BOX[sel]) cls += ' peer';
+        if (hl && v === hl) cls += ' match';
+      }
+    }
+    if (S.wrong[i]) cls += ' bad';
+    if (el.className !== cls) el.className = cls;
+
+    var sig = v ? ('v' + v) : ('n' + S.notes[i] + (highlightOn ? ':' + hl : ''));
+    if (el._sig !== sig){
+      if (v){
+        html = '<span class="val">' + v + '</span>';
+      } else if (S.notes[i]){
+        html = '<span class="notes">';
+        for (d = 1; d <= 9; d++){
+          if (S.notes[i] & (1 << (d - 1))){
+            html += '<span class="' + (highlightOn && hl === d ? 'note-match' : '') + '">' + d + '</span>';
+          } else {
+            html += '<span></span>';
+          }
+        }
+        html += '</span>';
+      } else {
+        html = '';
+      }
+      el.innerHTML = html;
+      el._sig = sig;
+    }
+    el.setAttribute('aria-label', cellLabel(i, v));
+  }
+
+  function renderAll(){
+    var sel = S.sel, hl = (sel >= 0 && S.values[sel]) ? S.values[sel] : 0, i;
+    for (i = 0; i < N; i++) renderCell(i, sel, hl);
+  }
+
+  function updateChrome(){
+    var counts = [0,0,0,0,0,0,0,0,0,0], i, d;
+    for (i = 0; i < N; i++) if (S.values[i]) counts[S.values[i]]++;
+    for (d = 1; d <= 9; d++){
+      var key = padKeys[d - 1], left = 9 - counts[d];
+      key.querySelector('.left').textContent = left > 0 ? left : '';
+      key.classList.toggle('done', left <= 0);
+    }
+    mistakeEl.textContent = checkOn ? (S.mistakes + '/' + MAX_MISTAKES) : '—';
+    timerEl.textContent = fmtTime(S.elapsed);
+    hintLabel.textContent = 'Hint ' + S.hintsLeft;
+    hintBtn.disabled = S.done || S.hintsLeft <= 0;
+    undoBtn.disabled = S.done || S.undoStack.length === 0;
+    eraseBtn.disabled = S.done;
+    notesBtn.classList.toggle('on', notesOn);
+    notesBtn.setAttribute('aria-pressed', notesOn ? 'true' : 'false');
+    document.body.setAttribute('data-notes', notesOn ? 'on' : 'off');
+  }
+
+  /* ---------- timer ---------- */
+  function stopTimer(){
+    if (timerHandle){ clearInterval(timerHandle); timerHandle = null; }
+  }
+  function startTimer(){
+    stopTimer();
+    timerHandle = setInterval(function(){
+      S.elapsed++;
+      timerEl.textContent = fmtTime(S.elapsed);
+      if (S.elapsed % 5 === 0) saveProgress();
+      if (S.elapsed >= 5999) stopTimer();
+    }, 1000);
+  }
+  function startTimerIfNeeded(){
+    if (!S.started && !S.done){ S.started = true; startTimer(); }
+  }
+
+  /* ---------- moves ---------- */
+  function newUndo(i){
+    return { i:i, val:S.values[i], notes:S.notes[i], wrong:S.wrong[i], cleared:[], mistake:0, hint:0 };
+  }
+  function pushUndo(entry){
+    S.undoStack.push(entry);
+    if (S.undoStack.length > 200) S.undoStack.shift();
+  }
+
+  function shake(i){
+    if (REDUCED_MOTION) return;
+    var el = cells[i];
+    el.classList.add('shake');
+    setTimeout(function(){ el.classList.remove('shake'); }, 300);
+  }
+
+  // Placing a digit rubs it out of the pencil marks of every peer, and the
+  // erased masks travel with the undo entry so a single undo restores them.
+  function clearPeerNotes(entry, i, d){
+    var k, p, bit = 1 << (d - 1);
+    for (k = 0; k < 20; k++){
+      p = PEERS[i * 20 + k];
+      if (S.notes[p] & bit){
+        entry.cleared.push([p, S.notes[p]]);
+        S.notes[p] &= ~bit;
+      }
+    }
+  }
+
+  function selectCell(i){
+    S.sel = i;
+    renderAll();
+  }
+
+  function placeDigit(d){
+    var i = S.sel, entry;
+    if (S.done || i < 0 || S.given[i] || S.hinted[i]) return;
+    startTimerIfNeeded();
+
+    if (notesOn){
+      if (S.values[i]) return;                 // clear the number before pencilling
+      entry = newUndo(i);
+      S.notes[i] ^= (1 << (d - 1));
+      pushUndo(entry);
+    } else {
+      if (S.values[i] === d){ eraseCell(); return; }
+      entry = newUndo(i);
+      S.values[i] = d;
+      S.notes[i] = 0;
+      S.wrong[i] = 0;
+      clearPeerNotes(entry, i, d);
+      if (checkOn && d !== S.solution[i]){
+        S.wrong[i] = 1;
+        S.mistakes++;
+        entry.mistake = 1;
+        shake(i);
+      }
+      pushUndo(entry);
+    }
+    renderAll(); updateChrome(); saveProgress();
+    if (checkOn && S.mistakes >= MAX_MISTAKES){ finish(false); return; }
+    checkWin();
+  }
+
+  function eraseCell(){
+    var i = S.sel, entry;
+    if (S.done || i < 0 || S.given[i] || S.hinted[i]) return;
+    if (!S.values[i] && !S.notes[i]) return;
+    entry = newUndo(i);
+    S.values[i] = 0; S.notes[i] = 0; S.wrong[i] = 0;
+    pushUndo(entry);
+    renderAll(); updateChrome(); saveProgress();
+  }
+
+  function undo(){
+    if (S.done || !S.undoStack.length) return;
+    var e = S.undoStack.pop(), k;
+    S.values[e.i] = e.val; S.notes[e.i] = e.notes; S.wrong[e.i] = e.wrong;
+    for (k = 0; k < e.cleared.length; k++) S.notes[e.cleared[k][0]] = e.cleared[k][1];
+    if (e.mistake) S.mistakes--;
+    if (e.hint){ S.hinted[e.i] = 0; S.hintsLeft++; }
+    S.sel = e.i;
+    renderAll(); updateChrome(); saveProgress();
+  }
+
+  // A hint prefers a square the player could have worked out right now by a
+  // single, so it points at a move rather than just filling a hole.
+  function pickHintCell(){
+    var g = new Int8Array(N), i, k, u, c, d, bit, cnt, where, placed;
+    for (i = 0; i < N; i++) g[i] = (S.values[i] && S.values[i] === S.solution[i]) ? S.values[i] : 0;
+    initCandidates(g);
+    for (i = 0; i < N; i++) if (!lv[i] && POPCNT[lc[i]] === 1) return i;
+    for (u = 0; u < 27; u++){
+      for (d = 1; d <= 9; d++){
+        bit = 1 << (d - 1); cnt = 0; where = -1; placed = false;
+        for (k = 0; k < 9; k++){
+          c = UNITS[u * 9 + k];
+          if (lv[c] === d){ placed = true; break; }
+          if (!lv[c] && (lc[c] & bit)){ cnt++; where = c; }
+        }
+        if (!placed && cnt === 1) return where;
+      }
+    }
+    if (S.sel >= 0 && !g[S.sel]) return S.sel;
+    for (i = 0; i < N; i++) if (!g[i]) return i;
+    return -1;
+  }
+
+  function useHint(){
+    if (S.done || S.hintsLeft <= 0) return;
+    var i = pickHintCell();
+    if (i < 0) return;
+    var entry = newUndo(i), d = S.solution[i];
+    entry.hint = 1;
+    S.values[i] = d; S.notes[i] = 0; S.wrong[i] = 0; S.hinted[i] = 1;
+    clearPeerNotes(entry, i, d);
+    S.hintsLeft--;
+    pushUndo(entry);
+    S.sel = i;
+    startTimerIfNeeded();
+    renderAll(); updateChrome(); saveProgress();
+    checkWin();
+  }
+
+  function checkWin(){
+    var i;
+    for (i = 0; i < N; i++) if (S.values[i] !== S.solution[i]) return;
+    finish(true);
+  }
+
+  function finish(won){
+    S.done = true;
+    stopTimer();
+    dropKey('sudoku.progress');
+    faceEl.setAttribute('data-state', won ? 'win' : 'lose');
+    modalFace.setAttribute('data-state', won ? 'win' : 'lose');
+    if (won){
+      var record = writeBestTime(currentLevel, S.elapsed);
+      modalTitle.textContent = 'Every square filled!';
+      modalMsg.innerHTML = record
+        ? 'Solved in <strong>' + fmtTime(S.elapsed) + '</strong> — a new best on ' + LEVELS[currentLevel].label + '!'
+        : 'Solved in <strong>' + fmtTime(S.elapsed) + '</strong> on ' + LEVELS[currentLevel].label + '.';
+      reviewBtn.hidden = true;
+      if (!REDUCED_MOTION) launchConfetti();
+    } else {
+      modalTitle.textContent = 'Three slips — the puzzle wins';
+      modalMsg.textContent = 'Every red square was a wrong number. Take a look, then start a fresh one.';
+      reviewBtn.hidden = false;
+    }
+    showBestTime();
+    updateChrome();
+    overlayEl.hidden = false;
+    playAgainBtn.focus();
+  }
+
+  /* ---------- progress ---------- */
+  function packDigits(arr){
+    var s = '', i;
+    for (i = 0; i < N; i++) s += arr[i];
+    return s;
+  }
+  function saveProgress(){
+    if (S.done) return;
+    writeJSON('sudoku.progress', {
+      level: currentLevel,
+      puzzle: packDigits(S.puzzle),
+      solution: packDigits(S.solution),
+      values: packDigits(S.values),
+      hinted: packDigits(S.hinted),
+      notes: Array.prototype.slice.call(S.notes),
+      mistakes: S.mistakes,
+      hintsLeft: S.hintsLeft,
+      elapsed: S.elapsed
+    });
+  }
+  function loadProgress(){
+    var p = readJSON('sudoku.progress'), i;
+    if (!p || !p.puzzle || !p.solution || !LEVELS[p.level]) return false;
+    if (p.puzzle.length !== N || p.solution.length !== N) return false;
+    currentLevel = p.level;
+    for (i = 0; i < N; i++){
+      S.puzzle[i] = +p.puzzle.charAt(i);
+      S.solution[i] = +p.solution.charAt(i);
+      S.values[i] = p.values ? +p.values.charAt(i) : S.puzzle[i];
+      S.given[i] = S.puzzle[i] ? 1 : 0;
+      S.hinted[i] = (p.hinted && p.hinted.charAt(i) === '1') ? 1 : 0;
+      S.notes[i] = (p.notes && p.notes[i]) ? p.notes[i] : 0;
+      S.wrong[i] = (checkOn && S.values[i] && S.values[i] !== S.solution[i]) ? 1 : 0;
+    }
+    S.mistakes = p.mistakes || 0;
+    S.hintsLeft = (typeof p.hintsLeft === 'number') ? p.hintsLeft : MAX_HINTS;
+    S.elapsed = p.elapsed || 0;
+    S.sel = -1; S.done = false; S.started = false; S.undoStack = [];
+    return true;
+  }
+
+  /* ---------- starting a game ---------- */
+  var prefetch = {};
+
+  function setActiveDiff(){
+    diffButtons.forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-diff') === currentLevel);
+    });
+  }
+
+  function applyPuzzle(r){
+    var i;
+    for (i = 0; i < N; i++){
+      S.puzzle[i] = r.puzzle[i];
+      S.solution[i] = r.solution[i];
+      S.values[i] = r.puzzle[i];
+      S.given[i] = r.puzzle[i] ? 1 : 0;
+      S.notes[i] = 0; S.wrong[i] = 0; S.hinted[i] = 0;
+    }
+    S.sel = -1; S.mistakes = 0; S.hintsLeft = MAX_HINTS;
+    S.elapsed = 0; S.started = false; S.done = false; S.undoStack = [];
+  }
+
+  // The next puzzle for the level is built while the player studies this
+  // one, so every "new puzzle" after the first appears instantly.
+  function schedulePrefetch(level){
+    function run(){
+      if (generating || prefetch[level]) return;
+      generateAsync(level, function(r){ prefetch[level] = r; });
+    }
+    if (window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 3000 });
+    else setTimeout(run, 1200);
+  }
+
+  function startWith(r){
+    applyPuzzle(r);
+    sizeBoard();
+    renderAll();
+    updateChrome();
+    saveProgress();
+    schedulePrefetch(currentLevel);
+  }
+
+  function newGame(level){
+    currentLevel = level;
+    writeStr('sudoku.difficulty', level);
+    dropKey('sudoku.progress');
+    setActiveDiff();
+    stopTimer();
+    S.done = false;
+    S.elapsed = 0;
+    timerEl.textContent = '0:00';
+    faceEl.setAttribute('data-state', 'idle');
+    overlayEl.hidden = true;
+    showBestTime();
+
+    var ready = prefetch[level];
+    if (ready){ prefetch[level] = null; startWith(ready); return; }
+
+    generating = true;
+    boardEl.classList.add('busy');
+    generateAsync(level, function(r){
+      generating = false;
+      boardEl.classList.remove('busy');
+      startWith(r);
+    });
+  }
+
+  function toggleNotes(){
+    notesOn = !notesOn;
+    updateChrome();
+  }
+
+  /* ---------- input ---------- */
+  function closestOf(node, cls){
+    while (node && node !== document){
+      if (node.classList && node.classList.contains(cls)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  boardEl.addEventListener('click', function(e){
+    var el = closestOf(e.target, 'cell');
+    if (!el || S.done) return;
+    selectCell(+el.getAttribute('data-i'));
+  });
+
+  var padTimer = null, padLong = false;
+  function cancelPadTimer(){
+    if (padTimer){ clearTimeout(padTimer); padTimer = null; }
+  }
+  // Long-pressing a key does the opposite of the current mode, so a pencil
+  // mark never needs a trip to the Notes button and back.
+  padEl.addEventListener('pointerdown', function(e){
+    var el = closestOf(e.target, 'pad-key');
+    if (!el) return;
+    padLong = false;
+    cancelPadTimer();
+    padTimer = setTimeout(function(){
+      padLong = true;
+      padTimer = null;
+      notesOn = !notesOn;
+      placeDigit(+el.getAttribute('data-d'));
+      notesOn = !notesOn;
+      updateChrome();
+    }, 450);
+  });
+  padEl.addEventListener('pointerup', cancelPadTimer);
+  padEl.addEventListener('pointerleave', cancelPadTimer);
+  padEl.addEventListener('pointercancel', cancelPadTimer);
+  padEl.addEventListener('click', function(e){
+    var el = closestOf(e.target, 'pad-key');
+    if (!el) return;
+    cancelPadTimer();
+    if (padLong){ padLong = false; return; }
+    placeDigit(+el.getAttribute('data-d'));
+  });
+
+  undoBtn.addEventListener('click', undo);
+  eraseBtn.addEventListener('click', eraseCell);
+  notesBtn.addEventListener('click', toggleNotes);
+  hintBtn.addEventListener('click', useHint);
+
+  document.addEventListener('keydown', function(e){
+    if (!overlayEl.hidden) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key, dr = 0, dc = 0, i, r, c;
+    if (k >= '1' && k <= '9'){ placeDigit(+k); e.preventDefault(); return; }
+    if (k === '0' || k === 'Backspace' || k === 'Delete'){ eraseCell(); e.preventDefault(); return; }
+    if (k === 'n' || k === 'N'){ toggleNotes(); e.preventDefault(); return; }
+    if (k === 'u' || k === 'U'){ undo(); e.preventDefault(); return; }
+    if (k === 'h' || k === 'H'){ useHint(); e.preventDefault(); return; }
+    if (k === 'ArrowUp') dr = -1;
+    else if (k === 'ArrowDown') dr = 1;
+    else if (k === 'ArrowLeft') dc = -1;
+    else if (k === 'ArrowRight') dc = 1;
+    else return;
+    e.preventDefault();
+    i = S.sel < 0 ? 0 : S.sel;
+    r = Math.max(0, Math.min(8, ROW[i] + dr));
+    c = Math.max(0, Math.min(8, COL[i] + dc));
+    selectCell(r * 9 + c);
+    cells[r * 9 + c].focus();
+  });
+
+  diffButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      newGame(btn.getAttribute('data-diff'));
+    });
+  });
+
+  function applyTheme(key){
+    currentTheme = key;
+    document.body.setAttribute('data-theme', key);
+    themeButtons.forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-theme') === key);
+    });
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', key === 'blossom' ? '#FFF1E6' : '#16213B');
+    writeStr('sudoku.theme', key);
+  }
+  themeButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      applyTheme(btn.getAttribute('data-theme'));
+    });
+  });
+
+  checkToggle.addEventListener('change', function(){
+    checkOn = checkToggle.checked;
+    writeStr('sudoku.checkMistakes', checkOn ? '1' : '0');
+    var i;
+    for (i = 0; i < N; i++){
+      S.wrong[i] = (checkOn && !S.given[i] && S.values[i] && S.values[i] !== S.solution[i]) ? 1 : 0;
+    }
+    renderAll(); updateChrome();
+  });
+  highlightToggle.addEventListener('change', function(){
+    highlightOn = highlightToggle.checked;
+    writeStr('sudoku.highlight', highlightOn ? '1' : '0');
+    renderAll();
+  });
+
+  faceBtn.addEventListener('click', function(){ newGame(currentLevel); });
+  playAgainBtn.addEventListener('click', function(){
+    overlayEl.hidden = true;
+    newGame(currentLevel);
+  });
+  // "See the board" tucks the card away so the red squares can be studied
+  // before the next puzzle is dealt.
+  reviewBtn.addEventListener('click', function(){
+    overlayEl.hidden = true;
+    faceBtn.focus();
+  });
+
+  /* ---------- background sparkles ---------- */
+  (function initSparkles(){
+    var field = document.getElementById('sparkleField');
+    var count = window.innerWidth < 600 ? 22 : 40, i, s, size;
+    for (i = 0; i < count; i++){
+      s = document.createElement('span');
+      s.className = 'spark';
+      size = 2 + Math.random() * 3;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.top = (Math.random() * 100) + '%';
+      s.style.animationDuration = (2.4 + Math.random() * 3.2) + 's';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      field.appendChild(s);
+    }
+  })();
+
+  /* ---------- confetti ---------- */
+  var CONFETTI = {
+    lantern: ['#FFB443','#FF8FB6','#6EE7C0','#7FD7FF','#FFCE54'],
+    blossom: ['#FF7AA8','#FFC94D','#4FBF98','#12649B','#FF8B6B']
+  };
+  var confettiCanvas = document.getElementById('confettiCanvas');
+  var ctx = confettiCanvas.getContext('2d');
+  function resizeCanvas(){
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', function(){
+    resizeCanvas();
+    sizeBoard();
+  });
+  resizeCanvas();
+
+  function launchConfetti(){
+    var colors = CONFETTI[currentTheme] || CONFETTI.lantern;
+    var pieces = [], total = 90, i;
+    for (i = 0; i < total; i++){
+      pieces.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -20 - Math.random() * confettiCanvas.height * 0.4,
+        size: 5 + Math.random() * 6,
+        color: colors[i % colors.length],
+        speed: 1.5 + Math.random() * 2.5,
+        drift: (Math.random() - 0.5) * 1.5,
+        rot: Math.random() * Math.PI,
+        rotSpeed: (Math.random() - 0.5) * 0.2
+      });
+    }
+    var start = nowMs();
+    function frame(){
+      var t = nowMs() - start, alive = false;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      pieces.forEach(function(p){
+        p.y += p.speed; p.x += p.drift; p.rot += p.rotSpeed;
+        if (p.y < confettiCanvas.height + 20) alive = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      });
+      if (alive && t < 4200) requestAnimationFrame(frame);
+      else ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- boot ---------- */
+  (function init(){
+    var storedTheme = readStr('sudoku.theme');
+    applyTheme((storedTheme === 'blossom' || storedTheme === 'lantern') ? storedTheme : 'lantern');
+
+    if (readStr('sudoku.highlight') === '0'){ highlightOn = false; highlightToggle.checked = false; }
+    if (readStr('sudoku.checkMistakes') === '0'){ checkOn = false; checkToggle.checked = false; }
+
+    var storedLevel = readStr('sudoku.difficulty');
+    if (LEVELS[storedLevel]) currentLevel = storedLevel;
+
+    buildCells();
+    sizeBoard();
+
+    if (loadProgress()){
+      setActiveDiff();
+      showBestTime();
+      renderAll();
+      updateChrome();
+      schedulePrefetch(currentLevel);
+    } else {
+      newGame(currentLevel);
+    }
+  })();
+})();
+</script>
+
+</body>
+</html>
