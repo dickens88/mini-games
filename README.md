@@ -18,6 +18,9 @@ games/crystal-sweeper/
 games/sudoku/
   ├── index.html               数独游戏（自包含，单文件；四个难度，题目在浏览器里现生成）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/freecell/
+  ├── index.html               空当接龙（自包含，单文件；随机发牌、整叠搬运、无限撤销）
+  └── cover.png                首页卡片 + 分享预览用的封面
 ```
 
 ## 上线前必须替换的三处

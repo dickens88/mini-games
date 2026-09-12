@@ -1,0 +1,1787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clover FreeCell — the classic card game, free in your browser</title>
+<meta name="description" content="Classic FreeCell, made cosy: four free cells, whole-run moves, unlimited undo and a gentle kid mode. Free, no sign-up, works on phones.">
+<meta name="theme-color" content="#0E2519">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/freecell/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Clover FreeCell — the classic card game, free in your browser">
+<meta property="og:description" content="Every card in sight from the first move. Four free cells, unlimited undo, and a fresh deal every time.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/freecell/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/freecell/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-black:#07150F;
+    --felt-deep:#0E2519;
+    --bg-glow:#17402C;
+    --panel:#14291F;
+    --felt:#12291D;
+    --raised:#1E3D2D;
+    --raised-2:#274C39;
+    --line:rgba(255,255,255,.09);
+    --line-strong:rgba(255,255,255,.2);
+
+    --accent:#5BD98A;
+    --accent-soft:#A7EEC2;
+    --accent-rgb:91,217,138;
+    --accent-btn-1:#5BD98A;
+    --accent-btn-2:#31B86A;
+    --accent-btn-ink:#052613;
+    --gold:#FFCE54;
+    --gold-2:#FFA95E;
+    --gold-rgb:255,206,84;
+    --rose:#FF8FB6;
+    --ink:#07150F;
+    --text:#EAF6EE;
+    --text-muted:#9CBCA9;
+    --spark-color:#CFF6DD;
+    --lcd-bg:#06150E;
+
+    /* Card ink is read on the card's own cream face, never on the felt, so
+       both inks below clear 4.5:1 against --card-face in either world. */
+    --card-face:#FDFBF4;
+    --card-face-2:#EDE7D8;
+    --card-edge:rgba(0,0,0,.42);
+    --card-black:#1A2B22;
+    --card-red:#B81B33;
+    --slot-bg:rgba(0,0,0,.26);
+    --slot-line:rgba(255,255,255,.18);
+    --slot-ink:rgba(255,255,255,.26);
+
+    color-scheme:dark;
+  }
+
+  body[data-theme="sunny"]{
+    --felt-black:#EAF4E7;
+    --felt-deep:#DCEDD9;
+    --bg-glow:#F7FBF3;
+    --panel:#FFFFFF;
+    --felt:#DBEBD6;
+    --raised:#E4F0E2;
+    --raised-2:#F2F8F0;
+    --line:rgba(30,70,45,.14);
+    --line-strong:rgba(30,70,45,.28);
+
+    --accent:#2E9E5B;
+    --accent-soft:#166B3C;
+    --accent-rgb:46,158,91;
+    --accent-btn-1:#1F7A44;
+    --accent-btn-2:#155E34;
+    --accent-btn-ink:#FFFFFF;
+    --gold:#FFE1A0;
+    --gold-2:#FFC864;
+    --gold-rgb:255,225,160;
+    --rose:#D9537E;
+    --ink:#1E3325;
+    --text:#1C3124;
+    --text-muted:#4F6B58;
+    --spark-color:#BFE6C9;
+    --lcd-bg:#20382A;
+
+    --card-face:#FFFFFF;
+    --card-face-2:#F1EEE2;
+    --card-edge:rgba(30,70,45,.3);
+    --card-black:#22332A;
+    --card-red:#AE0F28;
+    --slot-bg:rgba(30,70,45,.07);
+    --slot-line:rgba(30,70,45,.24);
+    --slot-ink:rgba(30,70,45,.32);
+
+    color-scheme:light;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(120% 90% at 50% -10%, var(--bg-glow) 0%, var(--felt-deep) 45%, var(--felt-black) 100%);
+    color:var(--text);
+    font-family:'Quicksand', ui-rounded, 'Nunito', sans-serif;
+    font-weight:600;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    position:relative;
+    transition:background .3s ease, color .3s ease;
+  }
+  body[data-theme="sunny"]{
+    background:
+      linear-gradient(180deg, var(--bg-glow) 0%, var(--felt-deep) 55%, var(--felt-black) 100%);
+  }
+
+  #sparkleField{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .spark{
+    position:absolute; border-radius:50%;
+    background:radial-gradient(circle, var(--spark-color) 0%, transparent 70%);
+    opacity:.45;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .spark{ animation:twinkle linear infinite; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .spark{ opacity:.3 !important; }
+  }
+  @keyframes twinkle{
+    0%,100%{ opacity:.12; transform:scale(.8); }
+    50%{ opacity:.9; transform:scale(1.15); }
+  }
+
+  .page{
+    position:relative; z-index:1;
+    max-width:800px;
+    margin:0 auto;
+    padding:16px 12px 40px;
+    display:flex; flex-direction:column; align-items:center;
+    gap:10px;
+  }
+
+  .hero{ text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .hero-title{
+    display:flex; align-items:center; gap:8px;
+    margin:0;
+    font-family:'Baloo 2', 'Segoe UI', sans-serif;
+    font-weight:800;
+    font-size:clamp(1.4rem, 3.6vw, 1.9rem);
+    letter-spacing:.3px;
+    text-wrap:balance;
+    background:linear-gradient(120deg, var(--accent-soft), var(--accent) 55%, var(--gold-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  /* A three-leaf clover built from three heart-ish leaves, so the mascot
+     costs no image and stays crisp at any size. */
+  .clover{ flex:none; position:relative; width:.95em; height:.95em; }
+  .clover i{
+    position:absolute; display:block; width:54%; height:54%;
+    border-radius:54% 54% 54% 0;
+    background:linear-gradient(150deg, var(--accent-soft), var(--accent));
+  }
+  .clover i:nth-child(1){ left:23%; top:0; transform:rotate(-45deg); }
+  .clover i:nth-child(2){ left:46%; top:31%; transform:rotate(45deg); }
+  .clover i:nth-child(3){ left:0; top:31%; transform:rotate(-135deg); }
+  .tagline{
+    margin:0; max-width:52ch; font-size:.84rem; line-height:1.45;
+    color:var(--text-muted); text-wrap:balance;
+  }
+
+  .theme-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; width:100%; }
+  .theme-pill, .act-btn, .card, .pile, .cta{
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  }
+  .theme-pill{
+    appearance:none; border:1px solid var(--line);
+    background:var(--panel); color:var(--text);
+    border-radius:12px; padding:6px 13px 6px 8px;
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.78rem;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .theme-pill:hover{ transform:translateY(-2px); border-color:var(--line-strong); }
+  .theme-pill:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .theme-pill.active{
+    border-color:transparent;
+    box-shadow:0 0 0 2px rgba(var(--accent-rgb),.6), 0 8px 18px -10px rgba(var(--accent-rgb),.6);
+  }
+  .theme-swatch{
+    width:15px; height:15px; border-radius:50%; flex:none;
+    border:1px solid rgba(0,0,0,.15);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+  .swatch-night{ background:linear-gradient(135deg, #5BD98A, #0E2519); }
+  .swatch-sunny{ background:linear-gradient(135deg, #DFF3DA, #FFE9A8); }
+
+  .console-wrap{ width:100%; max-width:420px; display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .console{
+    width:100%;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:8px 14px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 12px 30px -18px rgba(0,0,0,.6);
+  }
+  .counter-unit{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .counter-label{
+    font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .lcd{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:700; font-size:1.1rem; letter-spacing:.08em;
+    font-variant-numeric:tabular-nums;
+    background:var(--lcd-bg); color:var(--gold);
+    border-radius:8px; padding:4px 8px; min-width:56px; text-align:center;
+    border:1px solid rgba(0,0,0,.5);
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.5);
+  }
+
+  .face-btn{
+    appearance:none; border:none; cursor:pointer;
+    width:44px; height:44px; border-radius:50%;
+    background:transparent; padding:0; flex:none;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));
+    transition:transform .12s ease;
+  }
+  .face-btn:active{ transform:scale(.92); }
+  .face-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+  /* The same cartoon smiley the other two games use: it grins while you
+     play, wears a star on a win, and looks worried when the table locks. */
+  .face{
+    display:block; position:relative; width:100%; height:100%;
+    background-repeat:no-repeat; background-position:center; background-size:contain;
+  }
+  .face[data-state="idle"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='36' cy='43' rx='5' ry='6.5' fill='%234A3324'/%3E%3Cellipse cx='64' cy='43' rx='5' ry='6.5' fill='%234A3324'/%3E%3Cpath d='M35,58 Q50,74 65,58' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  .face[data-state="worried"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cpath d='M27,30 L42,35' stroke='%234A3324' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M73,30 L58,35' stroke='%234A3324' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='36' cy='46' rx='6' ry='7.5' fill='%234A3324'/%3E%3Cellipse cx='64' cy='46' rx='6' ry='7.5' fill='%234A3324'/%3E%3Cellipse cx='50' cy='68' rx='7.5' ry='8.5' fill='%234A3324'/%3E%3C/svg%3E"); }
+  .face[data-state="win"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cpath d='M28,45 Q36,33 44,45' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M56,45 Q64,33 72,45' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M33,56 Q50,80 67,56 Z' fill='%234A3324'/%3E%3Cpath d='M44,71 Q50,79 56,71 Z' fill='%23FF8FA8'/%3E%3Cpath d='M84,13 L86.6,20.4 L94,23 L86.6,25.6 L84,33 L81.4,25.6 L74,23 L81.4,20.4 Z' fill='%23FFF0A6'/%3E%3C/svg%3E"); }
+  .face[data-state="lose"]{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23FFD35C' stroke='%23E0A231' stroke-width='3'/%3E%3Cellipse cx='29' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cellipse cx='71' cy='60' rx='7' ry='4.5' fill='%23FF9DB1' opacity='0.8'/%3E%3Cpath d='M30,37 L42,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M42,37 L30,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M58,37 L70,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M70,37 L58,49' stroke='%234A3324' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M37,71 Q50,59 63,71' stroke='%234A3324' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+
+  .best-line{
+    margin:0; font-size:.7rem; font-weight:600; color:var(--text-muted);
+    min-height:1em; text-align:center;
+  }
+  .best-line strong{ color:var(--gold); font-weight:700; }
+  body[data-theme="sunny"] .best-line strong{ color:var(--accent-soft); }
+
+  /* ---------- the table ---------- */
+  .table{
+    width:100%; min-width:0;
+    display:flex; flex-direction:column; gap:10px;
+    background:var(--felt);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:10px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 18px 40px -22px rgba(0,0,0,.7);
+  }
+  .top-row, .cols{
+    display:flex; justify-content:center; align-items:flex-start;
+    gap:var(--col-gap, 6px);
+    min-width:0;
+  }
+  .bank{ display:flex; gap:var(--col-gap, 6px); }
+  /* A little air between the free cells and the four home piles, so the two
+     halves of the top row read as two different jobs. */
+  .bank-sep{ flex:none; width:calc(var(--card-w, 56px) * .3); }
+
+  .pile{
+    position:relative; flex:none;
+    width:var(--card-w, 56px);
+    border-radius:calc(var(--card-w, 56px) * .13);
+  }
+  .pile:focus{ outline:none; }
+  .pile:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .slot{ height:var(--card-h, 78px); }
+  .col{ min-height:var(--col-h, var(--card-h, 78px)); }
+  /* Every pile keeps a faint landing pad drawn behind its cards, so an empty
+     column still looks like somewhere a card could go. */
+  .pile::before{
+    content:""; position:absolute; left:0; top:0;
+    width:100%; height:var(--card-h, 78px);
+    border-radius:inherit;
+    background:var(--slot-bg);
+    border:1px dashed var(--slot-line);
+  }
+  .pile .mark{
+    position:absolute; left:0; top:0;
+    width:100%; height:var(--card-h, 78px);
+    display:flex; align-items:center; justify-content:center;
+    font-size:calc(var(--card-w, 56px) * .6); line-height:1;
+    color:var(--slot-ink);
+    pointer-events:none;
+  }
+  .pile.drop::after{
+    content:""; position:absolute; inset:0;
+    border-radius:inherit;
+    box-shadow:0 0 0 2px var(--accent);
+    pointer-events:none;
+  }
+  .pile.hint-to::after{
+    content:""; position:absolute; inset:0;
+    border-radius:inherit;
+    box-shadow:0 0 0 2px var(--gold);
+    pointer-events:none;
+  }
+
+  .card{
+    position:absolute; left:0; top:0;
+    width:var(--card-w, 56px); height:var(--card-h, 78px);
+    border-radius:calc(var(--card-w, 56px) * .13);
+    background:linear-gradient(168deg, var(--card-face) 0%, var(--card-face-2) 100%);
+    border:1px solid var(--card-edge);
+    box-shadow:0 2px 3px rgba(0,0,0,.35);
+    color:var(--card-black);
+    overflow:hidden;
+    cursor:grab;
+    /* Cards own the drag gesture; the page still scrolls from the felt
+       around them. */
+    touch-action:none;
+  }
+  .card.red{ color:var(--card-red); }
+  .card .corner{
+    position:absolute; left:7%; top:3%;
+    display:flex; align-items:center; gap:calc(var(--card-w, 56px) * .03);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-weight:700;
+    font-size:calc(var(--card-w, 56px) * .38);
+    line-height:1.05;
+  }
+  .card .corner i{ font-style:normal; font-size:calc(var(--card-w, 56px) * .32); }
+  .card .pip{
+    position:absolute; right:6%; bottom:1%;
+    font-size:calc(var(--card-w, 56px) * .58); line-height:1;
+    opacity:.92;
+  }
+  .card.sel{
+    box-shadow:0 0 0 2px var(--gold), 0 8px 16px -6px rgba(0,0,0,.55);
+    transform:translateX(2px);
+  }
+  .card.hint-from{ box-shadow:0 0 0 2px var(--gold), 0 8px 16px -6px rgba(0,0,0,.55); }
+  .card.lifted{ opacity:.32; }
+
+  #dragLayer{
+    position:fixed; left:0; top:0; z-index:30;
+    pointer-events:none;
+    width:var(--card-w, 56px);
+  }
+  #dragLayer .card{ box-shadow:0 10px 22px -6px rgba(0,0,0,.65); cursor:grabbing; }
+
+  @keyframes pileShake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-4px); }
+    75%{ transform:translateX(4px); }
+  }
+  @keyframes dealIn{
+    from{ transform:translate(0, -16px) scale(.97); opacity:0; }
+    to{ transform:none; opacity:1; }
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .pile.shake{ animation:pileShake .26s ease; }
+    .card.dealt{ animation:dealIn .26s ease both; }
+  }
+
+  /* ---------- buttons and settings ---------- */
+  .act-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; width:100%; }
+  .act-btn{
+    appearance:none; cursor:pointer;
+    flex:1 1 0; min-width:0;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:8px 5px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--text-muted);
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.7rem;
+    transition:transform .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .act-btn svg{ width:19px; height:19px; }
+  .act-btn:hover:not([disabled]){ transform:translateY(-2px); color:var(--text); border-color:var(--line-strong); }
+  .act-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .act-btn[disabled]{ opacity:.38; cursor:default; }
+  .act-btn.primary{
+    background:linear-gradient(150deg, var(--accent-btn-1), var(--accent-btn-2));
+    border-color:transparent;
+    color:var(--accent-btn-ink);
+    box-shadow:0 8px 20px -10px rgba(var(--accent-rgb),.7);
+  }
+
+  .msg{
+    margin:0; min-height:1.3em; text-align:center;
+    font-size:.76rem; font-weight:700; color:var(--gold);
+    text-wrap:balance;
+  }
+  body[data-theme="sunny"] .msg{ color:var(--accent-soft); }
+
+  .hint{ margin:0; text-align:center; font-size:.74rem; color:var(--text-muted); max-width:58ch; line-height:1.45; }
+  .keys{
+    margin:0; text-align:center; font-size:.68rem; color:var(--text-muted); opacity:.85;
+  }
+  .keys kbd{
+    font-family:'JetBrains Mono', ui-monospace, monospace; font-size:.66rem;
+    background:var(--raised); border:1px solid var(--line-strong);
+    border-radius:5px; padding:1px 5px; margin:0 1px;
+  }
+  @media (hover:none){ .keys{ display:none; } }
+
+  .settings{ display:flex; flex-direction:column; gap:7px; align-items:flex-start; }
+  .settings-row{ display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+  .toggle{ position:relative; width:34px; height:19px; flex:none; }
+  .toggle input{ position:absolute; inset:0; margin:0; opacity:0; cursor:pointer; }
+  .toggle-track{
+    position:absolute; inset:0;
+    background:var(--raised);
+    border:1px solid var(--line-strong);
+    border-radius:999px;
+    transition:background .2s ease;
+  }
+  .toggle-thumb{
+    position:absolute; top:2px; left:2px;
+    width:13px; height:13px; border-radius:50%;
+    background:var(--card-face);
+    box-shadow:0 1px 2px rgba(0,0,0,.35);
+    transition:transform .2s ease;
+  }
+  .toggle input:checked ~ .toggle-track{ background:var(--accent); border-color:transparent; }
+  .toggle input:checked ~ .toggle-track .toggle-thumb{ transform:translateX(15px); }
+  .toggle input:focus-visible ~ .toggle-track{ outline:2px solid var(--accent); outline-offset:2px; }
+  .settings-label{ font-size:.74rem; font-weight:600; color:var(--text-muted); }
+
+  /* ---------- win / stuck card ---------- */
+  .overlay{
+    position:fixed; inset:0; z-index:40;
+    background:rgba(6,18,12,.72);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .overlay[hidden]{ display:none; }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--line-strong);
+    border-radius:24px;
+    padding:30px 28px 26px;
+    max-width:340px; width:100%;
+    text-align:center;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.7);
+    display:flex; flex-direction:column; align-items:center; gap:11px;
+  }
+  .modal-face-wrap{ width:64px; height:64px; filter:drop-shadow(0 5px 8px rgba(0,0,0,.3)); }
+  .modal h2{
+    margin:2px 0 0; font-family:'Baloo 2', sans-serif; font-weight:800;
+    font-size:1.32rem; text-wrap:balance; color:var(--text);
+  }
+  .modal p{ margin:0; color:var(--text-muted); font-size:.9rem; line-height:1.5; }
+  .modal p strong{ color:var(--gold); }
+  body[data-theme="sunny"] .modal p strong{ color:var(--accent-soft); }
+  .modal-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:4px; }
+  .cta{
+    appearance:none; border:none; cursor:pointer;
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.95rem;
+    color:var(--accent-btn-ink);
+    background:linear-gradient(150deg, var(--accent-btn-1), var(--accent-btn-2));
+    padding:11px 24px; border-radius:14px;
+    box-shadow:0 10px 24px -10px rgba(var(--accent-rgb),.6);
+    transition:transform .12s ease;
+  }
+  .cta:hover{ transform:translateY(-2px); }
+  .cta:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+  .cta-secondary{
+    background:transparent; color:var(--text-muted);
+    border:1px solid var(--line-strong); box-shadow:none;
+    padding:10px 18px;
+  }
+  .cta-secondary:hover{ color:var(--text); border-color:var(--accent); }
+
+  #confettiCanvas{ position:fixed; inset:0; z-index:45; pointer-events:none; }
+
+  @media (max-width:520px){
+    .page{ padding:14px 8px 32px; gap:9px; }
+    .table{ padding:7px; border-radius:16px; }
+    .console{ padding:7px 10px; }
+    .lcd{ min-width:48px; font-size:.98rem; }
+    .face-btn{ width:36px; height:36px; }
+    .act-row{ gap:5px; }
+    .act-btn{ padding:7px 3px; font-size:.62rem; }
+    .act-btn svg{ width:17px; height:17px; }
+  }
+</style>
+
+<style>
+  .site-nav{
+    position:relative; z-index:3;
+    max-width:960px; margin:0 auto; padding:14px 20px 0;
+    display:flex; align-items:center; gap:8px;
+  }
+  .site-nav a{
+    display:inline-flex; align-items:center; gap:7px;
+    text-decoration:none; color:var(--text-muted);
+    font-family:'Quicksand', sans-serif; font-weight:700; font-size:.82rem;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:7px 15px 7px 11px;
+    transition:transform .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .site-nav a:hover{ transform:translateX(-2px); color:var(--text); border-color:var(--line-strong); }
+  .site-nav a:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .site-nav svg{ width:14px; height:14px; }
+</style>
+</head>
+<body data-theme="night">
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+</nav>
+
+<div id="sparkleField"></div>
+
+<div class="page">
+  <header class="hero">
+    <h1 class="hero-title">
+      <span class="clover" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>Clover FreeCell</span>
+    </h1>
+    <p class="tagline">The classic Windows card game. Nothing is hidden — every card is face up from the very first move, so every game is a puzzle you can actually think your way out of.</p>
+  </header>
+
+  <div class="theme-row" role="group" aria-label="Choose a world">
+    <button class="theme-pill active" data-theme="night" type="button"><span class="theme-swatch swatch-night" aria-hidden="true"></span>Night Clover</button>
+    <button class="theme-pill" data-theme="sunny" type="button"><span class="theme-swatch swatch-sunny" aria-hidden="true"></span>Sunny Felt</button>
+  </div>
+
+  <div class="console-wrap">
+    <div class="console">
+      <div class="counter-unit">
+        <span class="counter-label">Moves</span>
+        <div class="lcd" id="moveCounter" aria-live="off">0</div>
+      </div>
+      <button class="face-btn" id="faceBtn" type="button" aria-label="Deal a new game">
+        <span class="face" id="face" data-state="idle"></span>
+      </button>
+      <div class="counter-unit">
+        <span class="counter-label">Time</span>
+        <div class="lcd" id="timer" aria-live="off">0:00</div>
+      </div>
+    </div>
+    <p class="best-line" id="bestLine"></p>
+  </div>
+
+  <div class="table" id="table">
+    <div class="top-row">
+      <div class="bank" id="freeBank" role="group" aria-label="Free cells"></div>
+      <div class="bank-sep" aria-hidden="true"></div>
+      <div class="bank" id="homeBank" role="group" aria-label="Home piles"></div>
+    </div>
+    <div class="cols" id="cols" role="group" aria-label="The eight columns"></div>
+  </div>
+
+  <div class="act-row">
+    <button class="act-btn" id="undoBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7H15a5 5 0 0 1 0 10H7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 4 8.5 7 12 10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Undo</span>
+    </button>
+    <button class="act-btn" id="hintBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.5 18h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1.2.9 1.9v.2h5.2v-.2c0-.7.3-1.4.9-1.9A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>
+      <span>Hint</span>
+    </button>
+    <button class="act-btn" id="homeBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M8 8l4-4 4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14v4.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Send home</span>
+    </button>
+    <button class="act-btn" id="restartBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Restart</span>
+    </button>
+    <button class="act-btn primary" id="newBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="6" width="11" height="14" rx="2" stroke="currentColor" stroke-width="2.1"/><path d="M8 3.5h8.5A2 2 0 0 1 18.5 5.5V17" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
+      <span>New deal</span>
+    </button>
+  </div>
+
+  <p class="msg" id="msg" role="status" aria-live="polite"></p>
+
+  <p class="hint" id="hintText">Tap a card, then tap where it should go — or just drag it. Build the columns downwards in alternating colours, and send every suit home from the ace up. A free cell parks one card while you dig.</p>
+
+  <p class="keys" aria-hidden="true">
+    <kbd>1</kbd>–<kbd>8</kbd> pick a column · <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> free cells · <kbd>Enter</kbd> send home · <kbd>U</kbd> undo · <kbd>H</kbd> hint · <kbd>Esc</kbd> drop it
+  </p>
+
+  <div class="settings">
+    <label class="settings-row">
+      <span class="toggle">
+        <input type="checkbox" id="autoToggle" checked>
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      </span>
+      <span class="settings-label">Send cards home by themselves once they are safe</span>
+    </label>
+    <label class="settings-row">
+      <span class="toggle">
+        <input type="checkbox" id="glowToggle" checked>
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      </span>
+      <span class="settings-label">Show me where the card I picked up can land</span>
+    </label>
+    <label class="settings-row">
+      <span class="toggle">
+        <input type="checkbox" id="kidToggle">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      </span>
+      <span class="settings-label">Kind mode: a fifth free cell (own best times)</span>
+    </label>
+  </div>
+</div>
+
+<div id="dragLayer" hidden></div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" role="alertdialog" aria-labelledby="modalTitle" aria-describedby="modalMsg">
+    <div class="modal-face-wrap">
+      <span class="face" id="modalFace" data-state="win"></span>
+    </div>
+    <h2 id="modalTitle">Every card home!</h2>
+    <p id="modalMsg"></p>
+    <div class="modal-actions">
+      <button class="cta" id="playAgainBtn" type="button">New deal</button>
+      <button class="cta cta-secondary" id="closeModalBtn" type="button" hidden>See the table</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confettiCanvas"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  var REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ==== engine:start ==== */
+  /* A card is one integer 0..51:
+       rank = (card >> 2) + 1     1 = ace ... 13 = king
+       suit = card & 3            0 clubs, 1 diamonds, 2 hearts, 3 spades
+     Diamonds and hearts are the red pair, which is all the colour rule
+     needs. Every function below is pure state in, new facts out, so the
+     rules can be tested without a browser. */
+  var COLS = 8;
+
+  function rankOf(c){ return (c >> 2) + 1; }
+  function suitOf(c){ return c & 3; }
+  function isRed(c){ return (c & 3) === 1 || (c & 3) === 2; }
+
+  function shuffledDeck(rnd){
+    var d = new Array(52), i, j, t;
+    for (i = 0; i < 52; i++) d[i] = i;
+    for (i = 51; i > 0; i--){
+      j = (rnd() * (i + 1)) | 0;
+      t = d[i]; d[i] = d[j]; d[j] = t;
+    }
+    return d;
+  }
+
+  // The classic deal: one card at a time, left to right, so the first four
+  // columns end up with seven cards and the last four with six.
+  function deal(deck, cellCount){
+    var st = { free: [], home: [0, 0, 0, 0], cols: [], cells: cellCount, moves: 0 }, i;
+    for (i = 0; i < cellCount; i++) st.free.push(-1);
+    for (i = 0; i < COLS; i++) st.cols.push([]);
+    for (i = 0; i < 52; i++) st.cols[i % COLS].push(deck[i]);
+    return st;
+  }
+
+  function cloneState(st){
+    var c = { free: st.free.slice(), home: st.home.slice(), cols: [], cells: st.cells, moves: st.moves }, i;
+    for (i = 0; i < COLS; i++) c.cols.push(st.cols[i].slice());
+    return c;
+  }
+
+  // Used by the self-test: no move may ever lose or invent a card.
+  function totalCards(st){
+    var n = 0, i;
+    for (i = 0; i < st.free.length; i++) if (st.free[i] >= 0) n++;
+    for (i = 0; i < 4; i++) n += st.home[i];
+    for (i = 0; i < COLS; i++) n += st.cols[i].length;
+    return n;
+  }
+
+  function canStack(card, onto){
+    return rankOf(onto) === rankOf(card) + 1 && isRed(onto) !== isRed(card);
+  }
+
+  // How many cards sit from pos to the bottom of the column, but only if
+  // they form a travelling run: each one a rank lower and the other colour.
+  // Anything else returns 0 — that card cannot be picked up.
+  function runFrom(col, pos){
+    var i;
+    if (pos < 0 || pos >= col.length) return 0;
+    for (i = pos; i < col.length - 1; i++){
+      if (!canStack(col[i + 1], col[i])) return 0;
+    }
+    return col.length - pos;
+  }
+
+  function freeSlots(st){
+    var n = 0, i;
+    for (i = 0; i < st.free.length; i++) if (st.free[i] < 0) n++;
+    return n;
+  }
+  function emptyCols(st, exceptIdx){
+    var n = 0, i;
+    for (i = 0; i < COLS; i++){
+      if (i !== exceptIdx && st.cols[i].length === 0) n++;
+    }
+    return n;
+  }
+  // FreeCell only ever moves one card at a time; a run move is that shuffle
+  // done for you. So the most that can travel at once is (empty cells + 1),
+  // doubled for every empty column it can stage cards through — and the
+  // destination column, when that is the empty one, cannot help.
+  function capacity(st, destKind, destIdx){
+    var free = freeSlots(st);
+    var empties = emptyCols(st, destKind === 'col' ? destIdx : -1);
+    return (free + 1) * Math.pow(2, empties);
+  }
+
+  function homeAccepts(st, card){ return st.home[suitOf(card)] === rankOf(card) - 1; }
+  function colAccepts(st, idx, card){
+    var col = st.cols[idx];
+    return col.length === 0 || canStack(card, col[col.length - 1]);
+  }
+
+  // What a grab at this spot would lift: the one card in a free cell, or the
+  // run starting at pos in a column. null means "nothing you can pick up".
+  function liftable(st, kind, idx, pos){
+    if (kind === 'free') return st.free[idx] < 0 ? null : [st.free[idx]];
+    if (kind === 'col'){
+      var col = st.cols[idx];
+      if (!runFrom(col, pos)) return null;
+      return col.slice(pos);
+    }
+    return null;
+  }
+
+  // Every refusal carries a reason so the table can say why in plain words
+  // instead of just ignoring the tap.
+  function canMove(st, src, dest){
+    var cards = liftable(st, src.kind, src.idx, src.pos), n, lead, cap;
+    if (!cards) return { ok:false, why:'run' };
+    n = cards.length; lead = cards[0];
+    if (dest.kind === 'home'){
+      if (n > 1) return { ok:false, why:'homeOne' };
+      if (dest.idx !== suitOf(lead)) return { ok:false, why:'homeSuit' };
+      if (!homeAccepts(st, lead)) return { ok:false, why:'homeOrder', suit:dest.idx };
+      return { ok:true, n:1 };
+    }
+    if (dest.kind === 'free'){
+      if (src.kind === 'free' && src.idx === dest.idx) return { ok:false, why:'same' };
+      if (n > 1) return { ok:false, why:'freeOne' };
+      if (st.free[dest.idx] >= 0) return { ok:false, why:'freeFull' };
+      return { ok:true, n:1 };
+    }
+    if (dest.kind === 'col'){
+      if (src.kind === 'col' && src.idx === dest.idx) return { ok:false, why:'same' };
+      if (!colAccepts(st, dest.idx, lead)) return { ok:false, why:'stack' };
+      cap = capacity(st, 'col', dest.idx);
+      if (n > cap) return { ok:false, why:'capacity', cap:cap, n:n };
+      return { ok:true, n:n };
+    }
+    return { ok:false, why:'run' };
+  }
+
+  function applyMove(st, src, dest){
+    var cards;
+    if (src.kind === 'free'){ cards = [st.free[src.idx]]; st.free[src.idx] = -1; }
+    else cards = st.cols[src.idx].splice(src.pos);
+    if (dest.kind === 'home') st.home[suitOf(cards[0])] = rankOf(cards[0]);
+    else if (dest.kind === 'free') st.free[dest.idx] = cards[0];
+    else st.cols[dest.idx] = st.cols[dest.idx].concat(cards);
+    st.moves++;
+    return cards;
+  }
+
+  function isWon(st){
+    return st.home[0] === 13 && st.home[1] === 13 && st.home[2] === 13 && st.home[3] === 13;
+  }
+
+  // The standard safe-autoplay test: a card can go home and stay there
+  // without ever being missed, because neither opposite colour still needs
+  // it as a landing place.
+  function safeHome(st, card){
+    if (!homeAccepts(st, card)) return false;
+    var r = rankOf(card), o1, o2;
+    if (isRed(card)){ o1 = 0; o2 = 3; } else { o1 = 1; o2 = 2; }
+    return st.home[o1] >= r - 1 && st.home[o2] >= r - 1;
+  }
+  /* ==== engine:mid ==== */
+
+  // Every move available right now. Free cells are interchangeable, so only
+  // the first empty one is offered — that keeps the list short enough to
+  // walk on every single move without the table feeling sticky.
+  function legalMoves(st){
+    var out = [], i, j, pos, col, top, res, src;
+    for (i = 0; i < st.free.length; i++){
+      if (st.free[i] < 0) continue;
+      src = { kind:'free', idx:i, pos:0 };
+      if (homeAccepts(st, st.free[i])) out.push({ src:src, dest:{ kind:'home', idx:suitOf(st.free[i]) }, n:1 });
+      for (j = 0; j < COLS; j++){
+        if (colAccepts(st, j, st.free[i])) out.push({ src:src, dest:{ kind:'col', idx:j }, n:1 });
+      }
+    }
+    for (i = 0; i < COLS; i++){
+      col = st.cols[i];
+      if (!col.length) continue;
+      top = col[col.length - 1];
+      src = { kind:'col', idx:i, pos:col.length - 1 };
+      if (homeAccepts(st, top)) out.push({ src:src, dest:{ kind:'home', idx:suitOf(top) }, n:1 });
+      for (j = 0; j < st.free.length; j++){
+        if (st.free[j] < 0){ out.push({ src:src, dest:{ kind:'free', idx:j }, n:1 }); break; }
+      }
+      for (pos = col.length - 1; pos >= 0; pos--){
+        if (!runFrom(col, pos)) break;
+        for (j = 0; j < COLS; j++){
+          if (j === i) continue;
+          res = canMove(st, { kind:'col', idx:i, pos:pos }, { kind:'col', idx:j });
+          if (res.ok) out.push({ src:{ kind:'col', idx:i, pos:pos }, dest:{ kind:'col', idx:j }, n:res.n });
+        }
+      }
+    }
+    return out;
+  }
+
+  function isReverseOf(mv, prev){
+    return !!prev && mv.src.kind === prev.dest.kind && mv.src.idx === prev.dest.idx &&
+           mv.dest.kind === prev.src.kind && mv.dest.idx === prev.src.idx;
+  }
+
+  /* The hint is deliberately not a solver — it never claims to know the
+     winning line. It picks the move a steady player would reach for:
+     something safe going home, then anything that frees a cell or opens a
+     column, and a free cell only as the last resort. */
+  function scoreMove(st, mv){
+    var cards = liftable(st, mv.src.kind, mv.src.idx, mv.src.pos);
+    if (!cards) return -1;
+    var lead = cards[0], col, below, score;
+    if (mv.dest.kind === 'home') return safeHome(st, lead) ? 100 : 72;
+    if (mv.dest.kind === 'free') return 8;
+    // a column move from here on
+    col = st.cols[mv.src.idx];
+    if (mv.src.kind === 'free') return 62;
+    if (mv.src.pos === 0) return st.cols[mv.dest.idx].length ? 58 : 12;   // empties this column
+    below = col[mv.src.pos - 1];
+    score = st.cols[mv.dest.idx].length ? 40 : 22;                        // filling an empty column is rarely urgent
+    if (homeAccepts(st, below)) score += 12;                              // uncovers a card that can go straight home
+    if (runFrom(col, mv.src.pos - 1)) score -= 6;                         // the card below already sits on its run
+    score += Math.min(cards.length, 4);                                   // moving a whole run tidies more
+    return score;
+  }
+
+  function findHint(st, prev){
+    var all = legalMoves(st), best = null, bestScore = -1, i, s;
+    for (i = 0; i < all.length; i++){
+      if (isReverseOf(all[i], prev)) continue;
+      s = scoreMove(st, all[i]);
+      if (s > bestScore){ bestScore = s; best = all[i]; }
+    }
+    return best;
+  }
+
+  // One pass of the safe-autoplay rule, repeated until nothing else is safe.
+  // Returns the cards it sent home so the table can talk about them.
+  function autoHome(st){
+    var sent = [], again = true, i, col, card;
+    while (again){
+      again = false;
+      for (i = 0; i < st.free.length; i++){
+        card = st.free[i];
+        if (card >= 0 && safeHome(st, card)){
+          applyMove(st, { kind:'free', idx:i, pos:0 }, { kind:'home', idx:suitOf(card) });
+          sent.push(card); again = true;
+        }
+      }
+      for (i = 0; i < COLS; i++){
+        col = st.cols[i];
+        if (!col.length) continue;
+        card = col[col.length - 1];
+        if (safeHome(st, card)){
+          applyMove(st, { kind:'col', idx:i, pos:col.length - 1 }, { kind:'home', idx:suitOf(card) });
+          sent.push(card); again = true;
+        }
+      }
+    }
+    return sent;
+  }
+  /* ==== engine:end ==== */
+
+  /* =====================================================================
+     The table: DOM, drawing and sizing.
+     ===================================================================== */
+  var RANK_TXT = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  var SUIT_TXT = ['\u2663', '\u2666', '\u2665', '\u2660'];
+  var SUIT_NAME = ['clubs', 'diamonds', 'hearts', 'spades'];
+  var RANK_NAME = ['', 'ace', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+                   'nine', 'ten', 'jack', 'queen', 'king'];
+
+  var pageEl = document.querySelector('.page');
+  var tableEl = document.getElementById('table');
+  var freeBank = document.getElementById('freeBank');
+  var homeBank = document.getElementById('homeBank');
+  var colsEl = document.getElementById('cols');
+  var moveEl = document.getElementById('moveCounter');
+  var timerEl = document.getElementById('timer');
+  var bestLine = document.getElementById('bestLine');
+  var faceEl = document.getElementById('face');
+  var faceBtn = document.getElementById('faceBtn');
+  var modalFace = document.getElementById('modalFace');
+  var overlayEl = document.getElementById('overlay');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalMsg = document.getElementById('modalMsg');
+  var playAgainBtn = document.getElementById('playAgainBtn');
+  var closeModalBtn = document.getElementById('closeModalBtn');
+  var undoBtn = document.getElementById('undoBtn');
+  var hintBtn = document.getElementById('hintBtn');
+  var homeBtn = document.getElementById('homeBtn');
+  var restartBtn = document.getElementById('restartBtn');
+  var newBtn = document.getElementById('newBtn');
+  var msgEl = document.getElementById('msg');
+  var autoToggle = document.getElementById('autoToggle');
+  var glowToggle = document.getElementById('glowToggle');
+  var kidToggle = document.getElementById('kidToggle');
+  var dragLayer = document.getElementById('dragLayer');
+  var themeButtons = [].slice.call(document.querySelectorAll('.theme-pill'));
+
+  var S = null;                 // the live game
+  var deck = null;              // the deal being played, kept so Restart can replay it
+  var undoStack = [];
+  var sel = null;               // { kind, idx, pos, cards }
+  var lastMove = null;          // so a hint never just bounces a card back
+  var elapsed = 0, started = false, done = false, timerHandle = null;
+  var cellCount = 4, kidMode = false, autoOn = true, glowOn = true;
+  var currentTheme = 'night';
+  var freeEls = [], homeEls = [], colEls = [];
+  var fan = 20, cardH = 78;
+  var msgTimer = null;
+
+  function nowMs(){
+    return (window.performance && window.performance.now) ? window.performance.now() : Date.now();
+  }
+  function cardName(c){ return RANK_NAME[rankOf(c)] + ' of ' + SUIT_NAME[suitOf(c)]; }
+  function shortName(c){ return RANK_TXT[rankOf(c)] + SUIT_TXT[suitOf(c)]; }
+
+  /* ---------- storage, all optional ---------- */
+  function readJSON(key){
+    try{
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
+  }
+  function readStr(key){
+    try{ return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function writeStr(key, value){
+    try{ localStorage.setItem(key, value); } catch(e){}
+  }
+  function dropKey(key){
+    try{ localStorage.removeItem(key); } catch(e){}
+  }
+
+  // Kind mode has a fifth free cell, which makes almost every deal easier —
+  // so it keeps its own records instead of muddling the classic ones.
+  function modeKey(){ return kidMode ? 'kind' : 'classic'; }
+  function modeLabel(){ return kidMode ? 'Kind mode' : 'Classic'; }
+
+  function fmtTime(sec){
+    var m = (sec / 60) | 0, s = sec % 60;
+    return m + ':' + (s < 10 ? '0' + s : s);
+  }
+
+  function showBest(){
+    var best = (readJSON('freecell.best') || {})[modeKey()];
+    var wins = (readJSON('freecell.wins') || {})[modeKey()] || 0;
+    if (!best){
+      bestLine.textContent = 'No win yet in ' + modeLabel() + ' — ' +
+        (kidMode ? 'five free cells, all the time you like.' : 'four free cells, every card in sight.');
+      return;
+    }
+    bestLine.innerHTML = modeLabel() + ' best: <strong>' + fmtTime(best.time) + '</strong> in <strong>' +
+      best.moves + '</strong> moves \u00B7 ' + wins + (wins === 1 ? ' win' : ' wins');
+  }
+
+  function saveWin(){
+    var all = readJSON('freecell.best') || {}, key = modeKey(), prev = all[key], record = false;
+    var wins = readJSON('freecell.wins') || {};
+    wins[key] = (wins[key] || 0) + 1;
+    writeJSON('freecell.wins', wins);
+    if (!prev || elapsed < prev.time || (elapsed === prev.time && S.moves < prev.moves)){
+      all[key] = { time: elapsed, moves: S.moves };
+      writeJSON('freecell.best', all);
+      record = true;
+    }
+    return record;
+  }
+
+  /* ---------- building the piles ---------- */
+  function makePile(kind, idx){
+    var el = document.createElement('div');
+    el.className = 'pile ' + (kind === 'col' ? 'col' : 'slot');
+    el.setAttribute('data-kind', kind);
+    el.setAttribute('data-idx', idx);
+    el.setAttribute('role', 'group');
+    return el;
+  }
+
+  function buildPiles(){
+    var i, el, mark;
+    freeBank.innerHTML = ''; homeBank.innerHTML = ''; colsEl.innerHTML = '';
+    freeEls = []; homeEls = []; colEls = [];
+    for (i = 0; i < cellCount; i++){
+      el = makePile('free', i);
+      freeBank.appendChild(el); freeEls.push(el);
+    }
+    for (i = 0; i < 4; i++){
+      el = makePile('home', i);
+      mark = document.createElement('span');
+      mark.className = 'mark';
+      mark.textContent = SUIT_TXT[i];
+      el.appendChild(mark);
+      homeBank.appendChild(el); homeEls.push(el);
+    }
+    for (i = 0; i < COLS; i++){
+      el = makePile('col', i);
+      colsEl.appendChild(el); colEls.push(el);
+    }
+  }
+
+  function makeCard(c){
+    var el = document.createElement('div');
+    el.className = 'card' + (isRed(c) ? ' red' : '');
+    el.setAttribute('data-card', c);
+    el.innerHTML = '<span class="corner"><b>' + RANK_TXT[rankOf(c)] + '</b><i>' + SUIT_TXT[suitOf(c)] +
+                   '</i></span><span class="pip">' + SUIT_TXT[suitOf(c)] + '</span>';
+    return el;
+  }
+
+  // Only the cards come and go on a redraw; the suit watermark painted into
+  // each home pile stays where it is.
+  function clearCards(el){
+    var kids = el.querySelectorAll('.card'), i;
+    for (i = 0; i < kids.length; i++) el.removeChild(kids[i]);
+  }
+
+  function pileOf(kind, idx){
+    if (kind === 'free') return freeEls[idx];
+    if (kind === 'home') return homeEls[idx];
+    return colEls[idx];
+  }
+  function allPiles(){ return freeEls.concat(homeEls, colEls); }
+
+  function clearMarks(){
+    var piles = allPiles(), marked, i;
+    for (i = 0; i < piles.length; i++){
+      piles[i].classList.remove('drop');
+      piles[i].classList.remove('hint-to');
+    }
+    marked = tableEl.querySelectorAll('.card.sel, .card.hint-from, .card.lifted');
+    for (i = 0; i < marked.length; i++){
+      marked[i].classList.remove('sel');
+      marked[i].classList.remove('hint-from');
+      marked[i].classList.remove('lifted');
+    }
+  }
+
+  // The picked-up run is ringed, and — unless the player turned it off —
+  // so is every pile it is actually allowed to land on.
+  function paintSelection(){
+    clearMarks();
+    if (!sel || done) return;
+    var cards = pileOf(sel.kind, sel.idx).querySelectorAll('.card'), i;
+    for (i = sel.pos; i < cards.length; i++) cards[i].classList.add('sel');
+    if (!glowOn) return;
+    for (i = 0; i < colEls.length; i++) if (canMove(S, sel, { kind:'col', idx:i }).ok) colEls[i].classList.add('drop');
+    for (i = 0; i < homeEls.length; i++) if (canMove(S, sel, { kind:'home', idx:i }).ok) homeEls[i].classList.add('drop');
+    for (i = 0; i < freeEls.length; i++) if (canMove(S, sel, { kind:'free', idx:i }).ok) freeEls[i].classList.add('drop');
+  }
+
+  function render(dealAnim){
+    var i, j, col, el, cards;
+    for (i = 0; i < cellCount; i++){
+      clearCards(freeEls[i]);
+      if (S.free[i] >= 0) freeEls[i].appendChild(makeCard(S.free[i]));
+      freeEls[i].setAttribute('aria-label', 'Free cell ' + (i + 1) + ': ' +
+        (S.free[i] >= 0 ? cardName(S.free[i]) : 'empty'));
+    }
+    for (i = 0; i < 4; i++){
+      clearCards(homeEls[i]);
+      if (S.home[i] > 0) homeEls[i].appendChild(makeCard(((S.home[i] - 1) << 2) | i));
+      homeEls[i].setAttribute('aria-label', 'Home for ' + SUIT_NAME[i] + ': ' +
+        (S.home[i] ? 'up to the ' + RANK_NAME[S.home[i]] : 'empty'));
+    }
+    for (i = 0; i < COLS; i++){
+      col = S.cols[i];
+      clearCards(colEls[i]);
+      for (j = 0; j < col.length; j++){
+        el = makeCard(col[j]);
+        el.style.top = Math.round(j * fan) + 'px';
+        el.setAttribute('data-pos', j);
+        if (dealAnim && !REDUCED_MOTION){
+          el.className += ' dealt';
+          el.style.animationDelay = ((j * COLS + i) * 9) + 'ms';
+        }
+        colEls[i].appendChild(el);
+      }
+      colEls[i].setAttribute('aria-label', 'Column ' + (i + 1) + ': ' +
+        (col.length ? col.length + (col.length === 1 ? ' card, ' : ' cards, top card ') + cardName(col[col.length - 1])
+                    : 'empty'));
+    }
+    paintSelection();
+  }
+
+  // Cards are sized from the widest row the table has to show — the free
+  // cells plus the four homes — so nothing ever spills sideways, and the fan
+  // tightens until the longest column fits the screen it is on.
+  function sizeTable(){
+    // The page is a plain block, so its width comes from the window and not
+    // from the cards inside it — measuring the table instead would let one
+    // oversized deal keep itself oversized.
+    var pageStyle = window.getComputedStyle(pageEl);
+    var tableStyle = window.getComputedStyle(tableEl);
+    var inner = pageEl.clientWidth
+      - (parseFloat(pageStyle.paddingLeft) || 0) - (parseFloat(pageStyle.paddingRight) || 0)
+      - (parseFloat(tableStyle.paddingLeft) || 0) - (parseFloat(tableStyle.paddingRight) || 0)
+      - (parseFloat(tableStyle.borderLeftWidth) || 0) - (parseFloat(tableStyle.borderRightWidth) || 0);
+    var slots = cellCount + 4;
+    var gap = window.innerWidth < 430 ? 4 : 6;
+    var w = Math.floor((inner - gap * (slots - 1)) / (slots + 0.3));
+    w = Math.max(26, Math.min(82, w));
+    cardH = Math.round(w * 1.42);
+
+    var maxLen = 1, i, docTop, budget, spread;
+    for (i = 0; i < COLS; i++) if (S.cols[i].length > maxLen) maxLen = S.cols[i].length;
+    docTop = colsEl.getBoundingClientRect().top + (window.pageYOffset || 0);
+    budget = Math.max(210, window.innerHeight - docTop - 130);
+    spread = cardH * 0.3;
+    if (maxLen > 1) spread = Math.min(spread, (budget - cardH) / (maxLen - 1));
+    fan = Math.max(Math.round(cardH * 0.155), Math.round(spread));
+
+    var root = document.documentElement.style;
+    root.setProperty('--card-w', w + 'px');
+    root.setProperty('--card-h', cardH + 'px');
+    root.setProperty('--col-gap', gap + 'px');
+    root.setProperty('--col-h', ((maxLen - 1) * fan + cardH) + 'px');
+  }
+
+  function updateChrome(){
+    moveEl.textContent = S ? S.moves : 0;
+    timerEl.textContent = fmtTime(elapsed);
+    undoBtn.disabled = done || !undoStack.length;
+    hintBtn.disabled = done;
+    homeBtn.disabled = done;
+    restartBtn.disabled = !deck;
+  }
+
+  function say(text){
+    msgEl.textContent = text || '';
+    if (msgTimer){ clearTimeout(msgTimer); msgTimer = null; }
+    if (text) msgTimer = setTimeout(function(){ msgEl.textContent = ''; }, 5000);
+  }
+
+  function startTimerIfNeeded(){
+    if (started || done) return;
+    started = true;
+    timerHandle = setInterval(function(){
+      elapsed++;
+      timerEl.textContent = fmtTime(elapsed);
+      if (elapsed % 5 === 0) saveProgress();
+    }, 1000);
+  }
+  function stopTimer(){
+    if (timerHandle){ clearInterval(timerHandle); timerHandle = null; }
+    started = false;
+  }
+
+  /* ---------- the half-finished game, kept for a reload ---------- */
+  function saveProgress(){
+    if (!S || done) return;
+    writeJSON('freecell.progress', {
+      free: S.free, home: S.home, cols: S.cols, moves: S.moves,
+      cells: S.cells, deck: deck, elapsed: elapsed, kid: kidMode
+    });
+  }
+
+  // A stored game is only used if it still holds all 52 cards exactly once —
+  // anything else (an old format, a half-written entry) is thrown away.
+  function stateLooksSane(st){
+    if (!st || !st.cols || st.cols.length !== COLS || !st.free || !st.home) return false;
+    var seen = {}, n = 0, i, j, c;
+    for (i = 0; i < st.free.length; i++){
+      c = st.free[i];
+      if (c === -1 || c === null) continue;
+      if (typeof c !== 'number' || c < 0 || c > 51 || seen[c]) return false;
+      seen[c] = 1; n++;
+    }
+    for (i = 0; i < 4; i++){
+      if (typeof st.home[i] !== 'number' || st.home[i] < 0 || st.home[i] > 13) return false;
+      for (j = 1; j <= st.home[i]; j++){
+        c = ((j - 1) << 2) | i;
+        if (seen[c]) return false;
+        seen[c] = 1; n++;
+      }
+    }
+    for (i = 0; i < COLS; i++){
+      if (!st.cols[i] || typeof st.cols[i].length !== 'number') return false;
+      for (j = 0; j < st.cols[i].length; j++){
+        c = st.cols[i][j];
+        if (typeof c !== 'number' || c < 0 || c > 51 || seen[c]) return false;
+        seen[c] = 1; n++;
+      }
+    }
+    return n === 52;
+  }
+
+  function loadProgress(){
+    var p = readJSON('freecell.progress');
+    if (!p || !stateLooksSane(p)) return false;
+    if (p.free.length !== 4 && p.free.length !== 5) return false;
+    kidMode = !!p.kid;
+    cellCount = p.free.length;
+    kidToggle.checked = kidMode;
+    S = { free: p.free.slice(), home: p.home.slice(), cols: [], cells: cellCount, moves: p.moves || 0 };
+    var i;
+    for (i = 0; i < COLS; i++) S.cols.push(p.cols[i].slice());
+    deck = (p.deck && p.deck.length === 52) ? p.deck.slice() : null;
+    elapsed = p.elapsed || 0;
+    undoStack = []; sel = null; lastMove = null;
+    started = false; done = false;
+    return true;
+  }
+
+  /* ---------- making a move ---------- */
+  function refusalText(res){
+    switch (res.why){
+      case 'run': return 'Those cards are not in a run \u2014 tap the card the run starts at.';
+      case 'homeOne': return 'Cards go home one at a time.';
+      case 'homeSuit': return 'That home pile belongs to another suit.';
+      case 'homeOrder': return 'That suit is not ready for this card yet \u2014 it wants the ' +
+        RANK_NAME[Math.min(13, S.home[res.suit] + 1)] + ' next.';
+      case 'freeOne': return 'A free cell holds one card, not a run.';
+      case 'freeFull': return 'That free cell is taken.';
+      case 'stack': return 'A card only lands on the next rank up in the other colour.';
+      case 'capacity': return 'Not enough room to move ' + res.n + ' cards at once \u2014 ' +
+        'with what is open you can shift ' + res.cap + '. Empty a free cell or a column first.';
+      default: return '';
+    }
+  }
+
+  function bounce(pile, res){
+    if (pile){
+      pile.classList.remove('shake');
+      void pile.offsetWidth;
+      pile.classList.add('shake');
+    }
+    say(refusalText(res));
+  }
+
+  function snapshot(){
+    undoStack.push({ st: cloneState(S), last: lastMove });
+    if (undoStack.length > 600) undoStack.shift();
+  }
+
+  function doMove(src, dest){
+    var res = canMove(S, src, dest);
+    if (!res.ok) return res;
+    snapshot();
+    applyMove(S, src, dest);
+    lastMove = { src: { kind: src.kind, idx: src.idx, pos: src.pos }, dest: { kind: dest.kind, idx: dest.idx } };
+    sel = null;
+    startTimerIfNeeded();
+    if (autoOn) autoHome(S);
+    sizeTable(); render(); updateChrome(); saveProgress();
+    if (isWon(S)) finish(true);
+    else checkStuck();
+    return res;
+  }
+
+  function srcFromPile(kind, idx, cardNode){
+    if (kind === 'home') return null;
+    if (kind === 'free') return S.free[idx] >= 0 ? { kind:'free', idx:idx, pos:0 } : null;
+    if (!cardNode) return null;
+    return { kind:'col', idx:idx, pos:+cardNode.getAttribute('data-pos') };
+  }
+
+  // Dropping on any home pile is read as "send this card home", so a shaky
+  // aim at the wrong suit still does what the player meant.
+  function destFromPile(pile, src){
+    var kind = pile.getAttribute('data-kind'), idx = +pile.getAttribute('data-idx'), cards;
+    if (kind === 'home'){
+      cards = liftable(S, src.kind, src.idx, src.pos);
+      if (cards && cards.length === 1 && homeAccepts(S, cards[0])) idx = suitOf(cards[0]);
+    }
+    return { kind: kind, idx: idx };
+  }
+
+  function sendHomeFrom(src){
+    var cards = liftable(S, src.kind, src.idx, src.pos);
+    if (!cards || cards.length !== 1) return false;
+    return doMove(src, { kind:'home', idx:suitOf(cards[0]) }).ok;
+  }
+
+  function sendToFree(src){
+    var cards = liftable(S, src.kind, src.idx, src.pos), i;
+    if (!cards || cards.length !== 1) return false;
+    for (i = 0; i < cellCount; i++){
+      if (S.free[i] < 0) return doMove(src, { kind:'free', idx:i }).ok;
+    }
+    return false;
+  }
+
+  function pickUp(kind, idx, cardNode){
+    if (kind === 'home'){ sel = null; render(); say('Cards that are home stay home.'); return; }
+    var src = srcFromPile(kind, idx, cardNode), cards;
+    if (!src){ sel = null; render(); return; }
+    cards = liftable(S, src.kind, src.idx, src.pos);
+    if (!cards){
+      sel = null; render();
+      say('Those cards are not in a run \u2014 tap the card the run starts at.');
+      return;
+    }
+    sel = src;
+    render();
+    say(cards.length > 1
+      ? 'Holding ' + cards.length + ' cards from the ' + cardName(cards[0]) + '.'
+      : '');
+  }
+
+  function handleTap(pile, cardNode){
+    var kind = pile.getAttribute('data-kind'), idx = +pile.getAttribute('data-idx'), dest, res;
+    if (sel){
+      if (sel.kind === kind && sel.idx === idx){
+        // A second tap on the very card in hand tries to send it home; the
+        // same tap elsewhere in the column just picks up from there instead.
+        if (kind === 'free' || (cardNode && +cardNode.getAttribute('data-pos') === sel.pos)){
+          if (!sendHomeFrom(sel)){ sel = null; render(); say(''); }
+          return;
+        }
+        pickUp(kind, idx, cardNode);
+        return;
+      }
+      dest = destFromPile(pile, sel);
+      res = canMove(S, sel, dest);
+      if (res.ok){ doMove(sel, dest); return; }
+      bounce(pile, res);
+      return;
+    }
+    pickUp(kind, idx, cardNode);
+  }
+
+  /* ---------- pointer input: one path for mouse, pen and thumb ---------- */
+  function closestOf(node, cls){
+    while (node && node !== document){
+      if (node.classList && node.classList.contains(cls)) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  var drag = null;
+
+  function beginGhost(cards){
+    var i, el;
+    dragLayer.innerHTML = '';
+    for (i = 0; i < cards.length; i++){
+      el = makeCard(cards[i]);
+      el.style.top = Math.round(i * fan) + 'px';
+      dragLayer.appendChild(el);
+    }
+    dragLayer.style.height = ((cards.length - 1) * fan + cardH) + 'px';
+    dragLayer.hidden = false;
+  }
+  function moveGhost(x, y){
+    dragLayer.style.transform = 'translate(' + Math.round(x - drag.offX) + 'px,' + Math.round(y - drag.offY) + 'px)';
+  }
+  function endGhost(){
+    dragLayer.hidden = true;
+    dragLayer.innerHTML = '';
+    dragLayer.style.transform = '';
+  }
+  function pileUnder(x, y){
+    var el = document.elementFromPoint(x, y);
+    return el ? closestOf(el, 'pile') : null;
+  }
+  function markLifted(){
+    var pile = pileOf(drag.src.kind, drag.src.idx), cards = pile.querySelectorAll('.card'), i;
+    for (i = drag.src.pos; i < cards.length; i++) cards[i].classList.add('lifted');
+  }
+  function highlightUnder(x, y){
+    var pile = pileUnder(x, y), piles = allPiles(), i;
+    for (i = 0; i < piles.length; i++) piles[i].classList.remove('hint-to');
+    if (pile && canMove(S, drag.src, destFromPile(pile, drag.src)).ok) pile.classList.add('hint-to');
+  }
+
+  tableEl.addEventListener('pointerdown', function(e){
+    if (done || !S) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    var pile = closestOf(e.target, 'pile');
+    if (!pile) return;
+    var cardNode = closestOf(e.target, 'card');
+    var src = srcFromPile(pile.getAttribute('data-kind'), +pile.getAttribute('data-idx'), cardNode);
+    var box = (cardNode || pile).getBoundingClientRect();
+    drag = {
+      id: e.pointerId, x0: e.clientX, y0: e.clientY,
+      pile: pile, card: cardNode, src: src, moved: false,
+      offX: e.clientX - box.left, offY: e.clientY - box.top
+    };
+  });
+
+  window.addEventListener('pointermove', function(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved){
+      if (Math.abs(e.clientX - drag.x0) + Math.abs(e.clientY - drag.y0) < 7) return;
+      if (!drag.src) return;
+      var cards = liftable(S, drag.src.kind, drag.src.idx, drag.src.pos);
+      if (!cards){ drag.src = null; return; }
+      drag.moved = true;
+      sel = drag.src;
+      paintSelection();
+      markLifted();
+      beginGhost(cards);
+      // The piles outlive a redraw, so the capture stays put even when the
+      // cards under the thumb are rebuilt mid-gesture.
+      try{ drag.pile.setPointerCapture(e.pointerId); } catch(err){}
+    }
+    moveGhost(e.clientX, e.clientY);
+    highlightUnder(e.clientX, e.clientY);
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  window.addEventListener('pointerup', function(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    var d = drag, pile, dest, res;
+    drag = null;
+    try{ if (d.pile.hasPointerCapture && d.pile.hasPointerCapture(e.pointerId)) d.pile.releasePointerCapture(e.pointerId); } catch(err){}
+    if (!d.moved){ handleTap(d.pile, d.card); return; }
+    endGhost();
+    pile = pileUnder(e.clientX, e.clientY);
+    sel = null;
+    if (!pile){ render(); return; }
+    dest = destFromPile(pile, d.src);
+    res = canMove(S, d.src, dest);
+    if (res.ok){ doMove(d.src, dest); return; }
+    render();
+    // A card dropped back where it came from is a change of mind, not a slip.
+    if (res.why !== 'same') bounce(pile, res);
+  });
+
+  window.addEventListener('pointercancel', function(){
+    if (!drag) return;
+    drag = null; sel = null;
+    endGhost(); render();
+  });
+
+  // Right-click is the classic shortcut for "park this in a free cell".
+  tableEl.addEventListener('contextmenu', function(e){
+    if (done || !S) return;
+    var pile = closestOf(e.target, 'pile');
+    if (!pile) return;
+    e.preventDefault();
+    var src = srcFromPile(pile.getAttribute('data-kind'), +pile.getAttribute('data-idx'), closestOf(e.target, 'card'));
+    if (!src) return;
+    if (!sendToFree(src)) say('Every free cell is taken.');
+  });
+
+  /* ---------- the helpers on the button row ---------- */
+  function destWords(dest){
+    if (dest.kind === 'home') return 'home';
+    if (dest.kind === 'free') return 'a free cell';
+    return S.cols[dest.idx].length ? 'column ' + (dest.idx + 1) : 'the empty column ' + (dest.idx + 1);
+  }
+
+  function showHint(){
+    if (done || !S) return;
+    var mv = findHint(S, lastMove), cards;
+    if (!mv){ say('Nothing can move from here \u2014 try Undo, or deal a new table.'); return; }
+    cards = liftable(S, mv.src.kind, mv.src.idx, mv.src.pos);
+    sel = { kind: mv.src.kind, idx: mv.src.idx, pos: mv.src.pos };
+    render();
+    pileOf(mv.dest.kind, mv.dest.idx).classList.add('hint-to');
+    say('A move you could make: ' + shortName(cards[0]) +
+        (cards.length > 1 ? ' with ' + (cards.length - 1) + ' below it' : '') +
+        ' \u2192 ' + destWords(mv.dest) + '.');
+  }
+
+  function sendHomeBurst(){
+    if (done || !S) return;
+    snapshot();
+    var sent = autoHome(S);
+    if (!sent.length){
+      undoStack.pop();
+      say('No card is safe to send home yet.');
+      updateChrome();
+      return;
+    }
+    lastMove = null; sel = null;
+    startTimerIfNeeded();
+    sizeTable(); render(); updateChrome(); saveProgress();
+    say(sent.length === 1 ? 'The ' + cardName(sent[0]) + ' went home.' : sent.length + ' cards went home.');
+    if (isWon(S)) finish(true);
+    else checkStuck();
+  }
+
+  function undo(){
+    if (!undoStack.length) return;
+    var snap = undoStack.pop();
+    S = snap.st; lastMove = snap.last;
+    done = false; sel = null;
+    overlayEl.hidden = true;
+    faceEl.setAttribute('data-state', 'idle');
+    sizeTable(); render(); updateChrome(); saveProgress();
+    say('');
+  }
+
+  function checkStuck(){
+    if (done) return;
+    if (legalMoves(S).length) return;
+    finish(false);
+  }
+
+  function finish(won){
+    done = true;
+    stopTimer();
+    dropKey('freecell.progress');
+    sel = null;
+    faceEl.setAttribute('data-state', won ? 'win' : 'worried');
+    modalFace.setAttribute('data-state', won ? 'win' : 'worried');
+    render(); updateChrome();
+    if (won){
+      var record = saveWin();
+      // The win is kept as a win: there is nothing left to undo back into.
+      undoStack = [];
+      undoBtn.disabled = true;
+      modalTitle.textContent = 'Every card home!';
+      modalMsg.innerHTML = 'All four suits, in <strong>' + fmtTime(elapsed) + '</strong> and <strong>' +
+        S.moves + '</strong> moves' + (record ? ' \u2014 a new ' + modeLabel() + ' best!' : ' on ' + modeLabel() + '.');
+      closeModalBtn.hidden = true;
+      if (!REDUCED_MOTION) launchConfetti();
+    } else {
+      modalTitle.textContent = 'No moves left';
+      modalMsg.textContent = 'Every free cell is full and nothing else will stack — this table is finished. ' +
+        'Step back a move or two, or deal a fresh one.';
+      closeModalBtn.hidden = !undoStack.length;
+      closeModalBtn.textContent = 'Take a move back';
+    }
+    showBest();
+    overlayEl.hidden = false;
+    playAgainBtn.focus();
+  }
+
+  /* ---------- dealing ---------- */
+  function startGame(useDeck){
+    stopTimer();
+    deck = useDeck ? useDeck.slice() : shuffledDeck(Math.random);
+    S = deal(deck, cellCount);
+    undoStack = []; sel = null; lastMove = null;
+    elapsed = 0; done = false;
+    timerEl.textContent = '0:00';
+    faceEl.setAttribute('data-state', 'idle');
+    overlayEl.hidden = true;
+    say('');
+    sizeTable(); render(true); updateChrome(); showBest(); saveProgress();
+  }
+  function newDeal(){ startGame(null); }
+  function restartDeal(){
+    if (!deck){ newDeal(); return; }
+    startGame(deck);
+    say('Same cards, fresh start.');
+  }
+
+  function setKidMode(on){
+    kidMode = on;
+    cellCount = on ? 5 : 4;
+    writeStr('freecell.kid', on ? '1' : '0');
+    buildPiles();
+    // The number of cells changes what the table even is, so the deal is
+    // laid out again from the same cards rather than half-converted.
+    startGame(deck);
+    say(on ? 'Kind mode: five free cells, and its own best time.' : 'Classic four free cells.');
+  }
+
+  /* ---------- keyboard, for the desktop players ---------- */
+  var FREE_KEYS = ['q', 'w', 'e', 'r', 't'];
+
+  function tapPile(kind, idx){
+    var pile = pileOf(kind, idx), col, nodes;
+    if (!pile) return;
+    if (sel){ handleTap(pile, null); return; }
+    if (kind === 'col'){
+      col = S.cols[idx];
+      if (!col.length) return;
+      nodes = pile.querySelectorAll('.card');
+      handleTap(pile, nodes[col.length - 1]);
+      return;
+    }
+    handleTap(pile, null);
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key, low = (k || '').toLowerCase(), fi, tag = e.target && e.target.tagName;
+    // A toggle or a button that has the focus keeps its own keys: space must
+    // still tick a checkbox rather than try to send a card home.
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (tag === 'BUTTON' && (k === 'Enter' || k === ' ')) return;
+    if (!overlayEl.hidden){
+      if (low === 'n'){ overlayEl.hidden = true; newDeal(); e.preventDefault(); }
+      if (low === 'u' && !closeModalBtn.hidden){ overlayEl.hidden = true; undo(); e.preventDefault(); }
+      return;
+    }
+    if (done || !S) return;
+    if (k === 'Escape'){ sel = null; render(); say(''); e.preventDefault(); return; }
+    if (k >= '1' && k <= '8'){ tapPile('col', +k - 1); e.preventDefault(); return; }
+    fi = FREE_KEYS.indexOf(low);
+    if (fi >= 0 && fi < cellCount){ tapPile('free', fi); e.preventDefault(); return; }
+    if (k === 'Enter' || k === ' '){
+      if (sel && !sendHomeFrom(sel)) say('That card cannot go home yet.');
+      e.preventDefault(); return;
+    }
+    if (low === 'u'){ undo(); e.preventDefault(); return; }
+    if (low === 'h'){ showHint(); e.preventDefault(); return; }
+    if (low === 'a'){ sendHomeBurst(); e.preventDefault(); return; }
+    if (low === 'n'){ newDeal(); e.preventDefault(); return; }
+    if (low === 'r'){ restartDeal(); e.preventDefault(); return; }
+  });
+
+  /* ---------- wiring ---------- */
+  undoBtn.addEventListener('click', undo);
+  hintBtn.addEventListener('click', showHint);
+  homeBtn.addEventListener('click', sendHomeBurst);
+  restartBtn.addEventListener('click', restartDeal);
+  newBtn.addEventListener('click', newDeal);
+  faceBtn.addEventListener('click', newDeal);
+  playAgainBtn.addEventListener('click', function(){ overlayEl.hidden = true; newDeal(); });
+  closeModalBtn.addEventListener('click', function(){ overlayEl.hidden = true; undo(); });
+
+  autoToggle.addEventListener('change', function(){
+    autoOn = autoToggle.checked;
+    writeStr('freecell.auto', autoOn ? '1' : '0');
+    if (autoOn && S && !done){
+      snapshot();
+      var sent = autoHome(S);
+      if (!sent.length) undoStack.pop();
+      sizeTable(); render(); updateChrome(); saveProgress();
+      if (isWon(S)) finish(true);
+    }
+  });
+  glowToggle.addEventListener('change', function(){
+    glowOn = glowToggle.checked;
+    writeStr('freecell.glow', glowOn ? '1' : '0');
+    render();
+  });
+  kidToggle.addEventListener('change', function(){ setKidMode(kidToggle.checked); });
+
+  function applyTheme(key){
+    currentTheme = key;
+    document.body.setAttribute('data-theme', key);
+    themeButtons.forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-theme') === key);
+    });
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', key === 'sunny' ? '#DCEDD9' : '#0E2519');
+    writeStr('freecell.theme', key);
+  }
+  themeButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){ applyTheme(btn.getAttribute('data-theme')); });
+  });
+
+  /* ---------- background sparkles ---------- */
+  (function initSparkles(){
+    var field = document.getElementById('sparkleField');
+    var count = window.innerWidth < 600 ? 18 : 32, i, s, size;
+    for (i = 0; i < count; i++){
+      s = document.createElement('span');
+      s.className = 'spark';
+      size = 2 + Math.random() * 3;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.top = (Math.random() * 100) + '%';
+      s.style.animationDuration = (2.6 + Math.random() * 3.4) + 's';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      field.appendChild(s);
+    }
+  })();
+
+  /* ---------- confetti ---------- */
+  var CONFETTI = {
+    night: ['#5BD98A', '#FFCE54', '#FF8FB6', '#7FD7FF', '#A7EEC2'],
+    sunny: ['#1F7A44', '#B07500', '#D9537E', '#12649B', '#2E9E5B']
+  };
+  var confettiCanvas = document.getElementById('confettiCanvas');
+  var ctx = confettiCanvas.getContext('2d');
+  function resizeCanvas(){
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+
+  function launchConfetti(){
+    var colors = CONFETTI[currentTheme] || CONFETTI.night;
+    var pieces = [], total = 90, i;
+    for (i = 0; i < total; i++){
+      pieces.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -20 - Math.random() * confettiCanvas.height * 0.4,
+        size: 5 + Math.random() * 6,
+        color: colors[i % colors.length],
+        speed: 1.5 + Math.random() * 2.5,
+        drift: (Math.random() - 0.5) * 1.5,
+        rot: Math.random() * Math.PI,
+        rotSpeed: (Math.random() - 0.5) * 0.2
+      });
+    }
+    var start = nowMs();
+    function frame(){
+      var t = nowMs() - start, alive = false;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      pieces.forEach(function(p){
+        p.y += p.speed; p.x += p.drift; p.rot += p.rotSpeed;
+        if (p.y < confettiCanvas.height + 20) alive = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      });
+      if (alive && t < 4200) requestAnimationFrame(frame);
+      else ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  var resizeTimer = null;
+  function onResize(){
+    resizeCanvas();
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      resizeTimer = null;
+      if (!S) return;
+      sizeTable(); render();
+    }, 80);
+  }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+
+  /* ---------- boot ---------- */
+  (function init(){
+    var storedTheme = readStr('freecell.theme');
+    applyTheme(storedTheme === 'sunny' ? 'sunny' : 'night');
+
+    if (readStr('freecell.auto') === '0'){ autoOn = false; autoToggle.checked = false; }
+    if (readStr('freecell.glow') === '0'){ glowOn = false; glowToggle.checked = false; }
+    if (readStr('freecell.kid') === '1'){ kidMode = true; cellCount = 5; kidToggle.checked = true; }
+
+    if (loadProgress()){
+      buildPiles();
+      sizeTable(); render(); updateChrome(); showBest();
+    } else {
+      buildPiles();
+      startGame(null);
+    }
+
+    // Web fonts land after the first paint and change how tall a row is, so
+    // the fan is measured once more when they are ready.
+    if (document.fonts && document.fonts.ready && document.fonts.ready.then){
+      document.fonts.ready.then(function(){ if (S){ sizeTable(); render(); } });
+    }
+  })();
+})();
+</script>
+
+</body>
+</html>
