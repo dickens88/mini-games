@@ -100,6 +100,12 @@
 
   *{ box-sizing:border-box; }
 
+  /* The scrollbar is always reserved. Without this the page can get into an
+     argument with itself: a taller table brings the scrollbar in, the narrower
+     window makes the cards smaller, the shorter table sends the scrollbar
+     away again. */
+  html{ overflow-y:scroll; }
+
   body{
     margin:0;
     min-height:100vh;
@@ -250,8 +256,18 @@
   body[data-theme="sunny"] .best-line strong{ color:var(--accent-soft); }
 
   /* ---------- the table ---------- */
+  /* The felt and the buttons under it are one block, as wide as the cards
+     need and no wider, so the row never runs off past the edge of the table. */
+  .felt-stack{
+    width:fit-content; max-width:100%;
+    margin:0 auto;
+    display:flex; flex-direction:column; gap:10px;
+  }
   .table{
-    width:100%; min-width:0;
+    /* The felt hugs the cards rather than the page: when the cards are sized
+       by the window's height, a full-width table would leave the columns
+       huddled in the middle of a lot of empty green. */
+    width:auto; min-width:0;
     display:flex; flex-direction:column; gap:10px;
     background:var(--felt);
     border:1px solid var(--line);
@@ -368,7 +384,7 @@
   }
 
   /* ---------- buttons and settings ---------- */
-  .act-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; width:100%; }
+  .act-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:7px; width:auto; }
   .act-btn{
     appearance:none; cursor:pointer;
     flex:1 1 0; min-width:0;
@@ -548,6 +564,8 @@
     <p class="best-line" id="bestLine"></p>
   </div>
 
+  <div class="felt-stack">
+
   <div class="table" id="table">
     <div class="top-row">
       <div class="bank" id="freeBank" role="group" aria-label="Free cells"></div>
@@ -574,6 +592,8 @@
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Restart</span>
     </button>
+  </div>
+
   </div>
 
   <p class="msg" id="msg" role="status" aria-live="polite"></p>
@@ -899,6 +919,7 @@
                    'nine', 'ten', 'jack', 'queen', 'king'];
 
   var pageEl = document.querySelector('.page');
+  var stackEl = document.querySelector('.felt-stack');
   var tableEl = document.getElementById('table');
   var freeBank = document.getElementById('freeBank');
   var homeBank = document.getElementById('homeBank');
@@ -1133,41 +1154,52 @@
     w = Math.max(26, Math.min(82, w));
     cardH = Math.round(w * 1.42);
 
-    // FAN_MIN is the point where a covered card still shows its whole rank
-    // and suit. A long column is squeezed down to it and no further: past
-    // that the cards themselves get smaller, because a pile you cannot read
-    // is worse than a pile of smaller cards.
-    var FAN_MAX = 0.32, FAN_MIN = 0.25, SHRINK_LIMIT = 0.75;
-    var maxLen = 1, i, docTop, budget, spread, wFit, wMin, corner;
+    /* The felt is a fixed box: its size comes from the window and the card
+       alone, never from how long a column happens to be, so the table stays
+       exactly where it is all game. That only works if the cards are chosen
+       to fit the box in the first place — PLAN_LEN is the column length the
+       layout promises to show comfortably, so a card is never taller than a
+       column of that many can afford. What gives after that is the overlap:
+       a longer column tucks its cards closer, and the rank in the corner
+       shrinks with it so a covered card can always be read. */
+    var FAN_MAX = 0.32, PLAN_LEN = 13, PLAN_FAN = 0.25;
+    var ratio = 1 + (PLAN_LEN - 1) * PLAN_FAN;
+    var maxLen = 1, i, stackTop, room, chrome, frameH, spread, corner;
     for (i = 0; i < COLS; i++) if (S.cols[i].length > maxLen) maxLen = S.cols[i].length;
-    docTop = colsEl.getBoundingClientRect().top + (window.pageYOffset || 0);
-    budget = Math.max(210, window.innerHeight - docTop - 126);
 
-    if (maxLen > 1 && (maxLen - 1) * cardH * FAN_MIN + cardH > budget){
-      // Smaller cards buy a shorter column, but only so far: past a quarter
-      // off, a very long column is better left to scroll than shrunk into
-      // something nobody can read comfortably.
-      wFit = Math.floor(budget / (1.42 * ((maxLen - 1) * FAN_MIN + 1)));
-      wMin = Math.min(w, Math.max(42, Math.round(w * SHRINK_LIMIT)));
-      w = Math.max(wMin, Math.min(w, wFit));
-      cardH = Math.round(w * 1.42);
-    }
+    /* The room is measured from the top of the felt, which sits at the same
+       place whatever size the cards are. Measuring from the columns instead
+       would be circular — the row of free cells above them is one card tall,
+       so the cards would keep re-deciding their own budget. Room holds the
+       top row and the columns: cardH + cardH * ratio, hence the (1 + ratio). */
+    stackTop = stackEl.getBoundingClientRect().top + (window.pageYOffset || 0);
+    chrome = (parseFloat(tableStyle.paddingTop) || 0) + (parseFloat(tableStyle.paddingBottom) || 0)
+      + (parseFloat(tableStyle.borderTopWidth) || 0) + (parseFloat(tableStyle.borderBottomWidth) || 0)
+      + 10;                                   // the gap between the two rows
+    room = Math.max(230, window.innerHeight - stackTop - chrome - 84);
+
+    w = Math.min(w, Math.max(24, Math.floor(room / (1.42 * (1 + ratio)))));
+    cardH = Math.round(w * 1.42);
+    frameH = Math.min(room - cardH, Math.round(cardH * ratio));
+    frameH = Math.max(frameH, Math.round(cardH * (1 + FAN_MAX)));
 
     spread = cardH * FAN_MAX;
-    if (maxLen > 1) spread = Math.min(spread, (budget - cardH) / (maxLen - 1));
-    fan = Math.max(Math.round(cardH * FAN_MIN), Math.round(spread));
+    if (maxLen > 1) spread = Math.min(spread, (frameH - cardH) / (maxLen - 1));
+    fan = Math.max(5, Math.floor(spread));
 
-    // Whatever the fan ended up as, the label has to fit inside it: 2% of the
-    // card above it, one line of text, and a little air below.
-    corner = Math.min(w * 0.36, (fan - cardH * 0.02 - 3) / 1.05);
-    corner = Math.max(9, corner);
+    // Whatever the overlap ended up as, the label has to fit in the sliver it
+    // leaves: 2% of the card above it, one line of text, a little air. A
+    // small rank beats a rank with its feet cut off, so the fit wins over
+    // the comfortable size.
+    corner = Math.min(w * 0.36, (fan - cardH * 0.02 - 1.5) / 1.05);
+    corner = Math.max(6, corner);
 
     var root = document.documentElement.style;
     root.setProperty('--card-w', w + 'px');
     root.setProperty('--card-h', cardH + 'px');
     root.setProperty('--corner', corner.toFixed(1) + 'px');
     root.setProperty('--col-gap', gap + 'px');
-    root.setProperty('--col-h', ((maxLen - 1) * fan + cardH) + 'px');
+    root.setProperty('--col-h', frameH + 'px');
   }
 
   function updateChrome(){
