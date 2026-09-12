@@ -323,15 +323,17 @@
     touch-action:none;
   }
   .card.red{ color:var(--card-red); }
+  /* The rank and suit live in the sliver a covered card still shows, so
+     their size comes from the fan, not from the card. */
   .card .corner{
-    position:absolute; left:7%; top:3%;
+    position:absolute; left:7%; top:2%;
     display:flex; align-items:center; gap:calc(var(--card-w, 56px) * .03);
     font-family:'JetBrains Mono', ui-monospace, monospace;
     font-weight:700;
-    font-size:calc(var(--card-w, 56px) * .38);
+    font-size:var(--corner, 20px);
     line-height:1.05;
   }
-  .card .corner i{ font-style:normal; font-size:calc(var(--card-w, 56px) * .32); }
+  .card .corner i{ font-style:normal; font-size:calc(var(--corner, 20px) * .86); }
   .card .pip{
     position:absolute; right:6%; bottom:1%;
     font-size:calc(var(--card-w, 56px) * .58); line-height:1;
@@ -383,12 +385,6 @@
   .act-btn:hover:not([disabled]){ transform:translateY(-2px); color:var(--text); border-color:var(--line-strong); }
   .act-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .act-btn[disabled]{ opacity:.38; cursor:default; }
-  .act-btn.primary{
-    background:linear-gradient(150deg, var(--accent-btn-1), var(--accent-btn-2));
-    border-color:transparent;
-    color:var(--accent-btn-ink);
-    box-shadow:0 8px 20px -10px rgba(var(--accent-rgb),.7);
-  }
 
   .msg{
     margin:0; min-height:1.3em; text-align:center;
@@ -477,7 +473,7 @@
   }
   .cta-secondary:hover{ color:var(--text); border-color:var(--accent); }
 
-  #confettiCanvas{ position:fixed; inset:0; z-index:45; pointer-events:none; }
+  #confettiCanvas{ position:fixed; inset:0; z-index:45; pointer-events:none; transition:opacity .4s ease; }
 
   @media (max-width:520px){
     .page{ padding:14px 8px 32px; gap:9px; }
@@ -577,10 +573,6 @@
     <button class="act-btn" id="restartBtn" type="button">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 3.5V8h-4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Restart</span>
-    </button>
-    <button class="act-btn primary" id="newBtn" type="button">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="6" width="11" height="14" rx="2" stroke="currentColor" stroke-width="2.1"/><path d="M8 3.5h8.5A2 2 0 0 1 18.5 5.5V17" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
-      <span>New deal</span>
     </button>
   </div>
 
@@ -926,7 +918,6 @@
   var hintBtn = document.getElementById('hintBtn');
   var homeBtn = document.getElementById('homeBtn');
   var restartBtn = document.getElementById('restartBtn');
-  var newBtn = document.getElementById('newBtn');
   var msgEl = document.getElementById('msg');
   var autoToggle = document.getElementById('autoToggle');
   var glowToggle = document.getElementById('glowToggle');
@@ -1142,17 +1133,39 @@
     w = Math.max(26, Math.min(82, w));
     cardH = Math.round(w * 1.42);
 
-    var maxLen = 1, i, docTop, budget, spread;
+    // FAN_MIN is the point where a covered card still shows its whole rank
+    // and suit. A long column is squeezed down to it and no further: past
+    // that the cards themselves get smaller, because a pile you cannot read
+    // is worse than a pile of smaller cards.
+    var FAN_MAX = 0.32, FAN_MIN = 0.25, SHRINK_LIMIT = 0.75;
+    var maxLen = 1, i, docTop, budget, spread, wFit, wMin, corner;
     for (i = 0; i < COLS; i++) if (S.cols[i].length > maxLen) maxLen = S.cols[i].length;
     docTop = colsEl.getBoundingClientRect().top + (window.pageYOffset || 0);
-    budget = Math.max(210, window.innerHeight - docTop - 130);
-    spread = cardH * 0.3;
+    budget = Math.max(210, window.innerHeight - docTop - 126);
+
+    if (maxLen > 1 && (maxLen - 1) * cardH * FAN_MIN + cardH > budget){
+      // Smaller cards buy a shorter column, but only so far: past a quarter
+      // off, a very long column is better left to scroll than shrunk into
+      // something nobody can read comfortably.
+      wFit = Math.floor(budget / (1.42 * ((maxLen - 1) * FAN_MIN + 1)));
+      wMin = Math.min(w, Math.max(42, Math.round(w * SHRINK_LIMIT)));
+      w = Math.max(wMin, Math.min(w, wFit));
+      cardH = Math.round(w * 1.42);
+    }
+
+    spread = cardH * FAN_MAX;
     if (maxLen > 1) spread = Math.min(spread, (budget - cardH) / (maxLen - 1));
-    fan = Math.max(Math.round(cardH * 0.155), Math.round(spread));
+    fan = Math.max(Math.round(cardH * FAN_MIN), Math.round(spread));
+
+    // Whatever the fan ended up as, the label has to fit inside it: 2% of the
+    // card above it, one line of text, and a little air below.
+    corner = Math.min(w * 0.36, (fan - cardH * 0.02 - 3) / 1.05);
+    corner = Math.max(9, corner);
 
     var root = document.documentElement.style;
     root.setProperty('--card-w', w + 'px');
     root.setProperty('--card-h', cardH + 'px');
+    root.setProperty('--corner', corner.toFixed(1) + 'px');
     root.setProperty('--col-gap', gap + 'px');
     root.setProperty('--col-h', ((maxLen - 1) * fan + cardH) + 'px');
   }
@@ -1547,7 +1560,6 @@
       modalMsg.innerHTML = 'All four suits, in <strong>' + fmtTime(elapsed) + '</strong> and <strong>' +
         S.moves + '</strong> moves' + (record ? ' \u2014 a new ' + modeLabel() + ' best!' : ' on ' + modeLabel() + '.');
       closeModalBtn.hidden = true;
-      if (!REDUCED_MOTION) launchConfetti();
     } else {
       modalTitle.textContent = 'No moves left';
       modalMsg.textContent = 'Every free cell is full and nothing else will stack — this table is finished. ' +
@@ -1556,6 +1568,17 @@
       closeModalBtn.textContent = 'Take a move back';
     }
     showBest();
+    // A win gets the old table's send-off first: the cards pour off the home
+    // piles and bounce away, and the card with the time on it waits its turn.
+    if (won && !REDUCED_MOTION){
+      runCascade(function(){ if (!done) return; openCard(); launchConfetti(); });
+      return;
+    }
+    openCard();
+  }
+
+  function openCard(){
+    if (!done) return;
     overlayEl.hidden = false;
     playAgainBtn.focus();
   }
@@ -1563,6 +1586,7 @@
   /* ---------- dealing ---------- */
   function startGame(useDeck){
     stopTimer();
+    killCascade();
     deck = useDeck ? useDeck.slice() : shuffledDeck(Math.random);
     S = deal(deck, cellCount);
     undoStack = []; sel = null; lastMove = null;
@@ -1641,7 +1665,6 @@
   hintBtn.addEventListener('click', showHint);
   homeBtn.addEventListener('click', sendHomeBurst);
   restartBtn.addEventListener('click', restartDeal);
-  newBtn.addEventListener('click', newDeal);
   faceBtn.addEventListener('click', newDeal);
   playAgainBtn.addEventListener('click', function(){ overlayEl.hidden = true; newDeal(); });
   closeModalBtn.addEventListener('click', function(){ overlayEl.hidden = true; undo(); });
@@ -1695,6 +1718,119 @@
       field.appendChild(s);
     }
   })();
+
+  /* ---------- the win cascade ---------- */
+  var cascadeStop = null;
+
+  function killCascade(){ if (cascadeStop) cascadeStop(false); }
+
+  function roundRectPath(g, x, y, w, h, r){
+    if (g.roundRect){ g.beginPath(); g.roundRect(x, y, w, h, r); return; }
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+
+  function paintFlyer(g, c, x, y, w, h){
+    roundRectPath(g, x, y, w, h, Math.max(3, w * 0.13));
+    g.fillStyle = '#FDFBF4';
+    g.fill();
+    g.lineWidth = 1;
+    g.strokeStyle = 'rgba(0,0,0,.45)';
+    g.stroke();
+    g.fillStyle = isRed(c) ? '#B81B33' : '#1A2B22';
+    g.textBaseline = 'top';
+    g.font = '700 ' + Math.round(w * 0.36) + 'px "JetBrains Mono", ui-monospace, monospace';
+    g.fillText(RANK_TXT[rankOf(c)], x + w * 0.13, y + h * 0.06);
+    g.font = '700 ' + Math.round(w * 0.42) + 'px "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif';
+    g.fillText(SUIT_TXT[suitOf(c)], x + w * 0.13, y + h * 0.44);
+  }
+
+  // As each card takes off, its home pile shows the one underneath.
+  function setHomeFace(suit, rank){
+    clearCards(homeEls[suit]);
+    if (rank > 0) homeEls[suit].appendChild(makeCard(((rank - 1) << 2) | suit));
+  }
+
+  /* The old table's send-off: kings first, every card tips off its home pile,
+     bounces along the bottom of the window and sails away, leaving its trail
+     behind it. A tap, a key or a new deal cuts it short. */
+  function runCascade(whenDone){
+    var g = ctx, order = [], flying = [], launched = 0, finished = false;
+    var w = Math.round(parseFloat(document.documentElement.style.getPropertyValue('--card-w')) || 56);
+    var h = Math.round(w * 1.42), t0 = nowMs(), last = t0, waiting = 0;
+    var rank, suit, i, f, item, rect;
+    // Everything below is in pixels per second, so the cards fall at the same
+    // speed on a 60Hz laptop and a 120Hz phone.
+    var GRAVITY = 1900, LAUNCH_EVERY = 0.034, BOUNCE = 0.78;
+
+    resizeCanvas();
+    for (rank = 13; rank >= 1; rank--){
+      for (suit = 3; suit >= 0; suit--) order.push({ card: ((rank - 1) << 2) | suit, suit: suit, rank: rank });
+    }
+
+    function stop(ring){
+      if (finished) return;
+      finished = true;
+      cascadeStop = null;
+      window.removeEventListener('pointerdown', skip);
+      window.removeEventListener('keydown', skip);
+      for (i = 0; i < 4; i++) setHomeFace(i, 13);   // the table is finished, so it looks finished
+      confettiCanvas.style.opacity = '0';
+      setTimeout(function(){
+        g.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiCanvas.style.opacity = '';
+        if (ring) whenDone();
+      }, 420);
+    }
+    function skip(){ stop(true); }
+
+    cascadeStop = stop;
+    window.addEventListener('pointerdown', skip);
+    window.addEventListener('keydown', skip);
+    // Frames stop arriving in a background tab, so the send-off is on a
+    // timer as well: the win card always turns up, animation or no.
+    setTimeout(function(){ stop(true); }, 5200);
+
+    function tick(){
+      if (finished) return;
+      var now = nowMs(), dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      waiting += dt;
+      while (waiting >= LAUNCH_EVERY && launched < order.length){
+        waiting -= LAUNCH_EVERY;
+        item = order[launched++];
+        rect = homeEls[item.suit].getBoundingClientRect();
+        flying.push({
+          c: item.card, x: rect.left, y: rect.top,
+          vx: (180 + Math.random() * 250) * (item.suit % 2 ? 1 : -1),
+          vy: -(120 + Math.random() * 240)
+        });
+        setHomeFace(item.suit, item.rank - 1);
+      }
+      // Nothing is cleared between frames — the trail is the whole charm.
+      for (i = flying.length - 1; i >= 0; i--){
+        f = flying[i];
+        f.vy += GRAVITY * dt;
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+        if (f.y + h >= confettiCanvas.height){
+          f.y = confettiCanvas.height - h;
+          f.vy = -Math.abs(f.vy) * BOUNCE;
+          if (Math.abs(f.vy) < 210) f.vy = -(240 + Math.random() * 180);
+        }
+        paintFlyer(g, f.c, f.x, f.y, w, h);
+        if (f.x + w < -20 || f.x > confettiCanvas.width + 20) flying.splice(i, 1);
+      }
+      if ((launched >= order.length && !flying.length) || now - t0 > 4200){ stop(true); return; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
 
   /* ---------- confetti ---------- */
   var CONFETTI = {
