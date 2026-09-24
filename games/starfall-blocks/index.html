@@ -1,0 +1,1215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Starfall Blocks — classic falling-block puzzle</title>
+<meta name="description" content="The classic falling-block puzzle, made cosy: turn and slide the pieces, fill a whole row and watch it sparkle away. Hold, ghost piece, three speeds, works with keys or touch. Free, no sign-up.">
+<meta name="theme-color" content="#141B33">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/starfall-blocks/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Starfall Blocks — classic falling-block puzzle">
+<meta property="og:description" content="Turn and slide the falling pieces, fill a whole row and watch it sparkle away. Three speeds, keyboard or touch.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/starfall-blocks/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/starfall-blocks/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-black:#0B1024;
+    --sky-deep:#141B33;
+    --sky-glow:#26305A;
+    --panel:#1A2342;
+    --panel-2:#222D52;
+    --well:#0E1430;
+    --line:rgba(255,255,255,.09);
+    --line-strong:rgba(255,255,255,.2);
+    --text:#EEF2FF;
+    --muted:#A3AED6;
+    --pink:#FF7EB0;
+    --pink-2:#E7508A;
+    --gold:#FFD35C;
+    --mint:#6EE7C0;
+    --lilac:#B69CFF;
+    --display:'Baloo 2', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --body:'Quicksand', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    color-scheme:dark;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ overscroll-behavior:none; }
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--text);
+    font-family:var(--body);
+    font-weight:600;
+    -webkit-font-smoothing:antialiased;
+    background:radial-gradient(120% 90% at 50% -10%, var(--sky-glow) 0%, var(--sky-deep) 45%, var(--sky-black) 100%);
+    background-attachment:fixed;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* twinkling stars, purely decorative */
+  #stars{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  #stars i{
+    position:absolute; display:block; border-radius:50%;
+    background:#fff; opacity:.5;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    #stars i{ animation:twinkle 3.6s ease-in-out infinite; }
+  }
+  @keyframes twinkle{ 0%,100%{ opacity:.15; } 50%{ opacity:.75; } }
+
+  .site-nav{
+    position:relative; z-index:3;
+    max-width:960px; margin:0 auto; padding:14px 20px 0;
+    display:flex; align-items:center; gap:8px;
+  }
+  .site-nav a{
+    display:inline-flex; align-items:center; gap:7px;
+    text-decoration:none; color:var(--muted);
+    font-weight:700; font-size:.82rem;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:7px 15px 7px 11px;
+    transition:transform .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .site-nav a:hover{ transform:translateX(-2px); color:var(--text); border-color:var(--line-strong); }
+  .site-nav a:focus-visible{ outline:2px solid var(--pink); outline-offset:2px; }
+  .site-nav svg{ width:14px; height:14px; }
+
+  .page{ position:relative; z-index:1; max-width:960px; margin:0 auto; padding:6px 16px 40px; }
+
+  .hero{ text-align:center; margin:6px 0 12px; }
+  .hero h1{
+    font-family:var(--display); font-weight:800;
+    font-size:clamp(1.7rem, 5vw, 2.5rem); line-height:1.1; margin:0 0 4px;
+    background:linear-gradient(90deg, #FFB3CF, var(--gold) 50%, #9EE6FF);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{ margin:0 auto; max-width:52ch; color:var(--muted); font-size:.92rem; line-height:1.5; }
+
+  .speed-row{ display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+  .speed-pill{
+    font:inherit; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; line-height:1.15;
+    background:var(--panel); color:var(--muted);
+    border:1px solid var(--line); border-radius:14px; padding:7px 16px;
+    transition:transform .15s ease, border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .speed-pill b{ font-family:var(--display); font-weight:800; font-size:1rem; color:var(--text); }
+  .speed-pill span{ font-size:.7rem; }
+  .speed-pill:hover{ transform:translateY(-1px); border-color:var(--line-strong); }
+  .speed-pill.active{ background:linear-gradient(160deg, var(--pink), var(--pink-2)); border-color:transparent; color:#FFE6F0; }
+  .speed-pill.active b{ color:#fff; }
+  .speed-pill:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+  /* ---------- play area ---------- */
+  .arena{
+    display:grid; grid-template-columns:auto auto auto; justify-content:center;
+    align-items:start; gap:14px;
+  }
+  .side{ display:flex; flex-direction:column; gap:10px; width:124px; }
+  .box{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:9px 10px 10px;
+  }
+  .box h2{
+    margin:0 0 4px; font-family:var(--display); font-weight:800;
+    font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+  }
+  .mini{ display:block; width:100%; aspect-ratio:4/3; }
+  .mini.tall{ aspect-ratio:4/7.4; }
+  .stat{ display:flex; flex-direction:column; }
+  .stat + .stat{ margin-top:6px; }
+  .stat span{ font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  .stat b{ font-family:var(--mono); font-weight:700; font-size:1.05rem; color:var(--text); font-variant-numeric:tabular-nums; }
+  .stat b.gold{ color:var(--gold); }
+
+  .well-wrap{ position:relative; }
+  .well{
+    position:relative;
+    padding:6px; border-radius:18px;
+    background:linear-gradient(160deg, #3A4680, #1C2447);
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  #board{
+    display:block; border-radius:12px; background:var(--well);
+    touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+
+  .overlay{
+    position:absolute; inset:6px; border-radius:12px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    text-align:center; padding:18px;
+    background:rgba(11,16,36,.78);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+  }
+  .overlay[hidden]{ display:none; }
+  .overlay h2{ margin:0; font-family:var(--display); font-weight:800; font-size:1.7rem; line-height:1.1; }
+  .overlay p{ margin:0; color:var(--muted); font-size:.86rem; line-height:1.45; max-width:24ch; }
+  .overlay .big{ font-family:var(--mono); font-size:1.6rem; color:var(--gold); }
+  .cta{
+    font:inherit; cursor:pointer; border:0;
+    font-family:var(--display); font-weight:800; font-size:1.05rem;
+    color:#fff; padding:9px 26px; border-radius:999px;
+    background:linear-gradient(160deg, var(--pink), var(--pink-2));
+    box-shadow:0 12px 22px -12px rgba(231,80,138,.95);
+    transition:transform .15s ease;
+  }
+  .cta:hover{ transform:translateY(-1px) scale(1.03); }
+  .cta:focus-visible{ outline:3px solid var(--gold); outline-offset:3px; }
+  .cta.ghost{ background:transparent; border:1px solid var(--line-strong); box-shadow:none; font-size:.9rem; padding:7px 20px; }
+
+  .tools{ display:flex; gap:8px; }
+  .tool{
+    flex:1; font:inherit; cursor:pointer;
+    font-size:.78rem; font-weight:700; color:var(--muted);
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:8px 6px;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .tool:hover{ color:var(--text); border-color:var(--line-strong); }
+  .tool:focus-visible{ outline:2px solid var(--pink); outline-offset:2px; }
+
+  /* ---------- touch pad ---------- */
+  .pad{
+    display:none;
+    grid-template-columns:repeat(6, 1fr); gap:8px;
+    max-width:460px; margin:14px auto 0;
+  }
+  .pad button{
+    font:inherit; cursor:pointer;
+    height:58px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text); background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid var(--line-strong);
+    touch-action:none; user-select:none; -webkit-user-select:none;
+    box-shadow:0 5px 0 #0A0F22;
+    transition:transform .05s ease, box-shadow .05s ease;
+  }
+  .pad button.down, .pad button:active{ transform:translateY(4px); box-shadow:0 1px 0 #0A0F22; }
+  .pad button svg{ width:26px; height:26px; }
+  .pad .accent{ background:linear-gradient(160deg, var(--pink), var(--pink-2)); border-color:transparent; }
+  .pad .hold-btn{ font-family:var(--display); font-weight:800; font-size:.86rem; }
+  @media (hover:none) and (pointer:coarse){
+    .pad{ display:grid; }
+    .keys-help{ display:none; }
+  }
+
+  .keys-help{
+    margin:18px auto 0; max-width:640px;
+    display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px;
+    font-size:.8rem; color:var(--muted);
+  }
+  .keys-help kbd{
+    font-family:var(--mono); font-size:.72rem; color:var(--text);
+    background:var(--panel-2); border:1px solid var(--line-strong); border-bottom-width:3px;
+    border-radius:6px; padding:1px 6px; margin-right:3px;
+  }
+  .touch-help{ display:none; text-align:center; font-size:.8rem; color:var(--muted); margin:12px auto 0; max-width:44ch; line-height:1.5; }
+  @media (hover:none) and (pointer:coarse){ .touch-help{ display:block; } }
+
+  @media (max-width:560px){
+    .page{ padding:4px 10px 30px; }
+    .hero p{ display:none; }
+    .arena{ gap:8px; }
+    .side{ width:70px; gap:8px; }
+    .box{ padding:6px 6px 7px; border-radius:12px; }
+    .box h2{ font-size:.6rem; letter-spacing:.08em; }
+    .stat span{ font-size:.56rem; letter-spacing:.06em; }
+    .stat b{ font-size:.82rem; }
+    .tools{ flex-direction:column; gap:6px; }
+    .tool{ font-size:.7rem; padding:6px 4px; }
+    .overlay h2{ font-size:1.35rem; }
+    .speed-pill{ padding:6px 12px; }
+    .speed-pill span{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+</nav>
+
+<div id="stars" aria-hidden="true"></div>
+
+<div class="page">
+  <header class="hero">
+    <h1>Starfall Blocks</h1>
+    <p>Pieces of starlight tumble down from the sky. Turn them and slide them so they fit together — fill a whole row from side to side and it sparkles away.</p>
+  </header>
+
+  <div class="speed-row" role="group" aria-label="Choose a speed">
+    <button class="speed-pill" data-speed="gentle" type="button"><b>Gentle</b><span>slow and steady</span></button>
+    <button class="speed-pill" data-speed="classic" type="button"><b>Classic</b><span>speeds up as you go</span></button>
+    <button class="speed-pill" data-speed="speedy" type="button"><b>Speedy</b><span>fast from the start</span></button>
+  </div>
+
+  <div class="arena" id="arena">
+    <aside class="side">
+      <div class="box">
+        <h2>Hold</h2>
+        <canvas class="mini" id="holdCanvas" aria-label="Held piece"></canvas>
+      </div>
+      <div class="box" aria-live="off">
+        <div class="stat"><span>Score</span><b id="scoreOut">0</b></div>
+        <div class="stat"><span>Lines</span><b id="linesOut">0</b></div>
+        <div class="stat"><span>Level</span><b id="levelOut">1</b></div>
+      </div>
+    </aside>
+
+    <div class="well-wrap" id="wellWrap">
+      <div class="well">
+        <canvas id="board" aria-label="Game board"></canvas>
+        <div class="overlay" id="overlay">
+          <h2 id="ovTitle">Ready?</h2>
+          <p id="ovScore" class="big" hidden></p>
+          <p id="ovMsg">Fill a row from side to side to clear it. Don't let the stack reach the top!</p>
+          <button class="cta" id="ovBtn" type="button">Start</button>
+          <button class="cta ghost" id="ovBtn2" type="button" hidden>New game</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="box">
+        <h2>Next</h2>
+        <canvas class="mini tall" id="nextCanvas" aria-label="Next pieces"></canvas>
+      </div>
+      <div class="box">
+        <div class="stat"><span>Best</span><b id="bestOut" class="gold">0</b></div>
+      </div>
+      <div class="tools">
+        <button class="tool" id="pauseBtn" type="button">Pause</button>
+        <button class="tool" id="restartBtn" type="button">Restart</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="pad" id="pad" role="group" aria-label="Controls">
+    <button type="button" data-act="left" aria-label="Move left"><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-act="right" aria-label="Move right"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-act="down" aria-label="Soft drop"><svg viewBox="0 0 24 24" fill="none"><path d="M5 9l7 7 7-7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-act="rotate" aria-label="Turn"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12a7 7 0 1 1-2.05-4.95" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M17.5 3.5v4h-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-act="drop" class="accent" aria-label="Drop"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l6 6 6-6M6 12l6 6 6-6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-act="hold" class="hold-btn" aria-label="Hold">Hold</button>
+  </div>
+
+  <div class="keys-help">
+    <span><kbd>←</kbd><kbd>→</kbd> slide</span>
+    <span><kbd>↑</kbd> or <kbd>X</kbd> turn</span>
+    <span><kbd>Z</kbd> turn back</span>
+    <span><kbd>↓</kbd> faster</span>
+    <span><kbd>Space</kbd> drop</span>
+    <span><kbd>C</kbd> hold</span>
+    <span><kbd>P</kbd> pause</span>
+  </div>
+  <p class="touch-help">Use the buttons — or play right on the board: tap to turn, drag sideways to slide, flick down to drop, flick up to hold.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- decorative stars ---------- */
+  (function(){
+    var field = document.getElementById('stars');
+    for (var i = 0; i < 40; i++){
+      var s = document.createElement('i');
+      var size = 1 + Math.random() * 2.2;
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.top = (Math.random() * 100) + '%';
+      s.style.width = s.style.height = size + 'px';
+      s.style.animationDelay = (Math.random() * 3.6) + 's';
+      field.appendChild(s);
+    }
+  })();
+
+  /* ---------- storage (never trusted to work) ---------- */
+  function load(key){ try{ return localStorage.getItem(key); } catch(e){ return null; } }
+  function save(key, v){ try{ localStorage.setItem(key, v); } catch(e){} }
+
+  /* =====================================================================
+     Pieces. Each shape is its spawn matrix; the other three states are
+     true matrix rotations, which is exactly what the Super Rotation
+     System expects, so the standard wall-kick tables below apply as-is.
+     ===================================================================== */
+  var COLS = 10, ROWS = 22, HIDDEN = 2, VISIBLE = ROWS - HIDDEN;
+
+  var SHAPES = {
+    I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+    J: [[1,0,0],[1,1,1],[0,0,0]],
+    L: [[0,0,1],[1,1,1],[0,0,0]],
+    O: [[1,1],[1,1]],
+    S: [[0,1,1],[1,1,0],[0,0,0]],
+    T: [[0,1,0],[1,1,1],[0,0,0]],
+    Z: [[1,1,0],[0,1,1],[0,0,0]]
+  };
+  var COLORS = {
+    I:'#56DDF0', J:'#6C9CFF', L:'#FFA24C', O:'#FFD35C',
+    S:'#63E6A4', T:'#B98BFF', Z:'#FF6F94'
+  };
+  var TYPES = ['I','J','L','O','S','T','Z'];
+
+  // STATES[type][rot] = list of [x,y] cells inside the piece's box
+  var STATES = {}, BOXSIZE = {};
+  TYPES.forEach(function(t){
+    var m = SHAPES[t], n = m.length, states = [];
+    for (var r = 0; r < 4; r++){
+      var cells = [];
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (m[y][x]) cells.push([x, y]);
+      states.push(cells);
+      var next = [];
+      for (var yy = 0; yy < n; yy++){
+        next.push([]);
+        for (var xx = 0; xx < n; xx++) next[yy].push(m[n - 1 - xx][yy]);
+      }
+      m = next;
+    }
+    STATES[t] = states;
+    BOXSIZE[t] = n;
+  });
+
+  // SRS kicks as [dx, dyUp]; converted to our y-down board when used.
+  var KICKS_JLSTZ = {
+    '0>1':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '1>0':[[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '1>2':[[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '2>1':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '2>3':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '3>2':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '3>0':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '0>3':[[0,0],[1,0],[1,1],[0,-2],[1,-2]]
+  };
+  var KICKS_I = {
+    '0>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '1>0':[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    '1>2':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    '2>1':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '2>3':[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    '3>2':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '3>0':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '0>3':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]]
+  };
+
+  /* ---------- speeds ---------- */
+  var MODES = {
+    gentle:  { start:1, linesPerLevel:15, maxLevel:8  },
+    classic: { start:1, linesPerLevel:10, maxLevel:20 },
+    speedy:  { start:6, linesPerLevel:10, maxLevel:20 }
+  };
+  // seconds per row, from the modern guideline curve
+  function gravityMs(level){
+    var l = Math.min(level, 20) - 1;
+    return Math.max(Math.pow(0.8 - l * 0.007, l), 0.012) * 1000;
+  }
+
+  var DAS = 170, ARR = 45, SOFT_MS = 35, LOCK_MS = 500, MAX_LOCK_RESETS = 15;
+  var CLEAR_MS = REDUCED_MOTION ? 120 : 320;
+
+  /* ---------- game state ---------- */
+  var grid, piece, holdType, holdUsed, bag, queue;
+  var score, lines, level, combo, b2b;
+  var state = 'ready';          // ready | playing | paused | clearing | over
+  var mode = load('starfall-mode') || 'classic';
+  if (!MODES[mode]) mode = 'classic';
+  var fallTimer = 0, lockTimer = 0, lockResets = 0, lowestY = 0;
+  var clearRows = [], clearTimer = 0;
+  var popups = [], particles = [];
+
+  function emptyGrid(){
+    var g = [];
+    for (var y = 0; y < ROWS; y++){ g.push(new Array(COLS).fill(null)); }
+    return g;
+  }
+
+  function refillBag(){
+    var b = TYPES.slice();
+    for (var i = b.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = b[i]; b[i] = b[j]; b[j] = t;
+    }
+    return b;
+  }
+  function takeNext(){
+    while (queue.length < 4){
+      if (!bag.length) bag = refillBag();
+      queue.push(bag.pop());
+    }
+    return queue.shift();
+  }
+
+  function cellsOf(p, rot, px, py){
+    var out = [], st = STATES[p.type][rot === undefined ? p.rot : rot];
+    px = px === undefined ? p.x : px;
+    py = py === undefined ? p.y : py;
+    for (var i = 0; i < 4; i++) out.push([px + st[i][0], py + st[i][1]]);
+    return out;
+  }
+  function fits(p, rot, px, py){
+    var c = cellsOf(p, rot, px, py);
+    for (var i = 0; i < 4; i++){
+      var x = c[i][0], y = c[i][1];
+      if (x < 0 || x >= COLS || y >= ROWS) return false;
+      if (y >= 0 && grid[y][x]) return false;
+    }
+    return true;
+  }
+
+  function spawn(type){
+    var n = BOXSIZE[type];
+    piece = { type:type, rot:0, x:Math.floor((COLS - n) / 2), y:HIDDEN - 1 };
+    fallTimer = 0; lockTimer = 0; lockResets = 0; lowestY = piece.y;
+    if (!fits(piece)){ gameOver(); return false; }
+    // drop straight into view if there is room, like the real thing
+    if (fits(piece, piece.rot, piece.x, piece.y + 1)){ piece.y++; lowestY = piece.y; }
+    return true;
+  }
+
+  function onGround(){ return !fits(piece, piece.rot, piece.x, piece.y + 1); }
+
+  function touchedGround(){
+    // a successful move or turn while resting buys a little more time
+    if (onGround() && lockResets < MAX_LOCK_RESETS){ lockTimer = 0; lockResets++; }
+  }
+
+  function tryMove(dx){
+    if (state !== 'playing') return false;
+    if (fits(piece, piece.rot, piece.x + dx, piece.y)){
+      piece.x += dx; touchedGround(); return true;
+    }
+    return false;
+  }
+
+  function tryRotate(dir){
+    if (state !== 'playing' || piece.type === 'O') return false;
+    var from = piece.rot, to = (from + dir + 4) % 4;
+    var table = (piece.type === 'I' ? KICKS_I : KICKS_JLSTZ)[from + '>' + to];
+    for (var i = 0; i < table.length; i++){
+      var nx = piece.x + table[i][0], ny = piece.y - table[i][1];
+      if (fits(piece, to, nx, ny)){
+        piece.x = nx; piece.y = ny; piece.rot = to;
+        if (piece.y > lowestY){ lowestY = piece.y; lockResets = 0; }
+        touchedGround();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function stepDown(){
+    if (fits(piece, piece.rot, piece.x, piece.y + 1)){
+      piece.y++;
+      if (piece.y > lowestY){ lowestY = piece.y; lockResets = 0; lockTimer = 0; }
+      return true;
+    }
+    return false;
+  }
+
+  function softDrop(){
+    if (state !== 'playing') return;
+    if (stepDown()){ score += 1; fallTimer = 0; updateHud(); }
+  }
+
+  function hardDrop(){
+    if (state !== 'playing') return;
+    var n = 0;
+    while (stepDown()) n++;
+    score += n * 2;
+    if (n > 0 && !REDUCED_MOTION){
+      cellsOf(piece).forEach(function(c){
+        for (var k = 0; k < 2; k++) particles.push(makeParticle(c[0] + .5, c[1] + .2, COLORS[piece.type], 0.6));
+      });
+    }
+    lockPiece();
+  }
+
+  function hold(){
+    if (state !== 'playing' || holdUsed) return;
+    var cur = piece.type;
+    if (holdType){ spawn(holdType); } else { spawn(takeNext()); }
+    holdType = cur; holdUsed = true;
+    drawHold(); drawNext();
+  }
+
+  function ghostY(){
+    var y = piece.y;
+    while (fits(piece, piece.rot, piece.x, y + 1)) y++;
+    return y;
+  }
+
+  function lockPiece(){
+    var cells = cellsOf(piece), allHidden = true;
+    for (var i = 0; i < 4; i++){
+      var x = cells[i][0], y = cells[i][1];
+      if (y >= 0) grid[y][x] = piece.type;
+      if (y >= HIDDEN) allHidden = false;
+    }
+    if (allHidden){ gameOver(); return; }
+
+    clearRows = [];
+    for (var r = 0; r < ROWS; r++){
+      if (grid[r].every(Boolean)) clearRows.push(r);
+    }
+    holdUsed = false;
+    drawHold();
+    if (clearRows.length){
+      scoreClear(clearRows.length);
+      if (!REDUCED_MOTION){
+        clearRows.forEach(function(row){
+          for (var x = 0; x < COLS; x++){
+            for (var k = 0; k < 3; k++) particles.push(makeParticle(x + .5, row + .5, COLORS[grid[row][x]], 1));
+          }
+        });
+      }
+      state = 'clearing'; clearTimer = 0; piece = null;
+    } else {
+      combo = -1;
+      spawn(takeNext());
+      drawNext();
+    }
+    updateHud();
+  }
+
+  var CLEAR_NAMES = ['', 'Nice!', 'Double!', 'Triple!', 'STARFALL!'];
+  function scoreClear(n){
+    combo++;
+    var pts = [0, 100, 300, 500, 800][n] * level;
+    var big = n === 4;
+    if (big && b2b) pts = Math.floor(pts * 1.5);
+    b2b = big;
+    if (combo > 0) pts += 50 * combo * level;
+    score += pts;
+    lines += n;
+
+    var text = CLEAR_NAMES[n];
+    if (combo > 0) text += '  combo ×' + (combo + 1);
+    var midRow = clearRows[Math.floor(clearRows.length / 2)];
+    popups.push({ text:text, sub:'+' + pts, y:midRow, t:0, big:big });
+
+    var m = MODES[mode];
+    var newLevel = Math.min(m.maxLevel, m.start + Math.floor(lines / m.linesPerLevel));
+    if (newLevel > level){
+      level = newLevel;
+      popups.push({ text:'Level ' + level, sub:'', y:midRow - 2, t:-250, big:false, level:true });
+    }
+  }
+
+  function finishClear(){
+    // remove bottom-up so indices stay valid
+    for (var i = clearRows.length - 1; i >= 0; i--) grid.splice(clearRows[i], 1);
+    for (var j = 0; j < clearRows.length; j++) grid.unshift(new Array(COLS).fill(null));
+    clearRows = [];
+
+    var empty = grid.every(function(row){ return row.every(function(c){ return !c; }); });
+    if (empty){
+      var bonus = 2000 * level;
+      score += bonus;
+      popups.push({ text:'All clear!', sub:'+' + bonus, y:VISIBLE / 2 + HIDDEN, t:0, big:true });
+    }
+    state = 'playing';
+    if (spawn(takeNext())) drawNext();
+    updateHud();
+  }
+
+  /* ---------- flow ---------- */
+  function newGame(){
+    grid = emptyGrid();
+    bag = []; queue = [];
+    holdType = null; holdUsed = false;
+    score = 0; lines = 0; combo = -1; b2b = false;
+    level = MODES[mode].start;
+    popups = []; particles = []; clearRows = [];
+    state = 'playing';
+    resetInput();
+    spawn(takeNext());
+    hideOverlay();
+    updateHud(); drawHold(); drawNext();
+    ensureBoardVisible();
+  }
+
+  function gameOver(){
+    state = 'over';
+    piece = null;
+    var key = 'starfall-best-' + mode;
+    var best = parseInt(load(key), 10) || 0;
+    var isBest = score > best;
+    if (isBest){ best = score; save(key, String(score)); }
+    updateHud();
+    showOverlay('over', isBest && score > 0 ? 'New best!' : 'Game over',
+      score.toLocaleString(),
+      lines + (lines === 1 ? ' line' : ' lines') + ' cleared · level ' + level +
+        (isBest || !score ? '' : '. Your best is ' + best.toLocaleString() + '.'),
+      'Play again', null);
+  }
+
+  var pausedFrom = 'playing';
+  function pause(){
+    if (state !== 'playing' && state !== 'clearing') return false;
+    pausedFrom = state;
+    state = 'paused';
+    resetInput();
+    showOverlay('pause', 'Paused', null, 'Take a breath. The pieces will wait for you.', 'Keep going', 'New game');
+    pauseBtn.textContent = 'Resume';
+    return true;
+  }
+  function resume(){
+    if (state !== 'paused') return;
+    state = pausedFrom;
+    hideOverlay();
+    lastTime = performance.now();
+  }
+
+  /* ---------- overlay ----------
+     ovMode says what the two buttons mean:
+       start / over  -> primary starts a game
+       pause         -> primary resumes, secondary starts fresh
+       confirm       -> primary starts fresh (maybe at a new speed),
+                        secondary goes back to the paused game          */
+  var overlay = document.getElementById('overlay');
+  var ovTitle = document.getElementById('ovTitle');
+  var ovScore = document.getElementById('ovScore');
+  var ovMsg = document.getElementById('ovMsg');
+  var ovBtn = document.getElementById('ovBtn');
+  var ovBtn2 = document.getElementById('ovBtn2');
+  var pauseBtn = document.getElementById('pauseBtn');
+  var ovMode = 'start', pendingMode = null;
+
+  function showOverlay(kind, title, big, msg, btn, btn2){
+    ovMode = kind;
+    ovTitle.textContent = title;
+    ovScore.hidden = big === null;
+    if (big !== null) ovScore.textContent = big;
+    ovMsg.textContent = msg;
+    ovBtn.textContent = btn;
+    ovBtn2.hidden = !btn2;
+    if (btn2) ovBtn2.textContent = btn2;
+    overlay.hidden = false;
+    setTimeout(function(){ try{ ovBtn.focus({ preventScroll:true }); } catch(e){} }, 30);
+  }
+  function hideOverlay(){ overlay.hidden = true; pauseBtn.textContent = 'Pause'; }
+
+  function askRestart(title, msg, newMode){
+    if (state === 'ready' || state === 'over'){
+      if (newMode){ mode = newMode; save('starfall-mode', mode); markMode(); }
+      newGame();
+      return;
+    }
+    pause();
+    pendingMode = newMode;
+    showOverlay('confirm', title, null, msg, 'New game', 'Keep playing');
+  }
+
+  ovBtn.addEventListener('click', function(){
+    if (ovMode === 'pause'){ resume(); return; }
+    if (ovMode === 'confirm' && pendingMode){ mode = pendingMode; save('starfall-mode', mode); markMode(); }
+    pendingMode = null;
+    newGame();
+  });
+  ovBtn2.addEventListener('click', function(){
+    if (ovMode === 'confirm'){ pendingMode = null; resume(); return; }
+    newGame();
+  });
+  pauseBtn.addEventListener('click', function(){
+    pauseBtn.blur();
+    if (state === 'paused') resume(); else pause();
+  });
+  document.getElementById('restartBtn').addEventListener('click', function(e){
+    e.currentTarget.blur();
+    askRestart('Start over?', 'This game ends and a fresh one begins.', null);
+  });
+
+  /* ---------- speed pills ---------- */
+  var SPEED_NAMES = { gentle:'Gentle', classic:'Classic', speedy:'Speedy' };
+  var pills = document.querySelectorAll('.speed-pill');
+  function markMode(){
+    for (var i = 0; i < pills.length; i++) pills[i].classList.toggle('active', pills[i].dataset.speed === mode);
+    if (state === 'ready') level = MODES[mode].start;
+    if (typeof score === 'number') updateHud();
+  }
+  for (var pi = 0; pi < pills.length; pi++){
+    pills[pi].addEventListener('click', function(e){
+      var m = e.currentTarget.dataset.speed;
+      e.currentTarget.blur();
+      if (m === mode) return;
+      if (state === 'ready'){ mode = m; save('starfall-mode', m); markMode(); return; }
+      askRestart('Switch to ' + SPEED_NAMES[m] + '?', 'Changing speed starts a fresh game.', m);
+    });
+  }
+
+  /* ---------- HUD ---------- */
+  var scoreOut = document.getElementById('scoreOut');
+  var linesOut = document.getElementById('linesOut');
+  var levelOut = document.getElementById('levelOut');
+  var bestOut = document.getElementById('bestOut');
+  function updateHud(){
+    scoreOut.textContent = score.toLocaleString();
+    linesOut.textContent = lines;
+    levelOut.textContent = level;
+    var best = parseInt(load('starfall-best-' + mode), 10) || 0;
+    bestOut.textContent = Math.max(best, score).toLocaleString();
+  }
+
+  /* =====================================================================
+     Drawing. Every block is a little candy gem; sprites are cached per
+     colour and size so the board redraw stays cheap.
+     ===================================================================== */
+  var board = document.getElementById('board');
+  var ctx = board.getContext('2d');
+  var holdCanvas = document.getElementById('holdCanvas');
+  var nextCanvas = document.getElementById('nextCanvas');
+  var DPR = 1, CELL = 28;
+  var spriteCache = {};
+
+  function shade(hex, amt){
+    var n = parseInt(hex.slice(1), 16);
+    var r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    function f(c){ return Math.round(amt < 0 ? c * (1 + amt) : c + (255 - c) * amt); }
+    return 'rgb(' + f(r) + ',' + f(g) + ',' + f(b) + ')';
+  }
+  function roundRect(c, x, y, w, h, r){
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+  function paintBlock(c, x, y, s, color){
+    var pad = Math.max(1, s * 0.05), r = s * 0.2;
+    var w = s - pad * 2;
+    var grd = c.createLinearGradient(0, y, 0, y + s);
+    grd.addColorStop(0, shade(color, 0.35));
+    grd.addColorStop(0.55, color);
+    grd.addColorStop(1, shade(color, -0.28));
+    c.fillStyle = grd;
+    roundRect(c, x + pad, y + pad, w, w, r);
+    c.fill();
+    // soft inner edge
+    c.strokeStyle = shade(color, -0.35);
+    c.globalAlpha = 0.55;
+    c.lineWidth = Math.max(1, s * 0.05);
+    roundRect(c, x + pad + c.lineWidth / 2, y + pad + c.lineWidth / 2, w - c.lineWidth, w - c.lineWidth, r * 0.9);
+    c.stroke();
+    // glossy top shine
+    c.globalAlpha = 0.42;
+    c.fillStyle = '#fff';
+    roundRect(c, x + s * 0.2, y + s * 0.14, s * 0.6, s * 0.2, s * 0.1);
+    c.fill();
+    // tiny sparkle
+    c.globalAlpha = 0.9;
+    c.beginPath();
+    c.arc(x + s * 0.27, y + s * 0.27, s * 0.055, 0, Math.PI * 2);
+    c.fill();
+    c.globalAlpha = 1;
+  }
+  function sprite(color, s){
+    var key = color + '@' + s;
+    if (!spriteCache[key]){
+      var cv = document.createElement('canvas');
+      cv.width = cv.height = s;
+      paintBlock(cv.getContext('2d'), 0, 0, s, color);
+      spriteCache[key] = cv;
+    }
+    return spriteCache[key];
+  }
+
+  function sizeCanvas(cv, cssW, cssH){
+    cv.style.width = cssW + 'px';
+    cv.style.height = cssH + 'px';
+    cv.width = Math.round(cssW * DPR);
+    cv.height = Math.round(cssH * DPR);
+  }
+
+  var arena = document.getElementById('arena');
+  var wellWrap = document.getElementById('wellWrap');
+  var pad = document.getElementById('pad');
+  function layout(){
+    DPR = Math.min(window.devicePixelRatio || 1, 3);
+    var sides = arena.querySelectorAll('.side');
+    var sideW = sides[0].offsetWidth + sides[1].offsetWidth;
+    var gap = parseFloat(getComputedStyle(arena).columnGap) || 14;
+    var availW = arena.clientWidth - sideW - gap * 2 - 12;
+    var padH = pad.offsetParent ? pad.offsetHeight + 14 : 0;
+    // fit below the header when we can; on short screens accept a scroll
+    // (starting a game scrolls the board into view)
+    var top = wellWrap.getBoundingClientRect().top + window.scrollY;
+    var availH = Math.max(window.innerHeight - top - padH - 24, window.innerHeight * 0.62 - padH);
+    var cell = Math.floor(Math.min(availW / COLS, availH / VISIBLE, 34));
+    CELL = Math.max(cell, 13);
+    sizeCanvas(board, CELL * COLS, CELL * VISIBLE);
+    spriteCache = {};
+    var box = holdCanvas.parentElement, bs = getComputedStyle(box);
+    var mw = box.clientWidth - parseFloat(bs.paddingLeft) - parseFloat(bs.paddingRight);
+    sizeCanvas(holdCanvas, mw, mw * 3 / 4);
+    sizeCanvas(nextCanvas, mw, mw * 7.4 / 4);
+    drawHold(); drawNext(); render();
+  }
+
+  function ensureBoardVisible(){
+    var r = wellWrap.getBoundingClientRect();
+    var bottom = r.bottom + (pad.offsetParent ? pad.offsetHeight + 14 : 0);
+    if (r.top < 0 || bottom > window.innerHeight){
+      window.scrollTo({ top:window.scrollY + r.top - 8, behavior:REDUCED_MOTION ? 'auto' : 'smooth' });
+    }
+  }
+
+  function drawMiniPiece(c, type, cx, cy, s, alpha){
+    var cells = STATES[type][0];
+    var minX = 9, maxX = -1, minY = 9, maxY = -1;
+    cells.forEach(function(p){
+      minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
+      minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]);
+    });
+    var w = (maxX - minX + 1) * s, h = (maxY - minY + 1) * s;
+    c.globalAlpha = alpha;
+    cells.forEach(function(p){
+      paintBlock(c, cx - w / 2 + (p[0] - minX) * s, cy - h / 2 + (p[1] - minY) * s, s, COLORS[type]);
+    });
+    c.globalAlpha = 1;
+  }
+
+  function drawHold(){
+    var c = holdCanvas.getContext('2d');
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var w = holdCanvas.width / DPR, h = holdCanvas.height / DPR;
+    c.clearRect(0, 0, w, h);
+    if (!holdType) return;
+    var s = Math.min(w / 4.6, h / 2.8);
+    drawMiniPiece(c, holdType, w / 2, h / 2, s, holdUsed ? 0.35 : 1);
+  }
+
+  function drawNext(){
+    var c = nextCanvas.getContext('2d');
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var w = nextCanvas.width / DPR, h = nextCanvas.height / DPR;
+    c.clearRect(0, 0, w, h);
+    if (!queue || !queue.length) return;
+    // the first slot is a little taller, so the very next piece reads biggest
+    var unit = h / 3.4, s = Math.min(w / 4.6, unit / 2.8);
+    var centers = [unit * 0.7, unit * 1.4 + unit * 0.5 + unit * 0.05, unit * 2.4 + unit * 0.5 + unit * 0.05];
+    for (var i = 0; i < 3; i++){
+      drawMiniPiece(c, queue[i], w / 2, centers[i], i === 0 ? s : s * 0.8, i === 0 ? 1 : 0.75);
+    }
+  }
+
+  function makeParticle(x, y, color, power){
+    var a = Math.random() * Math.PI * 2, v = (1.5 + Math.random() * 5) * power;
+    return { x:x, y:y, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 3 * power, life:0, max:500 + Math.random() * 400, color:color, r:.07 + Math.random() * .1 };
+  }
+
+  function render(){
+    if (!grid) grid = emptyGrid();
+    var s = CELL;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var W = s * COLS, H = s * VISIBLE;
+    ctx.clearRect(0, 0, W, H);
+
+    // faint grid
+    ctx.strokeStyle = 'rgba(255,255,255,.045)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var gx = 1; gx < COLS; gx++){ ctx.moveTo(gx * s + .5, 0); ctx.lineTo(gx * s + .5, H); }
+    for (var gy = 1; gy < VISIBLE; gy++){ ctx.moveTo(0, gy * s + .5); ctx.lineTo(W, gy * s + .5); }
+    ctx.stroke();
+
+    var ss = Math.round(s * DPR);
+    function blit(color, x, y){
+      ctx.drawImage(sprite(color, ss), x * s, (y - HIDDEN) * s, s, s);
+    }
+
+    // settled blocks
+    var flash = state === 'clearing' ? clearTimer / CLEAR_MS : 0;
+    for (var y = HIDDEN; y < ROWS; y++){
+      var clearing = clearRows.indexOf(y) >= 0;
+      for (var x = 0; x < COLS; x++){
+        var t = grid[y][x];
+        if (!t) continue;
+        if (clearing){
+          // sweep out from the middle, glowing white
+          var d = Math.abs(x - 4.5) / 5;
+          var k = Math.min(1, Math.max(0, flash * 1.6 - d * 0.6));
+          ctx.globalAlpha = 1 - k;
+          blit(COLORS[t], x, y);
+          ctx.globalAlpha = (1 - k) * 0.7;
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(x * s, (y - HIDDEN) * s, s, s);
+          ctx.globalAlpha = 1;
+        } else {
+          blit(COLORS[t], x, y);
+        }
+      }
+    }
+
+    if (piece && (state === 'playing' || state === 'paused')){
+      // ghost
+      var gyPos = ghostY();
+      if (gyPos !== piece.y){
+        var col = COLORS[piece.type];
+        cellsOf(piece, piece.rot, piece.x, gyPos).forEach(function(c){
+          if (c[1] < HIDDEN) return;
+          var px = c[0] * s, py = (c[1] - HIDDEN) * s, pd = s * 0.1;
+          ctx.globalAlpha = 0.16; ctx.fillStyle = col;
+          roundRect(ctx, px + pd, py + pd, s - pd * 2, s - pd * 2, s * 0.18); ctx.fill();
+          ctx.globalAlpha = 0.7; ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.5, s * 0.07);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        });
+      }
+      // active piece; fades slightly as the lock timer runs out
+      var fade = onGround() ? 1 - 0.3 * (lockTimer / LOCK_MS) : 1;
+      ctx.globalAlpha = fade;
+      cellsOf(piece).forEach(function(c){ if (c[1] >= HIDDEN) blit(COLORS[piece.type], c[0], c[1]); });
+      ctx.globalAlpha = 1;
+    }
+
+    // sparkles
+    particles.forEach(function(p){
+      var a = 1 - p.life / p.max;
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = p.life < 90 ? '#fff' : p.color;
+      ctx.beginPath();
+      ctx.arc(p.x * s, (p.y - HIDDEN) * s, p.r * s * (0.6 + a * 0.6), 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // floating words
+    popups.forEach(function(p){
+      if (p.t < 0) return;
+      var a = p.t < 900 ? 1 : Math.max(0, 1 - (p.t - 900) / 400);
+      var rise = Math.min(p.t / 1300, 1) * s * 1.6;
+      var cy = Math.min(Math.max((p.y - HIDDEN + .5) * s, s * 2), H - s * 2) - rise;
+      var pop = REDUCED_MOTION ? 1 : Math.min(1, 0.6 + p.t / 250);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(W / 2, cy);
+      ctx.scale(pop, pop);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var fs = Math.round(s * (p.big ? 1.25 : 0.95));
+      ctx.font = '800 ' + fs + 'px "Baloo 2", system-ui, sans-serif';
+      ctx.lineWidth = Math.max(3, s * 0.18);
+      ctx.strokeStyle = 'rgba(11,16,36,.85)';
+      ctx.strokeText(p.text, 0, 0);
+      ctx.fillStyle = p.level ? '#6EE7C0' : (p.big ? '#FFD35C' : '#FFFFFF');
+      ctx.fillText(p.text, 0, 0);
+      if (p.sub){
+        ctx.font = '700 ' + Math.round(s * 0.6) + 'px "JetBrains Mono", monospace';
+        ctx.lineWidth = Math.max(2.5, s * 0.14);
+        ctx.strokeText(p.sub, 0, fs * 0.85);
+        ctx.fillStyle = '#FFB3CF';
+        ctx.fillText(p.sub, 0, fs * 0.85);
+      }
+      ctx.restore();
+    });
+  }
+
+  /* =====================================================================
+     Input. Sideways moves use our own auto-repeat (a short wait, then a
+     steady slide) so keyboard and touch buttons feel identical.
+     ===================================================================== */
+  var held = { left:false, right:false, down:false };
+  var dasDir = 0, dasTimer = 0, arrTimer = 0, softTimer = 0;
+
+  function resetInput(){
+    held.left = held.right = held.down = false;
+    dasDir = 0; dasTimer = 0; arrTimer = 0;
+    var b = pad.querySelectorAll('.down');
+    for (var i = 0; i < b.length; i++) b[i].classList.remove('down');
+  }
+
+  function press(act){
+    if (state === 'ready' || state === 'over'){
+      if (act === 'drop' || act === 'rotate') newGame();
+      return;
+    }
+    if (state === 'paused') return;
+    switch (act){
+      case 'left':  held.left = true;  dasDir = -1; dasTimer = 0; arrTimer = 0; tryMove(-1); break;
+      case 'right': held.right = true; dasDir = 1;  dasTimer = 0; arrTimer = 0; tryMove(1);  break;
+      case 'down':  if (!held.down){ held.down = true; softTimer = 0; softDrop(); } break;
+      case 'rotate': tryRotate(1); break;
+      case 'rotateBack': tryRotate(-1); break;
+      case 'drop': hardDrop(); break;
+      case 'hold': hold(); break;
+    }
+  }
+  function release(act){
+    if (act === 'left'){ held.left = false; if (dasDir === -1){ dasDir = held.right ? 1 : 0; dasTimer = 0; } }
+    else if (act === 'right'){ held.right = false; if (dasDir === 1){ dasDir = held.left ? -1 : 0; dasTimer = 0; } }
+    else if (act === 'down'){ held.down = false; }
+  }
+
+  var KEYMAP = {
+    ArrowLeft:'left', ArrowRight:'right', ArrowDown:'down',
+    ArrowUp:'rotate', KeyX:'rotate', KeyZ:'rotateBack', ControlLeft:'rotateBack', ControlRight:'rotateBack',
+    Space:'drop', KeyC:'hold', ShiftLeft:'hold', ShiftRight:'hold',
+    KeyA:'left', KeyD:'right', KeyS:'down', KeyW:'rotate'
+  };
+
+  document.addEventListener('keydown', function(e){
+    if (e.metaKey || e.altKey) return;
+    if (e.code === 'KeyP' || e.code === 'Escape'){
+      if (state === 'paused') resume(); else pause();
+      e.preventDefault(); return;
+    }
+    var act = KEYMAP[e.code];
+    if (!act) return;
+    var onButton = document.activeElement && document.activeElement.tagName === 'BUTTON';
+    if ((state === 'ready' || state === 'over' || state === 'paused') && onButton &&
+        (e.code === 'Space' || e.code === 'Enter')) return;       // let the button click
+    e.preventDefault();
+    if (e.repeat) return;                                          // we do our own repeat
+    press(act);
+  });
+  document.addEventListener('keyup', function(e){
+    var act = KEYMAP[e.code];
+    if (act) release(act);
+  });
+  window.addEventListener('blur', function(){ resetInput(); });
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) pause(); });
+
+  // on-screen pad
+  pad.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  Array.prototype.forEach.call(pad.querySelectorAll('button'), function(btn){
+    var act = btn.dataset.act;
+    btn.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      try{ btn.setPointerCapture(e.pointerId); } catch(err){}
+      btn.classList.add('down');
+      press(act);
+    });
+    function up(){ btn.classList.remove('down'); release(act); }
+    btn.addEventListener('pointerup', up);
+    btn.addEventListener('pointercancel', up);
+    btn.addEventListener('lostpointercapture', up);
+    btn.addEventListener('click', function(e){ e.preventDefault(); });
+  });
+
+  // gestures right on the board
+  var gesture = null;
+  board.addEventListener('pointerdown', function(e){
+    if (e.pointerType === 'mouse') return;
+    e.preventDefault();
+    try{ board.setPointerCapture(e.pointerId); } catch(err){}
+    gesture = { id:e.pointerId, sx:e.clientX, sy:e.clientY, ax:e.clientX, ay:e.clientY, t:performance.now(), moved:false };
+  });
+  board.addEventListener('pointermove', function(e){
+    if (!gesture || e.pointerId !== gesture.id || state !== 'playing') return;
+    var step = CELL * 0.9;
+    while (e.clientX - gesture.ax >= step){ tryMove(1); gesture.ax += step; gesture.moved = true; }
+    while (gesture.ax - e.clientX >= step){ tryMove(-1); gesture.ax -= step; gesture.moved = true; }
+    // a slow drag down eases the piece down; a flick is handled on release
+    var dt = performance.now() - gesture.t;
+    if (dt > 180){
+      while (e.clientY - gesture.ay >= CELL){ softDrop(); gesture.ay += CELL; gesture.moved = true; }
+    }
+  });
+  function endGesture(e){
+    if (!gesture || e.pointerId !== gesture.id) return;
+    var g = gesture; gesture = null;
+    var dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+    var dt = performance.now() - g.t;
+    if (state === 'ready' || state === 'over') return;
+    if (state !== 'playing') return;
+    if (dt < 260 && dy > CELL * 2 && Math.abs(dy) > Math.abs(dx) * 1.5){ hardDrop(); return; }
+    if (dt < 300 && dy < -CELL * 2 && Math.abs(dy) > Math.abs(dx) * 1.5){ hold(); return; }
+    if (!g.moved && Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 300){
+      // tap on the left third turns back, anywhere else turns forward
+      var r = board.getBoundingClientRect();
+      tryRotate(e.clientX - r.left < r.width / 3 ? -1 : 1);
+    }
+  }
+  board.addEventListener('pointerup', endGesture);
+  board.addEventListener('pointercancel', function(){ gesture = null; });
+
+  /* ---------- main loop ---------- */
+  var lastTime = performance.now();
+  function frame(now){
+    var dt = Math.min(now - lastTime, 100);
+    lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  function update(dt){
+    // effects keep moving whatever the state, except while paused
+    if (state !== 'paused'){
+      for (var i = particles.length - 1; i >= 0; i--){
+        var p = particles[i];
+        p.life += dt;
+        p.vy += 18 * dt / 1000;
+        p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000;
+        if (p.life > p.max) particles.splice(i, 1);
+      }
+      for (var j = popups.length - 1; j >= 0; j--){
+        popups[j].t += dt;
+        if (popups[j].t > 1300) popups.splice(j, 1);
+      }
+    }
+
+    if (state === 'clearing'){
+      clearTimer += dt;
+      if (clearTimer >= CLEAR_MS) finishClear();
+      return;
+    }
+    if (state !== 'playing' || !piece) return;
+
+    // sideways auto-repeat
+    if (dasDir){
+      dasTimer += dt;
+      if (dasTimer >= DAS){
+        arrTimer += dt;
+        while (arrTimer >= ARR){ arrTimer -= ARR; if (!tryMove(dasDir)) { arrTimer = 0; break; } }
+      }
+    }
+
+    // gravity (soft drop just makes it faster)
+    var g = gravityMs(level);
+    if (held.down && SOFT_MS < g){
+      softTimer += dt;
+      while (softTimer >= SOFT_MS){ softTimer -= SOFT_MS; softDrop(); }
+      fallTimer = 0;
+    } else {
+      fallTimer += dt;
+      while (fallTimer >= g){
+        fallTimer -= g;
+        if (!stepDown()){ fallTimer = 0; break; }
+      }
+    }
+
+    if (onGround()){
+      lockTimer += dt;
+      if (lockTimer >= LOCK_MS) lockPiece();
+    } else {
+      lockTimer = 0;
+    }
+  }
+
+  /* ---------- boot ---------- */
+  score = 0; lines = 0; level = MODES[mode].start; queue = [];
+  markMode(); updateHud();
+  window.addEventListener('resize', layout);
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(arena);
+  layout();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -21,6 +21,9 @@ games/sudoku/
 games/freecell/
   ├── index.html               空当接龙（自包含，单文件；随机发牌、整叠搬运、无限撤销）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/starfall-blocks/
+  ├── index.html               俄罗斯方块（自包含，单文件；三档速度、暂存、影子落点、键盘/触屏/手势）
+  └── cover.png                首页卡片 + 分享预览用的封面
 ```
 
 ## 上线前必须替换的三处
