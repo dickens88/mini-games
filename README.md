@@ -24,6 +24,9 @@ games/freecell/
 games/starfall-blocks/
   ├── index.html               俄罗斯方块（自包含，单文件；三档速度、暂存、影子落点、键盘/触屏/手势）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/potion-sort/
+  ├── index.html               倒水排序（自包含，单文件；200 关按关卡号固定生成且保证有解、星级、提示、撤销、神秘关）
+  └── cover.png                首页卡片 + 分享预览用的封面
 ```
 
 ## 上线前必须替换的三处
