@@ -472,7 +472,7 @@ function frame(now) {
   time += dt;
   const map = mapOf(state);
   scene.update(dt);
-  scene.relax(state, map, dt);
+  scene.relax(state, map, dt, busy);
   renderer.frame({ state, map, vis: scene.vis, time, dt, busy: busy || !playing });
   requestAnimationFrame(frame);
 }

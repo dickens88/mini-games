@@ -55,8 +55,10 @@ export function createScene() {
     for (const [pi, t] of layout(state, map)) vis.set(pi, fresh(t));
   }
 
-  // every frame: squash, spin and dizziness wear off; idle pawns drift to their resting places
-  function relax(state, map, dt) {
+  // every frame: squash, spin and dizziness wear off; idle pawns drift to their resting places.
+  // `hold` keeps pawns where they are while a turn is still playing out (e.g. during the dice
+  // roll) — the rules have already moved them, and drifting now would spoil the walk.
+  function relax(state, map, dt, hold) {
     const k = 1 - Math.pow(0.0001, dt);
     const spring = 1 - Math.pow(0.002, dt);
     for (const v of vis.values()) {
@@ -64,7 +66,7 @@ export function createScene() {
       v.sy += (1 - v.sy) * spring;
       if (v.dizzy > 0) v.dizzy = Math.max(0, v.dizzy - dt);
     }
-    if (tweens.length) return;
+    if (hold || tweens.length) return;
     for (const [pi, t] of layout(state, map)) {
       const v = vis.get(pi);
       if (!v) continue;
