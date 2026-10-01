@@ -49,8 +49,19 @@ games/garden-guard/
   ├── js/data/                 关卡 / 虫子 / 塔的数据（加新关卡从 levels/ 开始）
   ├── js/render/ js/ui/        画布绘制、精灵、粒子、建造/升级面板、弹窗
   └── cover.png                首页卡片 + 分享预览用的封面
+games/bubble-buddies/
+  ├── index.html               泡泡伙伴（泡泡龙；100 关按关卡号固定生成 + 无尽模式，彩虹/炸弹/闪电道具、礼物泡泡、连击；多文件 ES 模块，无需构建）
+  ├── style.css
+  ├── js/core/                 规则：蜂窝网格、弹墙轨迹、三消、掉落、天花板下压、计分（不碰页面，可在 node 里跑）
+  ├── js/data/levels.js        关卡生成：形状（爱心、吊链、小岛……）+ 上色方式（加新形状从这里开始）
+  ├── js/render/               晶莹剔透的玻璃泡泡和表情、发射器、小龙 Dino 的分层动画、粒子/横幅特效、四套背景
+  ├── img/dragon/              小龙 Dino 拆成的 7 个图层（身体、眼睛、爪子、脚），原图 "Cute dragon" by lzubiaur (Voodoo Cactus)，
+  │                            https://opengameart.org/content/cute-dragon-0 ，CC-BY 3.0（可商用，需署名；署名写在游戏的帮助页里）
+  ├── js/ui/                   顶部分数栏、菜单/选关/结算卡片
+  └── cover.png                首页卡片 + 分享预览用的封面
 tools/dice-quest-sim.mjs       骰子大冒险自检：node tools/dice-quest-sim.mjs 每张地图随机下上万局，检查地图布置、不卡死、存档能还原、离线缓存没漏文件
 tools/garden-guard-sim.mjs     花园守卫自检：node tools/garden-guard-sim.mjs 用自动玩家打每一关，检查能通关、波次难度合理
+tools/bubble-buddies-sim.mjs   泡泡伙伴自检：node tools/bubble-buddies-sim.mjs 机器人把 100 关各打几遍，检查关卡布置、不会卡死、存档能还原、离线缓存没漏文件，并打印每关用了几发 / 三星线
 ```
 
 ## 上线前必须替换的三处

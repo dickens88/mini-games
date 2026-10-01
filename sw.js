@@ -7,7 +7,7 @@
  * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v3';
+var VERSION = 'v5';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -60,7 +60,23 @@ var PRECACHE = [
   '/games/garden-guard/js/strings.js', '/games/garden-guard/js/ui/build-panel.js',
   '/games/garden-guard/js/ui/hud.js', '/games/garden-guard/js/ui/input.js',
   '/games/garden-guard/js/ui/modals.js', '/games/garden-guard/js/ui/tower-panel.js',
-  '/games/garden-guard/style.css'
+  '/games/garden-guard/style.css',
+  '/games/bubble-buddies/', '/games/bubble-buddies/cover.png',
+  '/games/bubble-buddies/js/audio.js', '/games/bubble-buddies/js/config.js',
+  '/games/bubble-buddies/js/core/game.js', '/games/bubble-buddies/js/core/grid.js',
+  '/games/bubble-buddies/js/core/match.js', '/games/bubble-buddies/js/core/rng.js',
+  '/games/bubble-buddies/js/core/shot.js', '/games/bubble-buddies/js/data/levels.js',
+  '/games/bubble-buddies/js/main.js', '/games/bubble-buddies/js/render/background.js',
+  '/games/bubble-buddies/js/render/buddy.js', '/games/bubble-buddies/js/render/fx.js',
+  '/games/bubble-buddies/js/render/dragon.js',
+  '/games/bubble-buddies/img/dragon/body.svg', '/games/bubble-buddies/img/dragon/shade.svg',
+  '/games/bubble-buddies/img/dragon/foot-l.svg', '/games/bubble-buddies/img/dragon/foot-r.svg',
+  '/games/bubble-buddies/img/dragon/paw-l.svg', '/games/bubble-buddies/img/dragon/paw-r.svg',
+  '/games/bubble-buddies/img/dragon/eyes.svg',
+  '/games/bubble-buddies/js/render/launcher.js', '/games/bubble-buddies/js/render/renderer.js',
+  '/games/bubble-buddies/js/save.js', '/games/bubble-buddies/js/ui/hud.js',
+  '/games/bubble-buddies/js/ui/overlay.js', '/games/bubble-buddies/js/ui/screens.js',
+  '/games/bubble-buddies/style.css'
 ];
 
 function isFont(url){
