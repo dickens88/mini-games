@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Garden Guard — cosy tower defense</title>
+<meta name="description" content="Hungry bugs are marching on the flower garden! Build pea pods and friends along the path, upgrade them, and keep every flower safe. Free tower defense, no sign-up.">
+<meta name="theme-color" content="#1E1233">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/garden-guard/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Garden Guard — cosy tower defense">
+<meta property="og:description" content="Build pea pods and friends along the garden path and stop the hungry bugs before they reach the flowers.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/garden-guard/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/garden-guard/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+</nav>
+
+<div id="stars" aria-hidden="true"></div>
+
+<div class="page">
+  <header class="hero">
+    <h1>Garden Guard</h1>
+    <p>Hungry bugs are marching on the flower garden! Build towers along the path, upgrade them, and keep every flower safe.</p>
+  </header>
+
+  <div class="hud">
+    <span class="pill level-pill" id="levelOut">Carrot Lane</span>
+    <span class="grow"></span>
+    <span class="pill stat lives" title="Flowers left"><span class="ico" aria-hidden="true">✿</span><b id="livesOut">20</b></span>
+    <span class="pill stat gold" title="Gold"><span class="ico" aria-hidden="true">●</span><b id="goldOut">0</b></span>
+    <span class="pill stat wave" title="Wave">Wave <b id="waveOut">0/0</b></span>
+    <button class="icon-btn" id="speedBtn" type="button" aria-label="Game speed" title="Speed (F)"><b id="speedOut">×1</b></button>
+    <button class="icon-btn" id="pauseBtn" type="button" aria-label="Pause" aria-pressed="false" title="Pause (P)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg>
+    </button>
+    <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true" title="Sound">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <div class="board-wrap" id="wrap">
+    <canvas id="board" tabindex="0" aria-label="Garden map. Tap an empty garden plot to plant a tower, or tap a tower to upgrade it."></canvas>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="overlay" id="overlay" hidden>
+      <h2 id="ovTitle"></h2>
+      <div class="big-stars" id="ovStars" hidden><span>★</span><span>★</span><span>★</span></div>
+      <div class="how" id="ovHow" hidden></div>
+      <p id="ovMsg"></p>
+      <div class="btn-row">
+        <button class="cta" id="ovBtn" type="button"></button>
+        <button class="cta ghost" id="ovBtn2" type="button" hidden></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="wave-btn" id="waveBtn" type="button">
+      <span class="wave-top"><b id="waveBtnLabel">Start</b><small id="waveBtnSub"></small></span>
+      <span class="wave-preview" id="wavePreview"></span>
+    </button>
+    <div class="panel" id="panel" aria-live="polite"></div>
+  </div>
+
+  <div class="keys-help">
+    <span><kbd>1</kbd>–<kbd>6</kbd> build on the chosen pad</span>
+    <span><kbd>Space</kbd> next wave</span>
+    <span><kbd>U</kbd> upgrade</span>
+    <span><kbd>S</kbd> sell</span>
+    <span><kbd>T</kbd> target</span>
+    <span><kbd>F</kbd> speed</span>
+    <span><kbd>P</kbd> pause</span>
+    <span><kbd>Esc</kbd> close</span>
+  </div>
+  <p class="touch-help">Tip: tap a tower again to close its panel. Turn the phone sideways for a bigger garden.</p>
+</div>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
+</body>
+</html>
