@@ -32,6 +32,17 @@ games/potion-sort/
 games/pop-pals-2048/
   ├── index.html               2048（自包含，单文件；萌系小伙伴方块、合成特效/连击/彩带、小伙伴图鉴、无限撤销、自动存档）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/dice-quest/
+  ├── index.html               骰子大冒险（2–4 人同屏；同一起点赛跑到终点，三张地图：丛林 / 海盗海 / 太空；多文件 ES 模块，无需构建）
+  ├── style.css
+  ├── js/core/                 规则：路线、梯子/滑道/传送门/陷阱等格子、撞人、道具、回合（不碰页面，可在 node 里跑）
+  ├── js/data/maps/            三张地图的数据：路线形状、每个格子是什么（加新地图从这里开始）
+  ├── js/data/items.js         道具清单
+  ├── js/render/themes/        三张地图各自的画风
+  ├── js/render/ js/ui/        画布绘制、动画、骰子、玩家面板、开局/结算界面
+  ├── img/avatars/             小动物头像（来自 https://ipaslogo.com/ ，可免费商用；项目 MIT 许可）
+  └── cover.png                首页卡片 + 分享预览用的封面
+tools/dice-quest-sim.mjs       骰子大冒险自检：node tools/dice-quest-sim.mjs 每张地图随机下上万局，检查地图布置、不卡死、存档能还原、离线缓存没漏文件
 ```
 
 ## 上线前必须替换的三处

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dice Quest — a race-to-the-finish board game for 2–4 players</title>
+<meta name="description" content="Roll the dice and race your friends to the finish across three wild maps — a jungle full of vines and snakes, pirate seas with sharks and whirlpools, and outer space with rockets and black holes. Free board game for 2–4 players on one screen.">
+<meta name="theme-color" content="#2F8A57">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/dice-quest/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Dice Quest — race to the finish">
+<meta property="og:description" content="Ladders, portals, traps and sneaky items on three themed maps. A party board game for 2–4 players on one screen.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/dice-quest/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/dice-quest/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="preload" as="image" href="img/avatars/rabbit.webp">
+<link rel="preload" as="image" href="img/avatars/tiger.webp">
+<link rel="preload" as="image" href="img/avatars/fox.webp">
+<link rel="preload" as="image" href="img/avatars/redpanda.webp">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+  <span class="grow"></span>
+  <button class="icon-btn" id="helpBtn" type="button" aria-label="How to play" title="How to play (H)"><b>?</b></button>
+  <button class="icon-btn" id="newBtn" type="button" aria-label="New game" title="New game">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4.5V8h-3.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true" title="Sound">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+</nav>
+
+
+<div class="page">
+  <header class="hero">
+    <h1>Dice Quest</h1>
+    <p>Everyone starts together — first to the finish wins! Climb, slide, warp and bump your way there.</p>
+  </header>
+
+  <div class="players" id="players" aria-live="polite"></div>
+
+  <div class="board-wrap">
+    <canvas id="board" aria-label="Game board: a winding trail from the start to the finish, with ladders, slides, portals and traps along the way."></canvas>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="overlay" id="overlay" hidden><div class="card"></div></div>
+  </div>
+
+  <div class="dock" id="dock">
+    <div class="dice-pair">
+      <button class="dice" id="dice" type="button" aria-label="Roll the dice" title="Roll (Space)"><span class="face"></span></button>
+      <span class="dice die2" id="dice2" hidden aria-hidden="true"><span class="face"></span></span>
+    </div>
+    <div class="dock-mid">
+      <p class="msg" id="msg" aria-live="polite"></p>
+      <p class="sub" id="sub"></p>
+      <div class="items" id="items" hidden></div>
+    </div>
+  </div>
+
+  <div class="keys-help">
+    <span><kbd>Space</kbd> roll</span>
+    <span><kbd>Q</kbd> <kbd>W</kbd> use item</span>
+    <span><kbd>H</kbd> help</span>
+  </div>
+  <p class="touch-help">Pass the phone or tablet around — everyone plays on the same screen.</p>
+</div>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
+</body>
+</html>
