@@ -3,10 +3,11 @@
  * After one online visit, every page, cover and font is kept in the browser,
  * so the whole site opens and plays with no network at all.
  *
- * Adding a new game: add its two files to PRECACHE below and bump VERSION.
+ * Adding a new game: add its page and cover (and, for a multi-file game, every
+ * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v1';
+var VERSION = 'v2';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -21,7 +22,27 @@ var PRECACHE = [
   '/games/freecell/',        '/games/freecell/cover.png',
   '/games/starfall-blocks/', '/games/starfall-blocks/cover.png',
   '/games/potion-sort/',     '/games/potion-sort/cover.png',
-  '/games/pop-pals-2048/',   '/games/pop-pals-2048/cover.png'
+  '/games/pop-pals-2048/',   '/games/pop-pals-2048/cover.png',
+  '/games/dice-quest/',      '/games/dice-quest/cover.png',
+  '/games/dice-quest/js/render/avatars.js', '/games/dice-quest/img/avatars/rabbit.webp',
+  '/games/dice-quest/img/avatars/tiger.webp', '/games/dice-quest/img/avatars/fox.webp',
+  '/games/dice-quest/img/avatars/redpanda.webp', '/games/dice-quest/img/avatars/panda.webp',
+  '/games/dice-quest/js/audio.js', '/games/dice-quest/js/config.js',
+  '/games/dice-quest/js/core/events.js', '/games/dice-quest/js/core/items.js',
+  '/games/dice-quest/js/core/map.js', '/games/dice-quest/js/core/rng.js',
+  '/games/dice-quest/js/core/rules.js', '/games/dice-quest/js/core/state.js',
+  '/games/dice-quest/js/core/turn.js', '/games/dice-quest/js/data/items.js',
+  '/games/dice-quest/js/data/maps/index.js', '/games/dice-quest/js/data/maps/jungle.js',
+  '/games/dice-quest/js/data/maps/sea.js', '/games/dice-quest/js/data/maps/space.js',
+  '/games/dice-quest/js/main.js', '/games/dice-quest/js/render/anim.js',
+  '/games/dice-quest/js/render/board-art.js', '/games/dice-quest/js/render/kit.js',
+  '/games/dice-quest/js/render/renderer.js', '/games/dice-quest/js/render/themes/index.js',
+  '/games/dice-quest/js/render/themes/jungle.js', '/games/dice-quest/js/render/themes/sea.js',
+  '/games/dice-quest/js/render/themes/space.js', '/games/dice-quest/js/save.js',
+  '/games/dice-quest/js/strings.js', '/games/dice-quest/js/ui/dice.js',
+  '/games/dice-quest/js/ui/hud.js', '/games/dice-quest/js/ui/input.js',
+  '/games/dice-quest/js/ui/overlay.js', '/games/dice-quest/js/ui/screens.js',
+  '/games/dice-quest/style.css'
 ];
 
 function isFont(url){
