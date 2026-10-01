@@ -7,6 +7,8 @@
 <meta name="description" content="The classic falling-block puzzle, made cosy: turn and slide the pieces, fill a whole row and watch it sparkle away. Hold, ghost piece, three speeds, works with keys or touch. Free, no sign-up.">
 <meta name="theme-color" content="#141B33">
 <link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
 <link rel="canonical" href="https://games.dearcharles.cn/games/starfall-blocks/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Starfall Blocks — classic falling-block puzzle">
@@ -1211,5 +1213,6 @@
   requestAnimationFrame(frame);
 })();
 </script>
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
 </body>
 </html>

@@ -7,6 +7,8 @@
 <meta name="description" content="Slide the pals around the board. When two matching pals bump into each other — pop! — they join into a bigger pal. Grow all the way to the Star King at 2048. Free, no sign-up.">
 <meta name="theme-color" content="#1E1233">
 <link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
 <link rel="canonical" href="https://games.dearcharles.cn/games/pop-pals-2048/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Pop Pals 2048 — the cutest number merge puzzle">
@@ -1271,5 +1273,6 @@
   else if (over) showOver();
 })();
 </script>
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
 </body>
 </html>

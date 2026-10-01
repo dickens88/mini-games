@@ -1,0 +1,13 @@
+{
+  "name": "Mini Games",
+  "short_name": "Mini Games",
+  "description": "Free little games to play right now — even with no internet.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3F7FA",
+  "theme_color": "#F3F7FA",
+  "icons": [
+    { "src": "/assets/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -7,6 +7,8 @@
 <meta name="description" content="Classic 9×9 sudoku, made cosy: four difficulties, pencil notes, hints and undo. Every puzzle is freshly made and has exactly one answer. Free, no sign-up.">
 <meta name="theme-color" content="#16213B">
 <link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
 <link rel="canonical" href="https://games.dearcharles.cn/games/sudoku/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Lantern Sudoku — classic sudoku with four difficulties">
@@ -1996,5 +1998,6 @@
 })();
 </script>
 
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
 </body>
 </html>
