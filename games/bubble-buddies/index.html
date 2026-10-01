@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bubble Buddies — a cute bubble shooter with 100 levels</title>
+<meta name="description" content="Aim, shoot and pop! Match three or more bubble buddies of the same colour, drop whole bunches at once and power up with rainbows, bombs and lightning. 100 free levels plus an endless mode.">
+<meta name="theme-color" content="#7CC8FF">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/bubble-buddies/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bubble Buddies — pop the cutest bubbles">
+<meta property="og:description" content="A cosy bubble shooter: match three, drop whole bunches, and power up with rainbows, bombs and lightning. 100 levels plus endless.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/bubble-buddies/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/bubble-buddies/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+  <span class="grow"></span>
+  <button class="icon-btn" id="helpBtn" type="button" aria-label="How to play" title="How to play (H)"><b>?</b></button>
+  <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu and levels" title="Menu (Esc)">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2" fill="currentColor"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2" fill="currentColor"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2" fill="currentColor"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2" fill="currentColor"/></svg>
+  </button>
+  <button class="icon-btn" id="newBtn" type="button" aria-label="Restart" title="Restart">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95M19 4.5V8h-3.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true" title="Sound">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+</nav>
+
+<div class="page">
+  <header class="hero">
+    <h1>Bubble Buddies</h1>
+  </header>
+
+  <div class="hud" id="hud" aria-live="polite">
+    <span class="pill where" data-hud="where">Level 1</span>
+    <span class="pill score"><b data-hud="score">0</b></span>
+    <span class="pill goal" data-hud="goal"></span>
+  </div>
+
+  <div class="board-wrap">
+    <canvas id="board" aria-label="Bubble board: rows of coloured bubble buddies hang from the top; the launcher at the bottom shoots one bubble at a time."></canvas>
+    <div class="overlay" id="overlay" hidden><div class="card"></div></div>
+  </div>
+
+  <div class="keys-help">
+    <span><kbd>←</kbd> <kbd>→</kbd> or mouse to aim</span>
+    <span><kbd>Space</kbd> / click shoot</span>
+    <span><kbd>S</kbd> swap</span>
+    <span><kbd>H</kbd> help</span>
+  </div>
+  <p class="touch-help">Drag to aim, let go to shoot. Tap Dino to swap bubbles.</p>
+</div>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
+</body>
+</html>
