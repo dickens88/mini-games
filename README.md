@@ -27,6 +27,9 @@ games/starfall-blocks/
 games/potion-sort/
   ├── index.html               倒水排序（自包含，单文件；200 关按关卡号固定生成且保证有解、星级、提示、撤销、神秘关）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/pop-pals-2048/
+  ├── index.html               2048（自包含，单文件；萌系小伙伴方块、合成特效/连击/彩带、小伙伴图鉴、无限撤销、自动存档）
+  └── cover.png                首页卡片 + 分享预览用的封面
 ```
 
 ## 上线前必须替换的三处
