@@ -47,7 +47,7 @@ export function createHud(els, on) {
 
     if (!busy && !over) {
       els.msg.textContent = again ? S.rollAgain(pl.name) : S.rollPrompt(pl.name);
-      els.sub.textContent = state.double ? S.armedDouble : state.golden ? S.armedGolden(state.golden) : usable.some(Boolean) ? S.itemHint : '';
+      els.sub.textContent = state.double ? S.armedDouble : state.golden ? S.armedGolden(state.golden) : state.remote ? S.armedRemote(state.remote) : usable.some(Boolean) ? S.itemHint : '';
     }
     if (over) { els.msg.textContent = ''; els.sub.textContent = ''; }
 

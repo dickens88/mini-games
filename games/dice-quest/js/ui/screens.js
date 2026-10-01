@@ -110,7 +110,7 @@ export function helpScreen(overlay, mapDef, onClose) {
   card => card.querySelector('[data-act="close"]').addEventListener('click', onClose), onClose);
 }
 
-// who to aim a Swap / Freeze at, or which face to roll with the Golden die
+// who to aim a Swap / Freeze at, or which face to roll with the Golden / Remote die
 export function targetScreen(overlay, state, itemId, choices, { onPick, onCancel }) {
   const it = ITEM_BY_ID[itemId];
   const number = it.target === 'number';
@@ -121,7 +121,7 @@ export function targetScreen(overlay, state, itemId, choices, { onPick, onCancel
       return `<button type="button" class="target" data-pick="${qi}" style="${seatStyle(q.seat)}"><span class="face">${avatarHtml(q.avatar)}</span><b>${esc(q.name)}</b><small>cell ${q.pos}${q.shield ? ' · 🛡️' : ''}</small></button>`;
     }).join('')}</div>`;
   overlay.show(`
-    <h2>${it.icon} ${number ? S.pickNumber : S.pickPlayer(it.name)}</h2>
+    <h2>${it.icon} ${number ? S.pickNumber(it.name) : S.pickPlayer(it.name)}</h2>
     ${body}
     <div class="btn-row"><button class="cta ghost" type="button" data-act="cancel">${S.cancel}</button></div>`, card => {
     card.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => onPick(Number(b.dataset.pick))));

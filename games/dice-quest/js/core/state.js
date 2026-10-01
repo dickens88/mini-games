@@ -29,6 +29,7 @@ export function createState({ map = 'jungle', players = [], seed }) {
     dice: [],          // the last roll
     double: false,     // Double dice is armed for this roll
     golden: 0,         // Golden die: the chosen face
+    remote: 0,         // Remote die: the chosen face (a 6 still rolls again)
     extra: false,      // something earned another roll
     bananas: [],
     ranks: [],         // player indexes in finishing order

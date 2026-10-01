@@ -40,6 +40,9 @@ export function createDice(btn, { onTick } = {}) {
     await sleep(REDUCED_MOTION ? 80 : 260);
   }
 
+  // drop `landed` once its bounce is done, so the idle spin can take over
+  btn.addEventListener('animationend', e => { if (e.animationName === 'land') btn.classList.remove('landed'); });
+
   show(6);
   return { show, roll };
 }

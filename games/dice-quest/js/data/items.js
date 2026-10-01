@@ -9,6 +9,7 @@ export const ITEMS = [
   { id: 'shield', name: 'Shield',      icon: '🛡️', weight: 4, boost: false, desc: 'Blocks the next bad thing that happens to you.' },
   { id: 'swap',   name: 'Swap',        icon: '🔄', weight: 3, boost: true,  desc: 'Trade places with any player.', target: 'player' },
   { id: 'freeze', name: 'Freeze',      icon: '❄️', weight: 4, boost: false, desc: 'A player of your choice misses their next turn.', target: 'player' },
+  { id: 'remote', name: 'Remote die',  icon: '📡', weight: 1, boost: false, desc: 'Rare! Pick your next roll — a 6 still rolls again.', target: 'number' },
   { id: 'banana', name: 'Banana',      icon: '🍌', weight: 4, boost: false, desc: 'Drop a banana where you stand. Whoever stops on it slides back 3.' }
 ];
 

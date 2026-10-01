@@ -11,9 +11,10 @@ const d6 = state => 1 + Math.floor(nextRandom(state) * 6);
 export function roll(state) {
   if (state.phase !== 'roll') return false;
   const pi = state.turn, pl = current(state), goal = mapOf(state).goal;
-  const golden = state.golden;
-  const dice = golden ? [golden] : state.double ? [d6(state), d6(state)] : [d6(state)];
+  const golden = state.golden, remote = state.remote;
+  const dice = golden ? [golden] : remote ? [remote] : state.double ? [d6(state), d6(state)] : [d6(state)];
   state.golden = 0;
+  state.remote = 0;
   state.double = false;
   state.dice = dice;
   emit(state, 'roll', { pi, dice, golden: !!golden });

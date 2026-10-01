@@ -1,5 +1,5 @@
 // Using items. Every item is used before rolling; some need a target
-// (a player, or a die face for the Golden die).
+// (a player, or a die face for the Golden die and the Remote die).
 
 import { MAX_BANANAS } from '../config.js';
 import { current, mapOf, shielded, swapPlaces } from './rules.js';
@@ -13,13 +13,18 @@ export function targets(state) {
 
 const EFFECTS = {
   double: {
-    can: s => !s.double && !s.golden,
+    can: s => !s.double && !s.golden && !s.remote,
     use: s => { s.double = true; }
   },
   golden: {
-    can: s => !s.double && !s.golden,
+    can: s => !s.double && !s.golden && !s.remote,
     ok: (s, n) => Number.isInteger(n) && n >= 1 && n <= 6,
     use: (s, n) => { s.golden = n; }
+  },
+  remote: {
+    can: s => !s.double && !s.golden && !s.remote,
+    ok: (s, n) => Number.isInteger(n) && n >= 1 && n <= 6,
+    use: (s, n) => { s.remote = n; }
   },
   shield: {
     can: s => !current(s).shield,
