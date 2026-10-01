@@ -51,6 +51,11 @@ export const sfx = {
   sell: () => { tone(988, 0.07, 'sine', 0.08); tone(1319, 0.12, 'sine', 0.08, 0.07); },
   wave: () => { tone(392, 0.18, 'square', 0.04); tone(523, 0.26, 'square', 0.04, 0.16); },
   bad: () => tone(210, 0.14, 'triangle', 0.1, 0, 150),
+  coin: throttled('coin', 120, () => { tone(1175, 0.06, 'sine', 0.05); tone(1568, 0.1, 'sine', 0.05, 0.05); }),
+  power: kind => {
+    if (kind === 'rain') [784, 659, 523, 440].forEach((f, i) => tone(f, 0.16, 'sine', 0.07, i * 0.07));
+    else for (let i = 0; i < 6; i++) tone(180 + i * 20, 0.09, 'sawtooth', 0.025, i * 0.05, 240 + i * 20);
+  },
   click: () => tone(620, 0.06, 'sine', 0.06, 0, 820),
   win: () => {
     [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'triangle', 0.11, i * 0.1));

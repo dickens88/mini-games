@@ -5,8 +5,8 @@ import { ENEMIES } from '../data/registry.js';
 import { emit } from './events.js';
 import { pointAt } from './path.js';
 
-function hpScale(state, waveNo) {
-  return (1 + 0.1 * (waveNo - 1)) * (state.level.hpMul || 1);
+export function hpScale(state, waveNo = state.waveIdx) {
+  return (1 + 0.1 * Math.max(0, waveNo - 1)) * (state.level.hpMul || 1);
 }
 
 export function spawnEnemy(state, type, pathIdx, d = 0, waveNo = state.waveIdx) {

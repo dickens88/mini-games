@@ -1,4 +1,5 @@
-// The overlay on top of the board (help, pause, win, lose, resume) and the toast.
+// The overlay on top of the board (help, pause, win, lose, resume, the level
+// map, "new bug!" cards) and the toast.
 
 import { S } from '../strings.js';
 
@@ -16,7 +17,7 @@ export function closeButton(onClick) {
 
 export function createOverlay() {
   const el = {
-    root: $('overlay'), title: $('ovTitle'), stars: $('ovStars'), how: $('ovHow'),
+    root: $('overlay'), title: $('ovTitle'), stars: $('ovStars'), how: $('ovHow'), pic: $('ovPic'), levels: $('ovLevels'),
     msg: $('ovMsg'), btn: $('ovBtn'), btn2: $('ovBtn2'), toast: $('toast')
   };
   let handlers = {}, kind = null, toastTimer = 0;
@@ -38,13 +39,21 @@ export function createOverlay() {
         d.innerHTML = `<b>${i + 1}</b>${text}`;
         el.how.append(d);
       });
+      el.pic.hidden = !opts.pic;
+      el.pic.textContent = '';
+      if (opts.pic) el.pic.append(opts.pic);
+      el.levels.hidden = !opts.levels;
+      el.levels.textContent = '';
+      if (opts.levels) el.levels.append(levelMap(opts.levels, opts.onPick));
+      el.root.classList.toggle('tall', !!opts.levels);
       el.stars.hidden = opts.stars === undefined;
       [...el.stars.children].forEach((s, i) => s.classList.toggle('on', i < (opts.stars || 0)));
       el.btn.textContent = opts.btn;
       el.btn2.hidden = !opts.btn2;
       el.btn2.textContent = opts.btn2 || '';
       el.root.hidden = false;
-      el.btn.focus({ preventScroll: true });
+      const current = opts.levels && el.levels.querySelector('.current');
+      (current || el.btn).focus({ preventScroll: true });
     },
     hide() { el.root.hidden = true; kind = null; handlers = {}; },
     toast(msg, ms = 1600) {
@@ -54,4 +63,38 @@ export function createOverlay() {
       toastTimer = setTimeout(() => el.toast.classList.remove('show'), ms);
     }
   };
+}
+
+const LOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+
+// chapters of level buttons, each with its best stars; locked ones can't be picked
+function levelMap(levels, onPick) {
+  const frag = document.createDocumentFragment();
+  const chapters = [...new Set(levels.map(l => l.chapter))];
+  for (const ch of chapters) {
+    const sec = document.createElement('section');
+    const h = document.createElement('h3');
+    h.textContent = `${ch}. ${S.chapters[ch] || ''}`;
+    const row = document.createElement('div');
+    row.className = 'level-row';
+    for (const l of levels.filter(x => x.chapter === ch)) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'level-card' + (l.current ? ' current' : '') + (l.theme ? ' ' + l.theme : '');
+      b.disabled = l.locked;
+      b.setAttribute('aria-label', S.levelLabel(l.name, l.stars, l.locked));
+      if (l.locked) b.title = S.locked;
+      const num = document.createElement('b');
+      if (l.locked) num.innerHTML = LOCK; else num.textContent = l.id;
+      const name = document.createElement('span'); name.textContent = l.name;
+      const stars = document.createElement('i');
+      stars.innerHTML = [0, 1, 2].map(k => `<em class="${k < l.stars ? 'on' : ''}">★</em>`).join('');
+      b.append(num, name, stars);
+      b.addEventListener('click', () => onPick(l.id));
+      row.append(b);
+    }
+    sec.append(h, row);
+    frag.append(sec);
+  }
+  return frag;
 }

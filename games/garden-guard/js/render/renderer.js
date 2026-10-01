@@ -8,15 +8,16 @@
 // driven by the events the simulation emits.
 
 import { COLS, ROWS, START_LIVES, WAVE_GAP } from '../config.js';
-import { ENEMIES, TOWERS } from '../data/registry.js';
+import { ENEMIES, TOWERS, POWERS } from '../data/registry.js';
 import { readGrid, pointAt } from '../core/path.js';
 import { towerStats } from '../core/towers.js';
-import { TAU, INK, FLOWER_COLORS, roundRect, ink, ellipse, circle, softShadow, toon } from './kit.js';
+import { TAU, INK, FLOWER_COLORS, roundRect, ink, ellipse, circle, softShadow, toon, hash } from './kit.js';
 import { ease, progress, turnTowards, clamp01 } from './anim.js';
 import { paintMap } from './background.js';
 import { createAmbient } from './ambient.js';
 import { TOWER_SPRITES, PROJECTILE_SPRITES } from './sprites/tower-sprites.js';
 import { ENEMY_SPRITES } from './sprites/enemy-sprites.js';
+import { drawCloud, drawBee } from './sprites/power-sprites.js';
 import { createParticles } from './particles.js';
 
 const FONT = "'Baloo 2', system-ui, sans-serif";
@@ -25,6 +26,15 @@ const BUILD_TIME = 0.55;
 const UPGRADE_TIME = 0.6;
 const DEATH_TIME = 0.7;
 const COIN_TIME = 0.75;
+const FLY = 0.35;       // how high flyers float above the road
+
+// sparks for each tower's hits
+const HIT_COLORS = {
+  pea: ['#B5EE8A', '#6CC447', '#FFFFFF'],
+  melon: ['#FF6B6B', '#7FD45A', '#FFE0E0'],
+  mint: ['#CFF4FF', '#8CCDE8', '#FFFFFF'],
+  cactus: ['#F3E2A8', '#FFFFFF']
+};
 
 export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
   const g = canvas.getContext('2d');
@@ -119,15 +129,28 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
     const pulse = reducedMotion ? 0.5 : 0.5 + Math.sin(now * 5.5) * 0.5;
     if (view.selTower) {
       const t = state.towers.find(x => x.uid === view.selTower);
-      if (t) drawRange(t.x, t.y, towerStats(t).range);
+      const range = t && towerStats(t).range;
+      if (range) drawRange(t.x, t.y, range);
     }
     if (view.selPad !== null && view.selPad !== undefined) {
       const pad = state.pads[view.selPad];
-      if (view.preview) drawRange(pad.c + 0.5, pad.r + 0.5, TOWERS[view.preview].levels[0].range);
+      const range = view.preview && TOWERS[view.preview].levels[0].range;
+      if (range) drawRange(pad.c + 0.5, pad.r + 0.5, range);
       g.strokeStyle = `rgba(255,224,120,${0.7 + pulse * 0.3})`;
       g.lineWidth = 0.07;
       ellipse(g, pad.c + 0.5, pad.r + 0.5, 0.45 + pulse * 0.03, 0.29 + pulse * 0.02);
       g.stroke();
+    }
+    if (view.aim && view.hover) {   // where a power will land
+      const r = POWERS[view.aim].radius, { x, y } = view.hover;
+      g.fillStyle = view.aim === 'rain' ? 'rgba(120,190,255,.22)' : 'rgba(255,211,92,.22)';
+      g.strokeStyle = view.aim === 'rain' ? 'rgba(200,230,255,.95)' : 'rgba(255,230,140,.95)';
+      g.lineWidth = 0.05;
+      g.setLineDash([0.18, 0.1]);
+      g.lineDashOffset = -now * 0.6;
+      circle(g, x, y, r); g.fill(); g.stroke();
+      g.setLineDash([]);
+      g.lineDashOffset = 0;
     }
     if (view.cursor) {
       g.strokeStyle = 'rgba(255,255,255,.85)';
@@ -190,8 +213,13 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
     const c = Math.cos(e.dir);
     if (Math.abs(c) > 0.3) v.face = c < 0 ? -1 : 1;
     const born = progress(now, v.bornAt, 0.35);
-    const gy = e.y + GROUND - (e.flying ? 0.35 : 0);
+    const hop = e.hop < 0 ? 1 + e.hop / 0.35 : null;   // grasshopper mid-leap, 0..1
+    const gy = e.y + GROUND - (e.flying ? FLY + Math.sin(now * 3 + e.uid) * 0.04 : 0) - (hop !== null ? Math.sin(hop * Math.PI) * 0.45 : 0);
     softShadow(g, e.x, e.y + GROUND + 0.02, s * 1.2 * born, s * 0.34 * born, e.flying ? 0.18 : 0.3);
+    if (e.fx.frost || e.fx.rain) {   // a cold puddle under slowed bugs
+      g.fillStyle = e.fx.frost ? 'rgba(190,240,255,.55)' : 'rgba(120,180,255,.4)';
+      ellipse(g, e.x, e.y + GROUND + 0.02, s * 1.5, s * 0.45); g.fill();
+    }
     const walk = reducedMotion ? 0 : e.d * 9 + e.uid;
     const draw = ENEMY_SPRITES[e.type];
     const hitP = progress(now, v.hitAt, 0.18);
@@ -200,10 +228,18 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
       const k = ease.outBack(born);
       g.translate(e.x, gy); g.scale(k, k); g.translate(-e.x, -gy);
     }
-    if (draw) draw(g, e.x, gy, v.face, s, walk, { now, seed: e.uid, squash: hitP < 1 ? 1 - hitP : 0 });
+    if (draw) draw(g, e.x, gy, v.face, s, walk, { now, seed: e.uid, squash: hitP < 1 ? 1 - hitP : 0, hide: !!e.fx.shell, hop });
     g.restore();
+    if (e.fx.frost && !reducedMotion) {   // frost sparkles circling
+      g.fillStyle = 'rgba(235,250,255,.95)';
+      for (let k = 0; k < 3; k++) {
+        const a = now * 2.5 + k * TAU / 3 + e.uid;
+        const px = e.x + Math.cos(a) * s * 1.3, py = gy - s * 0.8 + Math.sin(a) * s * 0.5;
+        g.beginPath(); g.moveTo(px, py - 0.04); g.lineTo(px + 0.025, py); g.lineTo(px, py + 0.04); g.lineTo(px - 0.025, py); g.fill();
+      }
+    }
     if (e.hp < e.maxHp) {
-      const w = Math.max(0.42, s * 2.2), x = e.x - w / 2, y = gy - s * 2.45;
+      const w = Math.max(0.42, s * 2.2) * (def.boss ? 1.6 : 1), x = e.x - w / 2, y = gy - s * (def.boss ? 2.2 : 2.45);
       roundRect(g, x - 0.025, y - 0.025, w + 0.05, 0.11, 0.05);
       g.fillStyle = INK; g.fill();
       const k = Math.max(0, e.hp / e.maxHp);
@@ -258,6 +294,56 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
     for (const p of state.projectiles) {
       const draw = PROJECTILE_SPRITES[p.look];
       if (draw) draw(g, p);
+    }
+  }
+
+  /* ---------- powers on the map ---------- */
+  // on the ground: a wet patch or a buzzing area
+  function drawZonesGround() {
+    for (const z of state.zones) {
+      const k = Math.min(1, (z.dur - z.t) / 0.3, z.t / 0.4);
+      if (z.kind === 'rain') {
+        g.fillStyle = `rgba(110,170,255,${0.28 * k})`;
+        ellipse(g, z.x, z.y + 0.1, z.r, z.r * 0.62); g.fill();
+        g.strokeStyle = `rgba(220,240,255,${0.5 * k})`; g.lineWidth = 0.03;
+        for (let i = 0; i < 4; i++) {   // ripples
+          const p = (now * 0.9 + i / 4) % 1;
+          const px = z.x + (hash(z.uid, i) - 0.5) * z.r * 1.2, py = z.y + 0.1 + (hash(i, z.uid) - 0.5) * z.r * 0.7;
+          ellipse(g, px, py, 0.05 + p * 0.22, (0.05 + p * 0.22) * 0.45);
+          g.globalAlpha = 1 - p; g.stroke(); g.globalAlpha = 1;
+        }
+      } else {
+        g.strokeStyle = `rgba(255,220,100,${0.6 * k})`; g.lineWidth = 0.04;
+        g.setLineDash([0.1, 0.12]);
+        circle(g, z.x, z.y, z.r); g.stroke();
+        g.setLineDash([]);
+      }
+    }
+  }
+
+  // in the air: the rain cloud and its drops, or the swarm of bees
+  function drawZonesSky() {
+    for (const z of state.zones) {
+      const k = Math.min(1, (z.dur - z.t) / 0.3, z.t / 0.4);
+      g.globalAlpha = k;
+      if (z.kind === 'rain') {
+        const cy = z.y - 1.15;
+        g.strokeStyle = 'rgba(170,210,255,.85)'; g.lineWidth = 0.03; g.lineCap = 'round';
+        for (let i = 0; i < 16; i++) {
+          const p = (now * 1.8 + hash(i, z.uid)) % 1;
+          const px = z.x + (hash(z.uid, i) - 0.5) * z.r * 1.4, py = cy + 0.2 + p * 1.1;
+          g.beginPath(); g.moveTo(px, py); g.lineTo(px - 0.02, py + 0.12); g.stroke();
+        }
+        drawCloud(g, z.x, cy);
+      } else {
+        for (let i = 0; i < 11; i++) {
+          const a = now * (2.2 + hash(i, 7) * 1.5) * (i % 2 ? 1 : -1) + i * 2.1;
+          const rr = z.r * (0.25 + hash(z.uid, i) * 0.7);
+          const bx = z.x + Math.cos(a) * rr, by = z.y - 0.35 + Math.sin(a * 1.3) * rr * 0.5;
+          drawBee(g, bx, by, Math.cos(a) < 0 ? 1 : -1, Math.abs(Math.sin(now * 40 + i)), 1.8);
+        }
+      }
+      g.globalAlpha = 1;
     }
   }
 
@@ -321,7 +407,7 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
     if (t > 1.9) { banner = null; return; }
     const inP = ease.outBack(clamp01(t / 0.4)), outP = ease.inQuad(clamp01((t - 1.55) / 0.35));
     const cx = COLS / 2, y = -0.9 + 1.75 * inP - 1.8 * outP;
-    const w = 4.2, h = 0.85;
+    const w = banner.boss ? 5.4 : 4.2, h = 0.85;
     // ribbon tails
     for (const side of [-1, 1]) {
       toon(g, () => {
@@ -334,7 +420,8 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
         g.closePath();
       }, '#C9496F', '#962E4F', { off: 0.03 });
     }
-    toon(g, () => roundRect(g, cx - w / 2, y, w, h, 0.18), '#FF7EB0', '#D9568A',
+    const [base, dark] = banner.boss ? ['#B8403A', '#7E2622'] : ['#FF7EB0', '#D9568A'];
+    toon(g, () => roundRect(g, cx - w / 2, y, w, h, 0.18), base, dark,
       { off: 0.06, hl: [cx - 1.2, y + 0.14, 1.2, 0.06, 0], light: 'rgba(255,255,255,.35)' });
     g.save();
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -367,6 +454,7 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
       state = s;
       bgFor = '';
       ends = readGrid(s.level.grid).road.filter(c => c.ch === 'E');
+      ambient.setTheme(s.level.theme || 'spring');
       computeFlags();
       towerFx.clear(); bugFx.clear(); fx.clear();
       corpses = []; coins = []; ghosts = []; banner = null;
@@ -376,6 +464,8 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
       const c = Math.floor(px / tile), r = Math.floor(py / tile);
       return c >= 0 && c < COLS && r >= 0 && r < ROWS ? { c, r } : null;
     },
+    // pixel position on the canvas -> tile coordinates
+    toTiles(px, py) { return { x: px / tile, y: py / tile }; },
     // did this tap land on a wave flag?
     flagAt(px, py) {
       if (!state || !flagVisible()) return false;
@@ -399,13 +489,15 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
           case 'hit': {
             const e = ev.target && state.enemies.find(x => x.uid === ev.target);
             if (e) bfx(e).hitAt = now;
-            fx.burst(ev.x, ev.y - 0.25, ['#B5EE8A', '#6CC447', '#FFFFFF'], 4, 1.1);
+            fx.burst(ev.x, ev.y - 0.25, HIT_COLORS[ev.kind] || HIT_COLORS.pea, ev.splash ? 9 : 4, ev.splash ? 1.6 : 1.1);
+            if (ev.splash) fx.ring(ev.x, ev.y + 0.05, ev.splash, ev.kind === 'mint' ? 'rgba(200,240,255,.9)' : 'rgba(255,140,140,.9)');
             break;
           }
           case 'kill': {
             const v = bugFx.get(ev.uid);
             const s = ENEMIES[ev.kind].size;
-            corpses.push({ uid: ev.uid, type: ev.kind, x: ev.x, y: ev.y + GROUND, s, at: now,
+            const lift = ENEMIES[ev.kind].flying ? FLY : 0;
+        corpses.push({ uid: ev.uid, type: ev.kind, x: ev.x, y: ev.y + GROUND - lift, s, at: now,
               face: v ? v.face : 1, vx: (v ? -v.face : 1) * 0.35 });
             bugFx.delete(ev.uid);
             fx.puff(ev.x, ev.y + GROUND - 0.2);
@@ -441,8 +533,34 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
             fx.text(ev.x, ev.y - 0.4, '+' + ev.value, '#FFD35C');
             break;
           }
-          case 'wave':
-            banner = { text: `Wave ${ev.wave}`, at: now };
+          case 'wave': {
+            const boss = state.waves[ev.wave - 1].some(sp => ENEMIES[sp.type].boss);
+            banner = { text: boss ? `Wave ${ev.wave} · Boss!` : `Wave ${ev.wave}`, at: now, boss };
+            break;
+          }
+          case 'gold': {   // a sunflower paid out
+            const t = state.towers.find(x => x.uid === ev.from);
+            if (t) tfx(t).shotAt = now;
+            coins.push({ x: ev.x, y: ev.y - 0.6, at: now });
+            fx.text(ev.x, ev.y - 0.8, '+' + ev.gold, '#FFD35C');
+            fx.burst(ev.x, ev.y - 0.55, ['#FFD35C', '#FFF3B0'], 5, 1.1);
+            break;
+          }
+          case 'spawn': {
+            const e = state.enemies.find(x => x.uid === ev.uid);
+            if (e) bfx(e).bornAt = now;
+            fx.puff(ev.x, ev.y + GROUND - (ENEMIES[ev.kind].flying ? FLY : 0.1));
+            break;
+          }
+          case 'shell':
+            fx.text(ev.x, ev.y - 0.55, '!', '#FFFFFF');
+            fx.puff(ev.x, ev.y);
+            break;
+          case 'power':
+            if (ev.kind === 'rain') fx.burst(ev.x, ev.y, ['#BFE3FF', '#7FB8FF', '#FFFFFF'], 14, 2);
+            else fx.burst(ev.x, ev.y, ['#FFD35C', '#2C1F1F', '#FFFFFF'], 14, 2);
+            fx.ring(ev.x, ev.y, ev.r, ev.kind === 'rain' ? 'rgba(200,230,255,.95)' : 'rgba(255,230,140,.95)');
+            if (!reducedMotion) shake = Math.max(shake, 0.12);
             break;
         }
       }
@@ -469,9 +587,11 @@ export function createRenderer(canvas, wrap, { reducedMotion, goldTarget }) {
       g.drawImage(bg, sx, sy);
       g.setTransform(dpr * tile, 0, 0, dpr * tile, sx, sy);
       drawGarden();
+      drawZonesGround();
       drawSelection(view);
       drawActors();
       drawProjectiles();
+      drawZonesSky();
       fx.drawBits(g);
       ambient.drawShadows(g);
       ambient.drawFlies(g);

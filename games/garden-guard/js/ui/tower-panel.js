@@ -6,13 +6,21 @@ import { closeButton } from './modals.js';
 
 const fmt = n => (Math.round(n * 100) / 100).toString();
 
+// how each stat reads in the panel
+const SHOW = {
+  rate: v => 1 / v,
+  slow: v => Math.round(v * 100) + '%',
+  every: v => v + 's'
+};
+const shown = (key, stats) => (stats[key] === undefined ? undefined : SHOW[key] ? SHOW[key](stats[key]) : stats[key]);
+
 function statLine(label, now, next) {
   const span = document.createElement('span');
   span.append(label + ' ');
-  const b = document.createElement('b'); b.textContent = fmt(now);
+  const b = document.createElement('b'); b.textContent = typeof now === 'number' ? fmt(now) : now;
   span.append(b);
   if (next !== undefined && next !== now) {
-    const i = document.createElement('i'); i.textContent = ' → ' + fmt(next);
+    const i = document.createElement('i'); i.textContent = ' → ' + (typeof next === 'number' ? fmt(next) : next);
     span.append(i);
   }
   return span;
@@ -62,15 +70,14 @@ export function towerPanel(state, tower, { onUpgrade, onSell, onMode, onClose })
       h.append(lv);
       stats.textContent = '';
       const n = next ? next.stats : undefined;
-      stats.append(
-        statLine(S.statDmg, cur.dmg, n && n.dmg),
-        statLine(S.statRange, cur.range, n && n.range),
-        statLine(S.statRate, 1 / cur.rate, n && 1 / n.rate)
-      );
+      for (const key of def.show || ['dmg', 'range', 'rate']) {
+        if (cur[key] !== undefined) stats.append(statLine(S.stats[key], shown(key, cur), n && shown(key, n)));
+      }
     }
     up.small.textContent = next ? '● ' + next.cost : S.maxLevel;
     up.b.disabled = !next || s.gold < next.cost;
     mode.small.textContent = S.modes[tower.mode];
+    mode.b.hidden = (def.attack || 'shoot') !== 'shoot';
     sell.small.textContent = '+' + sellValue(s, tower);
   }
   refresh(state);

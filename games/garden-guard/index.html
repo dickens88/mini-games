@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Garden Guard — cosy tower defense</title>
-<meta name="description" content="Hungry bugs are marching on the flower garden! Build pea pods and friends along the path, upgrade them, and keep every flower safe. Free tower defense, no sign-up.">
+<meta name="description" content="Hungry bugs are marching on the flower garden! Plant pea pods, melon lobbers, frost mints, cacti and sunflowers, call down rain and bees, and keep every flower safe across eight levels. Free tower defense, no sign-up.">
 <meta name="theme-color" content="#1E1233">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -40,7 +40,7 @@
   </header>
 
   <div class="hud">
-    <span class="pill level-pill" id="levelOut">Carrot Lane</span>
+    <button class="pill level-pill" id="levelsBtn" type="button" title="Levels (L)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5l5-2 6 2 5-2v13l-5 2-6-2-5 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4.5v13M15 6.5v13" stroke="currentColor" stroke-width="2"/></svg><span id="levelOut">Carrot Lane</span></button>
     <span class="grow"></span>
     <span class="pill stat lives" title="Flowers left"><span class="ico" aria-hidden="true">✿</span><b id="livesOut">20</b></span>
     <span class="pill stat gold" title="Gold"><span class="ico" aria-hidden="true">●</span><b id="goldOut">0</b></span>
@@ -59,7 +59,9 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="overlay" id="overlay" hidden>
       <h2 id="ovTitle"></h2>
+      <div class="ov-pic" id="ovPic" hidden></div>
       <div class="big-stars" id="ovStars" hidden><span>★</span><span>★</span><span>★</span></div>
+      <div class="level-map" id="ovLevels" hidden></div>
       <div class="how" id="ovHow" hidden></div>
       <p id="ovMsg"></p>
       <div class="btn-row">
@@ -74,17 +76,20 @@
       <span class="wave-top"><b id="waveBtnLabel">Start</b><small id="waveBtnSub"></small></span>
       <span class="wave-preview" id="wavePreview"></span>
     </button>
+    <div class="powers" id="powers" hidden></div>
     <div class="panel" id="panel" aria-live="polite"></div>
   </div>
 
   <div class="keys-help">
-    <span><kbd>1</kbd>–<kbd>6</kbd> build on the chosen pad</span>
+    <span><kbd>1</kbd>–<kbd>5</kbd> build on the chosen pad</span>
+    <span><kbd>Q</kbd> <kbd>W</kbd> powers</span>
     <span><kbd>Space</kbd> next wave</span>
     <span><kbd>U</kbd> upgrade</span>
     <span><kbd>S</kbd> sell</span>
     <span><kbd>T</kbd> target</span>
     <span><kbd>F</kbd> speed</span>
     <span><kbd>P</kbd> pause</span>
+    <span><kbd>L</kbd> levels</span>
     <span><kbd>Esc</kbd> close</span>
   </div>
   <p class="touch-help">Tip: tap a tower again to close its panel. Turn the phone sideways for a bigger garden.</p>

@@ -16,7 +16,10 @@ export const S = {
   sell: 'Sell',
   target: 'Target',
   modes: { first: 'First', last: 'Last', strong: 'Strong', close: 'Close' },
-  statDmg: 'Damage', statRange: 'Range', statRate: 'Shots/s',
+  stats: {
+    dmg: 'Damage', range: 'Range', rate: 'Shots/s', splash: 'Splash',
+    slow: 'Slow', gold: 'Gold', every: 'Every'
+  },
   close: 'Close',
 
   reasons: {
@@ -25,8 +28,23 @@ export const S = {
     locked: 'That tower is not available here',
     max: 'This tower is fully grown',
     last: 'That was the last wave',
-    over: 'The game is over'
+    over: 'The game is over',
+    cooldown: 'Still recharging'
   },
+
+  aimTip: name => `Tap the map to drop the ${name}. Tap the button again to cancel.`,
+  ready: 'Ready',
+
+  levelsTitle: 'Garden map',
+  levelsBtn: 'Levels',
+  chapters: { 1: 'Sunny Patch', 2: 'Pumpkin Hollow' },
+  locked: 'Win the level before to unlock',
+  levelLabel: (name, stars, locked) => locked ? `${name}, locked` : `${name}, ${stars} of 3 stars`,
+
+  newBug: 'New bug!',
+  newTower: 'New tower!',
+  newPower: 'New power!',
+  gotIt: 'Got it',
 
   helpTitle: 'How to play',
   help: [
@@ -47,6 +65,8 @@ export const S = {
   loseTitle: 'The bugs ate the garden',
   loseMsg: w => `You held out until wave <b>${w}</b>. Try a different plan!`,
   again: 'Play again',
+  nextLevel: 'Next level',
+  allSaved: 'That was the last garden — every one is safe. Go back for three stars everywhere!',
   tryAgain: 'Try again',
 
   paused: 'Paused',

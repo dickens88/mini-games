@@ -43,10 +43,10 @@ games/dice-quest/
   ├── img/avatars/             小动物头像（来自 https://ipaslogo.com/ ，可免费商用；项目 MIT 许可）
   └── cover.png                首页卡片 + 分享预览用的封面
 games/garden-guard/
-  ├── index.html               花园守卫（塔防；第一章「Carrot Lane」1 关 8 波，豌豆塔可升级；多文件 ES 模块，无需构建）
+  ├── index.html               花园守卫（塔防；两章 8 关（春天 / 秋天主题），5 种塔、9 种虫子含蚁后 Boss、雨云 / 蜂群两个技能，选关和星级；多文件 ES 模块，无需构建）
   ├── style.css
   ├── js/core/                 规则：路径、波次、塔、索敌、战斗（不碰页面，可在 node 里跑）
-  ├── js/data/                 关卡 / 虫子 / 塔的数据（加新关卡从 levels/ 开始）
+  ├── js/data/                 关卡 / 虫子 / 塔 / 技能的数据（加新关卡从 levels/ 开始，加新塔从 towers/ 开始）
   ├── js/render/ js/ui/        画布绘制、精灵、粒子、建造/升级面板、弹窗
   └── cover.png                首页卡片 + 分享预览用的封面
 games/bubble-buddies/
@@ -59,8 +59,17 @@ games/bubble-buddies/
   │                            https://opengameart.org/content/cute-dragon-0 ，CC-BY 3.0（可商用，需署名；署名写在游戏的帮助页里）
   ├── js/ui/                   顶部分数栏、菜单/选关/结算卡片
   └── cover.png                首页卡片 + 分享预览用的封面
+games/rally-pals/
+  ├── index.html               网球小伙伴（双人同屏网球；正手/挑高球/跳起扣杀、头球、6 种道具泡泡、4 个球场：花园 / 刮风的海滩 / 打滑的冰场 / 低重力月球；也能打电脑；多文件 ES 模块，无需构建）
+  ├── style.css
+  ├── js/core/                 规则：球的飞行和弹跳、挥拍出球、计分（快速赛 / 真网球计分）、道具、电脑对手（不碰页面，可在 node 里跑）
+  ├── js/data/                 球场 / 小伙伴 / 道具的数据（加新球场从 courts.js 开始，画风在 render/courts.js）
+  ├── js/render/               小伙伴、球场、观众、道具图标、特效，全部用代码画
+  ├── js/ui/                   键盘 / 触屏按钮 / 手柄、记分牌、选人选场 / 暂停 / 结算卡片
+  └── cover.png                首页卡片 + 分享预览用的封面
 tools/dice-quest-sim.mjs       骰子大冒险自检：node tools/dice-quest-sim.mjs 每张地图随机下上万局，检查地图布置、不卡死、存档能还原、离线缓存没漏文件
-tools/garden-guard-sim.mjs     花园守卫自检：node tools/garden-guard-sim.mjs 用自动玩家打每一关，检查能通关、波次难度合理
+tools/garden-guard-sim.mjs     花园守卫自检：node tools/garden-guard-sim.mjs 用自动玩家打每一关，检查能通关、波次难度合理、关卡数据、存档能还原、离线缓存没漏文件
+tools/rally-pals-sim.mjs       网球小伙伴自检：node tools/rally-pals-sim.mjs 两个电脑在每个球场、每个难度打完整比赛，检查计分（平分/占先）、好球都能落在界内、比赛一定能打完、离线缓存没漏文件
 tools/bubble-buddies-sim.mjs   泡泡伙伴自检：node tools/bubble-buddies-sim.mjs 机器人把 100 关各打几遍，检查关卡布置、不会卡死、存档能还原、离线缓存没漏文件，并打印每关用了几发 / 三星线
 ```
 

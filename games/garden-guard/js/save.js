@@ -11,6 +11,8 @@ function defaults() {
     speed: 1,
     seenHelp: false,
     stars: {},       // levelId -> best stars (1..3)
+    current: null,   // the level last played
+    seen: [],        // towers, powers and bugs already introduced
     run: null        // start-of-wave snapshot of the game in progress
   };
 }
@@ -33,6 +35,8 @@ function clean(raw) {
       if (n >= 1 && n <= 3) d.stars[k] = n;
     }
   }
+  if (typeof raw.current === 'string') d.current = raw.current;
+  if (Array.isArray(raw.seen)) d.seen = raw.seen.filter(x => typeof x === 'string');
   if (raw.run && typeof raw.run === 'object' && typeof raw.run.levelId === 'string') d.run = raw.run;
   return d;
 }

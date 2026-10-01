@@ -12,6 +12,13 @@ export function createInput(canvas, renderer, act) {
     cursor = null;
     act.tap(e.clientX - r.left, e.clientY - r.top);
   });
+  // where the mouse is, for aiming powers (touch has no hover: the tap aims)
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    const r = canvas.getBoundingClientRect();
+    act.hover(e.clientX - r.left, e.clientY - r.top);
+  });
+  canvas.addEventListener('pointerleave', () => act.hover(null));
 
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -35,6 +42,8 @@ export function createInput(canvas, renderer, act) {
     } else if (k === ' ' && tag !== 'BUTTON') {
       e.preventDefault(); if (!e.repeat) act.wave();
     } else if (/^[1-9]$/.test(k)) act.buildKey(k);
+    else if (k === 'q' || k === 'Q' || k === 'w' || k === 'W') act.powerKey(k.toLowerCase());
+    else if (k === 'l' || k === 'L') act.levels();
     else if (k === 'u' || k === 'U') act.upgrade();
     else if (k === 's' || k === 'S') act.sell();
     else if (k === 't' || k === 'T') act.mode();
@@ -43,5 +52,5 @@ export function createInput(canvas, renderer, act) {
     else if (k === 'Escape') { cursor = null; act.cancel(); }
   });
 
-  return { get cursor() { return cursor; } };
+  return { get cursor() { return cursor; }, clearCursor() { cursor = null; } };
 }

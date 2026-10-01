@@ -2,7 +2,8 @@
 // rules and returns { ok, reason }, so the UI never has to repeat them.
 
 import { EARLY_BONUS_PER_SEC, TARGET_MODES } from '../config.js';
-import { TOWERS } from '../data/registry.js';
+import { TOWERS, POWERS } from '../data/registry.js';
+import { hpScale } from './combat.js';
 import { emit } from './events.js';
 import { startWave } from './sim.js';
 import { nextUpgrade, sellValue } from './towers.js';
@@ -31,7 +32,7 @@ export function build(state, padIdx, type) {
     uid: state.nextUid++, type, pad: padIdx,
     x: pad.c + 0.5, y: pad.r + 0.5,
     level: 0, branch: null,
-    cd: 0, aim: -Math.PI / 2, mode: 'first',
+    cd: 0, aim: -Math.PI / 2, mode: def.mode || 'first',
     spent: def.cost, builtWave: state.waveIdx
   };
   state.towers.push(tower);
@@ -81,4 +82,24 @@ export function callWave(state) {
   startWave(state);
   if (bonus) emit(state, 'bonus', { gold: bonus });
   return { ok: true, bonus };
+}
+
+export function canCast(state, id) {
+  if (state.result) return fail('over');
+  if (!POWERS[id] || !(id in state.powerCd)) return fail('locked');
+  if (state.powerCd[id] > 0) return fail('cooldown');
+  return { ok: true };
+}
+
+export function castPower(state, id, x, y) {
+  const check = canCast(state, id);
+  if (!check.ok) return check;
+  const def = POWERS[id];
+  state.powerCd[id] = def.cooldown;
+  const zone = { uid: state.nextUid++, kind: id, x, y, r: def.radius, t: def.dur, dur: def.dur };
+  if (def.slow) zone.slow = def.slow;
+  if (def.dps) zone.dps = def.dps * hpScale(state);
+  state.zones.push(zone);
+  emit(state, 'power', { kind: id, x, y, r: def.radius });
+  return { ok: true };
 }

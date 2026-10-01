@@ -9,11 +9,32 @@ import { TAU, INK, FLOWER_COLORS, hash, roundRect, ink, ellipse, circle, softSha
 
 const ROAD_R = 0.43;   // half width of the road
 
-const GRASS = '#9CC152';
 const DIRT = { lip: '#8A6440', rim: '#A97E4E', base: '#D9B57E' };
+
+// colours that change with the level's season
+const THEMES = {
+  spring: {
+    grass: '#9CC152', patchLight: 'rgba(187,217,110,.32)', patchDark: 'rgba(110,150,50,.22)',
+    strokeDark: 'rgba(100,145,45,.35)', strokeLight: 'rgba(205,230,130,.4)',
+    tuft: '#6E9A36', tuftLight: 'rgba(200,230,120,.7)',
+    trees: [['#6FA035', '#4C7A23', 'rgba(190,225,110,.55)'], ['#7DAE3B', '#557F25', 'rgba(205,235,120,.55)']],
+    bushes: ['#6FA035', '#86B444', '#4C7A23'], fruit: '#E8423E',
+    warm: 'rgba(255,236,170,.14)', leaves: 0
+  },
+  autumn: {
+    grass: '#B5B04A', patchLight: 'rgba(230,205,110,.32)', patchDark: 'rgba(140,120,40,.22)',
+    strokeDark: 'rgba(140,120,40,.35)', strokeLight: 'rgba(240,215,130,.4)',
+    tuft: '#8F8A30', tuftLight: 'rgba(235,215,120,.7)',
+    trees: [['#E8892F', '#B35A1C', 'rgba(255,210,140,.55)'], ['#D65A3A', '#9C3622', 'rgba(255,190,150,.55)'], ['#E8B83A', '#B0811C', 'rgba(255,235,160,.55)']],
+    bushes: ['#C9702A', '#D99A3A', '#8E4A1C'], fruit: '#8E2C26',
+    warm: 'rgba(255,190,120,.18)', leaves: 160
+  }
+};
+let P = THEMES.spring;
 
 export function paintMap(b, state) {
   const level = state.level;
+  P = THEMES[level.theme] || THEMES.spring;
   const seed = [...level.id].reduce((s, ch) => (s * 31 + ch.charCodeAt(0)) | 0, 7);
   let i = 0;
   const rnd = () => hash(seed, i++);
@@ -36,6 +57,7 @@ export function paintMap(b, state) {
     else if (chr === 'f') decor.push({ kind: 'flowers', x, y });
     else if (chr === 'r') decor.push({ kind: 'rock', x, y });
     else if (chr === 'm') decor.push({ kind: 'mushrooms', x, y });
+    else if (chr === 'p') decor.push({ kind: 'pumpkin', x, y });
     else if (chr === '.') {
       const edge = c === 0 || r === 0 || c === COLS - 1 || r === ROWS - 1;
       const jx = x + (rnd() - 0.5) * 0.4, jy = y + (rnd() - 0.5) * 0.3;
@@ -43,7 +65,8 @@ export function paintMap(b, state) {
       if (edge && rd > 1.05 && pd > 0.95 && roll < 0.55) decor.push({ kind: 'tree', x: jx, y: jy });
       else if (rd > 0.8 && pd > 0.8 && roll < (edge ? 0.75 : 0.22)) {
         const k = rnd();
-        decor.push({ kind: k < 0.35 ? 'bush' : k < 0.6 ? 'rock' : k < 0.85 ? 'flowers' : 'mushrooms', x: jx, y: jy });
+        const kind = k < 0.35 ? 'bush' : k < 0.6 ? 'rock' : k < 0.85 ? (level.theme === 'autumn' ? 'pumpkin' : 'flowers') : 'mushrooms';
+        decor.push({ kind, x: jx, y: jy });
       }
     }
   }));
@@ -62,13 +85,13 @@ export function paintMap(b, state) {
 
 /* ---------- lawn ---------- */
 function lawn(b, rnd, roadDist) {
-  b.fillStyle = GRASS;
+  b.fillStyle = P.grass;
   b.fillRect(-1, -1, COLS + 2, ROWS + 2);
 
   // big soft patches of light and shade
   for (let k = 0; k < 70; k++) {
     const x = rnd() * COLS, y = rnd() * ROWS, r = 0.4 + rnd() * 1.0;
-    b.fillStyle = rnd() < 0.5 ? 'rgba(187,217,110,.32)' : 'rgba(110,150,50,.22)';
+    b.fillStyle = rnd() < 0.5 ? P.patchLight : P.patchDark;
     b.beginPath();
     for (let j = 0; j < 4; j++) {
       const cx = x + (rnd() - 0.5) * r * 1.2, cy = y + (rnd() - 0.5) * r * 0.6, rr = r * (0.35 + rnd() * 0.35);
@@ -84,7 +107,7 @@ function lawn(b, rnd, roadDist) {
     const x = rnd() * COLS, y = rnd() * ROWS;
     if (roadDist(x, y) < ROAD_R) continue;
     const a = -0.5 + rnd() * 0.5, l = 0.08 + rnd() * 0.12;
-    b.strokeStyle = rnd() < 0.55 ? 'rgba(100,145,45,.35)' : 'rgba(205,230,130,.4)';
+    b.strokeStyle = rnd() < 0.55 ? P.strokeDark : P.strokeLight;
     b.lineWidth = 0.035;
     b.beginPath();
     b.moveTo(x, y);
@@ -97,10 +120,26 @@ function lawn(b, rnd, roadDist) {
     if (roadDist(x, y) < ROAD_R + 0.1) continue;
     tuft(b, x, y, 0.7 + rnd() * 0.6);
   }
+
+  // fallen leaves in autumn
+  for (let k = 0; k < P.leaves; k++) {
+    const x = rnd() * COLS, y = rnd() * ROWS;
+    const onRoad = roadDist(x, y) < ROAD_R;
+    if (onRoad && rnd() < 0.6) continue;
+    b.save();
+    b.translate(x, y);
+    b.rotate(rnd() * TAU);
+    b.globalAlpha = onRoad ? 0.7 : 0.85;
+    b.beginPath();
+    b.moveTo(-0.07, 0); b.quadraticCurveTo(0, -0.05, 0.07, 0); b.quadraticCurveTo(0, 0.05, -0.07, 0);
+    b.fillStyle = ['#E8892F', '#D65A3A', '#E8B83A', '#C9702A'][Math.floor(rnd() * 4)];
+    b.fill();
+    b.restore();
+  }
 }
 
 function tuft(b, x, y, s) {
-  b.fillStyle = '#6E9A36';
+  b.fillStyle = P.tuft;
   b.beginPath();
   b.moveTo(x - 0.09 * s, y);
   b.quadraticCurveTo(x - 0.08 * s, y - 0.1 * s, x - 0.11 * s, y - 0.17 * s);
@@ -109,7 +148,7 @@ function tuft(b, x, y, s) {
   b.quadraticCurveTo(x + 0.08 * s, y - 0.08 * s, x + 0.09 * s, y);
   b.closePath();
   b.fill();
-  b.fillStyle = 'rgba(200,230,120,.7)';
+  b.fillStyle = P.tuftLight;
   b.beginPath();
   b.moveTo(x - 0.02 * s, y - 0.02 * s);
   b.quadraticCurveTo(x - 0.02 * s, y - 0.12 * s, x, y - 0.17 * s);
@@ -247,7 +286,7 @@ function tree(b, x, y, n) {
   softShadow(b, x + 0.12 * s, y + 0.2, 0.55 * s, 0.18 * s, 0.32);
   toon(b, () => { b.beginPath(); b.moveTo(x - 0.08, y + 0.2); b.lineTo(x - 0.06, y - 0.15); b.lineTo(x + 0.06, y - 0.15); b.lineTo(x + 0.09, y + 0.2); b.closePath(); },
     '#8A5A34', '#5E3B22', { off: 0.03, line: 0.04 });
-  const tone = n < 0.5 ? ['#6FA035', '#4C7A23', 'rgba(190,225,110,.55)'] : ['#7DAE3B', '#557F25', 'rgba(205,235,120,.55)'];
+  const tone = P.trees[Math.floor(n * 7919) % P.trees.length];
   canopy(b, [
     [x - 0.26 * s, y - 0.22 * s, 0.25 * s],
     [x + 0.25 * s, y - 0.24 * s, 0.26 * s],
@@ -255,14 +294,14 @@ function tree(b, x, y, n) {
     [x, y - 0.2 * s, 0.29 * s]
   ], tone[0], tone[1], tone[2]);
   if (n > 0.7) {
-    for (const [dx, dy] of [[-0.18, -0.3], [0.2, -0.38], [0.04, -0.15]]) { circle(b, x + dx * s, y + dy * s, 0.045); ink(b, '#E8423E', 0.02); }
+    for (const [dx, dy] of [[-0.18, -0.3], [0.2, -0.38], [0.04, -0.15]]) { circle(b, x + dx * s, y + dy * s, 0.045); ink(b, P.fruit, 0.02); }
   }
 }
 
 function bush(b, x, y, n) {
   softShadow(b, x + 0.05, y + 0.12, 0.34, 0.1, 0.3);
   canopy(b, [[x - 0.14, y - 0.02, 0.15], [x + 0.14, y - 0.01, 0.15], [x, y - 0.12, 0.18]],
-    n < 0.5 ? '#6FA035' : '#86B444', '#4C7A23', 'rgba(200,235,120,.55)');
+    n < 0.5 ? P.bushes[0] : P.bushes[1], P.bushes[2], 'rgba(255,240,170,.45)');
   if (n > 0.55) for (const [dx, dy] of [[-0.1, -0.08], [0.12, -0.04], [0.02, -0.18]]) { circle(b, x + dx, y + dy, 0.035); ink(b, n > 0.8 ? '#B69CFF' : '#FFFFFF', 0.016); }
 }
 
@@ -313,12 +352,29 @@ function mushrooms(b, x, y, n) {
   }
 }
 
-const DECOR = { tree, bush, rock, flowers, mushrooms };
+// a round orange pumpkin with a curly stalk
+function pumpkin(b, x, y, n) {
+  const s = 0.75 + n * 0.45;
+  softShadow(b, x + 0.04, y + 0.1 * s, 0.24 * s, 0.07 * s, 0.3);
+  const body = () => {
+    b.beginPath();
+    for (const [dx, r] of [[-0.11, 0.13], [0.11, 0.13], [0, 0.15]]) { b.moveTo(x + dx * s + r * s, y - 0.06 * s); b.ellipse(x + dx * s, y - 0.06 * s, r * s, 0.13 * s, 0, 0, TAU); }
+  };
+  body(); b.lineWidth = 0.05; b.strokeStyle = INK; b.stroke();
+  toon(b, body, '#F2953A', '#C2621E', { off: 0.03 * s, line: 0, hl: [x - 0.08 * s, y - 0.12 * s, 0.05 * s, 0.025 * s], light: 'rgba(255,230,180,.6)' });
+  b.strokeStyle = 'rgba(150,70,20,.6)'; b.lineWidth = 0.02;
+  for (const dx of [-0.06, 0.06]) { b.beginPath(); b.moveTo(x + dx * s, y - 0.18 * s); b.quadraticCurveTo(x + dx * 1.6 * s, y - 0.06 * s, x + dx * s, y + 0.06 * s); b.stroke(); }
+  toon(b, () => roundRect(b, x - 0.025 * s, y - 0.27 * s, 0.05 * s, 0.09 * s, 0.02), '#6E8A2E', '#4C6420', { off: 0.01, line: 0.025 });
+  b.strokeStyle = '#5E9E33'; b.lineWidth = 0.018;
+  b.beginPath(); b.moveTo(x, y - 0.24 * s); b.quadraticCurveTo(x + 0.1 * s, y - 0.32 * s, x + 0.12 * s, y - 0.22 * s); b.stroke();
+}
+
+const DECOR = { tree, bush, rock, flowers, mushrooms, pumpkin };
 
 /* ---------- light ---------- */
 function lighting(b) {
   const warm = b.createLinearGradient(0, 0, COLS * 0.7, ROWS);
-  warm.addColorStop(0, 'rgba(255,236,170,.14)');
+  warm.addColorStop(0, P.warm);
   warm.addColorStop(1, 'rgba(255,236,170,0)');
   b.fillStyle = warm;
   b.fillRect(0, 0, COLS, ROWS);

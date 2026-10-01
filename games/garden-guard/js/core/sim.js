@@ -2,7 +2,7 @@
 // no clock — the caller decides how many steps to run (×2 speed = two per frame).
 
 import { STEP, WAVE_GAP } from '../config.js';
-import { ENEMIES } from '../data/registry.js';
+import { ENEMIES, POWERS } from '../data/registry.js';
 import { emit } from './events.js';
 import { pointAt } from './path.js';
 import { nextRandom } from './rng.js';
@@ -17,8 +17,14 @@ export function makeCtx(state) {
     emit: (type, data) => emit(state, type, data),
     random: () => nextRandom(state),
     damage: (enemy, amount, opts = {}) => damage(state, enemy, amount, Object.assign({ ctx }, opts)),
-    spawn: (type, pathIdx, d) => spawnEnemy(state, type, pathIdx, d),
-    near: (x, y, r, opts) => enemiesNear(state, x, y, r, opts)
+    // a bug born mid-road (from a queen, a caterpillar…), with a puff to show it
+    spawn: (type, pathIdx, d) => {
+      const e = spawnEnemy(state, type, pathIdx, d);
+      emit(state, 'spawn', { uid: e.uid, kind: type, x: e.x, y: e.y });
+      return e;
+    },
+    near: (x, y, r, opts) => enemiesNear(state, x, y, r, opts),
+    speedFactor
   };
   return ctx;
 }
@@ -56,6 +62,8 @@ export function step(state) {
     }
   }
 
+  for (const id in state.powerCd) state.powerCd[id] = Math.max(0, state.powerCd[id] - dt);
+  runZones(state, ctx, dt);
   moveEnemies(state, ctx, dt);
   runTowers(state, ctx, dt);
   moveProjectiles(state, ctx, dt);
@@ -70,6 +78,15 @@ export function step(state) {
     state.result = 'win';
     emit(state, 'end', { result: 'win' });
   }
+}
+
+function runZones(state, ctx, dt) {
+  for (const z of state.zones) {
+    z.t -= dt;
+    const def = POWERS[z.kind];
+    for (const e of ctx.near(z.x, z.y, z.r)) def.tick(ctx, z, e, dt);
+  }
+  state.zones = state.zones.filter(z => z.t > 0);
 }
 
 function moveEnemies(state, ctx, dt) {
@@ -103,7 +120,7 @@ function runTowers(state, ctx, dt) {
   for (const t of state.towers) {
     const def = towerDef(t), stats = towerStats(t);
     if (def.aura) def.aura(ctx, t, stats, dt);
-    if (def.attack !== 'shoot') continue;
+    if ((def.attack || 'shoot') !== 'shoot') continue;
     t.cd = Math.max(0, t.cd - dt);
     if (t.cd > 0) continue;
     const target = pickTarget(state, t, def, stats);
@@ -118,8 +135,8 @@ function runTowers(state, ctx, dt) {
 export function fire(state, tower, def, stats, target, extra = {}) {
   state.projectiles.push(Object.assign({
     uid: state.nextUid++,
-    from: tower.uid, kind: tower.type, look: def.projectile.look,
-    x: tower.x, y: tower.y, tx: target.x, ty: target.y,
+    from: tower.uid, kind: tower.type, level: tower.level, look: def.projectile.look,
+    x: tower.x, y: tower.y, ox: tower.x, oy: tower.y, tx: target.x, ty: target.y,
     target: target.uid, speed: def.projectile.speed,
     dmg: stats.dmg, splash: stats.splash || 0, pierce: !!stats.pierce
   }, extra));
@@ -141,7 +158,7 @@ function moveProjectiles(state, ctx, dt) {
     }
     p.x = p.tx; p.y = p.ty;
     const def = towerDef({ type: p.kind });
-    if (def.onHit) def.onHit(ctx, p, target);
+    if (def.onHit) def.onHit(ctx, p, target, towerStats({ type: p.kind, level: p.level || 0 }));
     else if (p.splash) {
       for (const e of ctx.near(p.x, p.y, p.splash, { air: false })) ctx.damage(e, p.dmg, { pierce: p.pierce });
     } else if (target) {

@@ -8,7 +8,7 @@ import { pathsFromGrid, readGrid } from './path.js';
 import { parseWave } from './waves.js';
 
 const SAVED = ['seed', 'time', 'gold', 'lives', 'waveIdx', 'spawnQueue', 'nextWaveIn',
-  'enemies', 'towers', 'projectiles', 'nextUid', 'result', 'stats'];
+  'enemies', 'towers', 'projectiles', 'zones', 'powerCd', 'nextUid', 'result', 'stats'];
 
 export function createState(levelId, seed) {
   const level = levelById(levelId);
@@ -30,6 +30,8 @@ export function createState(levelId, seed) {
     enemies: [],
     towers: [],
     projectiles: [],
+    zones: [],           // power effects on the map: [{kind, x, y, r, t, ...}]
+    powerCd: Object.fromEntries((level.powers || []).map(id => [id, 0])),   // seconds until ready
     nextUid: 1,
     result: null,        // null | 'win' | 'lose'
     stats: { kills: 0, leaked: 0 },

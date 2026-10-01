@@ -1,5 +1,6 @@
 // Life that has nothing to do with the game: slow cloud shadows drifting over
-// the lawn and a couple of butterflies. Switched off for reduced motion.
+// the lawn, a couple of butterflies, and in autumn leaves twirling down.
+// Switched off for reduced motion.
 
 import { COLS, ROWS } from '../config.js';
 import { TAU, ink, ellipse } from './kit.js';
@@ -14,14 +15,29 @@ export function createAmbient(reducedMotion) {
     { x: 10, y: 1, tx: 8, ty: 2, col: '#B69CFF', ph: 2 }
   ];
 
+  const LEAF_COLORS = ['#E8892F', '#D65A3A', '#E8B83A', '#C9702A'];
+  let leaves = [];
+
   function retarget(f) {
     f.tx = 0.5 + Math.random() * (COLS - 1);
     f.ty = 0.5 + Math.random() * (ROWS - 1);
   }
 
   return {
+    setTheme(theme) {
+      leaves = theme !== 'autumn' ? [] : Array.from({ length: 7 }, (_, i) => ({
+        x: Math.random() * COLS, y: Math.random() * ROWS, ph: Math.random() * 6, spin: 0.6 + Math.random(),
+        col: LEAF_COLORS[i % LEAF_COLORS.length]
+      }));
+    },
     update(dt) {
       if (reducedMotion) return;
+      for (const l of leaves) {
+        l.ph += dt;
+        l.y += dt * 0.35;
+        l.x += Math.sin(l.ph * 1.3) * dt * 0.5 + dt * 0.08;
+        if (l.y > ROWS + 0.3) { l.y = -0.3; l.x = Math.random() * COLS; }
+      }
       for (const c of clouds) {
         c.x += dt * 0.12;
         if (c.x - c.s * 2 > COLS) { c.x = -c.s * 2; c.y = 1 + Math.random() * (ROWS - 2); }
@@ -47,6 +63,18 @@ export function createAmbient(reducedMotion) {
     },
     drawFlies(g) {
       if (reducedMotion) return;
+      for (const l of leaves) {
+        g.save();
+        g.translate(l.x, l.y);
+        g.rotate(Math.sin(l.ph * l.spin) * 1.2);
+        g.scale(Math.cos(l.ph * l.spin * 1.7), 1);   // flips as it tumbles
+        g.beginPath();
+        g.moveTo(-0.1, 0);
+        g.quadraticCurveTo(0, -0.07, 0.1, 0);
+        g.quadraticCurveTo(0, 0.07, -0.1, 0);
+        ink(g, l.col, 0.015);
+        g.restore();
+      }
       for (const f of flies) {
         const flap = Math.abs(Math.sin(f.ph * 14));
         const facing = f.tx >= f.x ? 1 : -1;

@@ -7,7 +7,7 @@
  * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v5';
+var VERSION = 'v7';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -51,15 +51,19 @@ var PRECACHE = [
   '/games/garden-guard/js/core/state.js', '/games/garden-guard/js/core/targeting.js',
   '/games/garden-guard/js/core/towers.js', '/games/garden-guard/js/core/waves.js',
   '/games/garden-guard/js/data/enemies/bugs.js', '/games/garden-guard/js/data/levels/ch1.js',
-  '/games/garden-guard/js/data/registry.js', '/games/garden-guard/js/data/towers/pea.js',
+  '/games/garden-guard/js/data/levels/ch2.js', '/games/garden-guard/js/data/powers.js',
+  '/games/garden-guard/js/data/registry.js', '/games/garden-guard/js/data/towers/cactus.js',
+  '/games/garden-guard/js/data/towers/melon.js', '/games/garden-guard/js/data/towers/mint.js',
+  '/games/garden-guard/js/data/towers/pea.js', '/games/garden-guard/js/data/towers/sunflower.js',
   '/games/garden-guard/js/main.js', '/games/garden-guard/js/render/ambient.js',
   '/games/garden-guard/js/render/anim.js', '/games/garden-guard/js/render/background.js',
   '/games/garden-guard/js/render/kit.js', '/games/garden-guard/js/render/particles.js',
   '/games/garden-guard/js/render/renderer.js', '/games/garden-guard/js/render/sprites/enemy-sprites.js',
-  '/games/garden-guard/js/render/sprites/tower-sprites.js', '/games/garden-guard/js/save.js',
-  '/games/garden-guard/js/strings.js', '/games/garden-guard/js/ui/build-panel.js',
-  '/games/garden-guard/js/ui/hud.js', '/games/garden-guard/js/ui/input.js',
-  '/games/garden-guard/js/ui/modals.js', '/games/garden-guard/js/ui/tower-panel.js',
+  '/games/garden-guard/js/render/sprites/power-sprites.js', '/games/garden-guard/js/render/sprites/tower-sprites.js',
+  '/games/garden-guard/js/save.js', '/games/garden-guard/js/strings.js',
+  '/games/garden-guard/js/ui/build-panel.js', '/games/garden-guard/js/ui/hud.js',
+  '/games/garden-guard/js/ui/input.js', '/games/garden-guard/js/ui/modals.js',
+  '/games/garden-guard/js/ui/powers.js', '/games/garden-guard/js/ui/tower-panel.js',
   '/games/garden-guard/style.css',
   '/games/bubble-buddies/', '/games/bubble-buddies/cover.png',
   '/games/bubble-buddies/js/audio.js', '/games/bubble-buddies/js/config.js',
@@ -76,7 +80,21 @@ var PRECACHE = [
   '/games/bubble-buddies/js/render/launcher.js', '/games/bubble-buddies/js/render/renderer.js',
   '/games/bubble-buddies/js/save.js', '/games/bubble-buddies/js/ui/hud.js',
   '/games/bubble-buddies/js/ui/overlay.js', '/games/bubble-buddies/js/ui/screens.js',
-  '/games/bubble-buddies/style.css'
+  '/games/bubble-buddies/style.css',
+  '/games/rally-pals/', '/games/rally-pals/cover.png',
+  '/games/rally-pals/js/audio.js', '/games/rally-pals/js/config.js',
+  '/games/rally-pals/js/core/ai.js', '/games/rally-pals/js/core/match.js',
+  '/games/rally-pals/js/core/physics.js', '/games/rally-pals/js/core/player.js',
+  '/games/rally-pals/js/core/rng.js', '/games/rally-pals/js/core/score.js',
+  '/games/rally-pals/js/core/shot.js', '/games/rally-pals/js/data/courts.js',
+  '/games/rally-pals/js/data/pals.js', '/games/rally-pals/js/data/powerups.js',
+  '/games/rally-pals/js/main.js', '/games/rally-pals/js/render/courts.js',
+  '/games/rally-pals/js/render/fx.js', '/games/rally-pals/js/render/icons.js',
+  '/games/rally-pals/js/render/pals.js', '/games/rally-pals/js/render/renderer.js',
+  '/games/rally-pals/js/save.js', '/games/rally-pals/js/ui/effects.js',
+  '/games/rally-pals/js/ui/hud.js', '/games/rally-pals/js/ui/input.js',
+  '/games/rally-pals/js/ui/overlay.js', '/games/rally-pals/js/ui/screens.js',
+  '/games/rally-pals/style.css'
 ];
 
 function isFont(url){
