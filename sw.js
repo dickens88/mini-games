@@ -7,7 +7,7 @@
  * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v2';
+var VERSION = 'v3';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -42,7 +42,25 @@ var PRECACHE = [
   '/games/dice-quest/js/strings.js', '/games/dice-quest/js/ui/dice.js',
   '/games/dice-quest/js/ui/hud.js', '/games/dice-quest/js/ui/input.js',
   '/games/dice-quest/js/ui/overlay.js', '/games/dice-quest/js/ui/screens.js',
-  '/games/dice-quest/style.css'
+  '/games/dice-quest/style.css',
+  '/games/garden-guard/', '/games/garden-guard/cover.png',
+  '/games/garden-guard/js/audio.js', '/games/garden-guard/js/config.js',
+  '/games/garden-guard/js/core/combat.js', '/games/garden-guard/js/core/commands.js',
+  '/games/garden-guard/js/core/events.js', '/games/garden-guard/js/core/path.js',
+  '/games/garden-guard/js/core/rng.js', '/games/garden-guard/js/core/sim.js',
+  '/games/garden-guard/js/core/state.js', '/games/garden-guard/js/core/targeting.js',
+  '/games/garden-guard/js/core/towers.js', '/games/garden-guard/js/core/waves.js',
+  '/games/garden-guard/js/data/enemies/bugs.js', '/games/garden-guard/js/data/levels/ch1.js',
+  '/games/garden-guard/js/data/registry.js', '/games/garden-guard/js/data/towers/pea.js',
+  '/games/garden-guard/js/main.js', '/games/garden-guard/js/render/ambient.js',
+  '/games/garden-guard/js/render/anim.js', '/games/garden-guard/js/render/background.js',
+  '/games/garden-guard/js/render/kit.js', '/games/garden-guard/js/render/particles.js',
+  '/games/garden-guard/js/render/renderer.js', '/games/garden-guard/js/render/sprites/enemy-sprites.js',
+  '/games/garden-guard/js/render/sprites/tower-sprites.js', '/games/garden-guard/js/save.js',
+  '/games/garden-guard/js/strings.js', '/games/garden-guard/js/ui/build-panel.js',
+  '/games/garden-guard/js/ui/hud.js', '/games/garden-guard/js/ui/input.js',
+  '/games/garden-guard/js/ui/modals.js', '/games/garden-guard/js/ui/tower-panel.js',
+  '/games/garden-guard/style.css'
 ];
 
 function isFont(url){

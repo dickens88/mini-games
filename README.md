@@ -42,7 +42,15 @@ games/dice-quest/
   ├── js/render/ js/ui/        画布绘制、动画、骰子、玩家面板、开局/结算界面
   ├── img/avatars/             小动物头像（来自 https://ipaslogo.com/ ，可免费商用；项目 MIT 许可）
   └── cover.png                首页卡片 + 分享预览用的封面
+games/garden-guard/
+  ├── index.html               花园守卫（塔防；第一章「Carrot Lane」1 关 8 波，豌豆塔可升级；多文件 ES 模块，无需构建）
+  ├── style.css
+  ├── js/core/                 规则：路径、波次、塔、索敌、战斗（不碰页面，可在 node 里跑）
+  ├── js/data/                 关卡 / 虫子 / 塔的数据（加新关卡从 levels/ 开始）
+  ├── js/render/ js/ui/        画布绘制、精灵、粒子、建造/升级面板、弹窗
+  └── cover.png                首页卡片 + 分享预览用的封面
 tools/dice-quest-sim.mjs       骰子大冒险自检：node tools/dice-quest-sim.mjs 每张地图随机下上万局，检查地图布置、不卡死、存档能还原、离线缓存没漏文件
+tools/garden-guard-sim.mjs     花园守卫自检：node tools/garden-guard-sim.mjs 用自动玩家打每一关，检查能通关、波次难度合理
 ```
 
 ## 上线前必须替换的三处
