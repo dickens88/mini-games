@@ -360,7 +360,15 @@
   .tool b{ font-family:var(--display); font-weight:800; font-size:1rem; line-height:1.2; }
   .tool:disabled{ opacity:.45; cursor:default; }
   .tool:disabled:active{ transform:none; box-shadow:0 5px 0 #0C0716; }
+  .tool.undo{ position:relative; }
   .tool.undo svg{ color:var(--mint); }
+  .tool .left{
+    min-width:1.6em; padding:1px 7px; border-radius:999px;
+    background:rgba(110,231,192,.18); color:var(--mint);
+    font-family:var(--display); font-weight:800; font-size:.9rem; line-height:1.3;
+  }
+  .tool.gain{ animation:undoGain .7s ease-out; }
+  @keyframes undoGain{ 30%{ transform:scale(1.12); box-shadow:0 5px 0 #0C0716, 0 0 22px var(--mint); } }
   .tool.fresh svg{ color:var(--pink); }
 
   /* ---------- pal collection ---------- */
@@ -470,6 +478,7 @@
     <button class="tool undo" id="undoBtn" type="button">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 0 1 0 12h-3" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
       <b>Undo</b>
+      <span class="left" id="undoLeft" aria-label="undos left">5</span>
     </button>
     <button class="tool fresh" id="newBtn" type="button">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M18.5 2.5v4.5H14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -749,6 +758,9 @@
   var grid = [];            // grid[r][c] = tile | null;  tile = { id, v, r, c, el }
   var score = 0, best = 0, won = false, keepGoing = false, over = false;
   var history = [];
+  var UNDO_START = 5;
+  var UNDO_BONUS = { 1024:1, 2048:2, 4096:4 };   // extra undos for making these pals
+  var undosLeft = UNDO_START;
   var found = {};           // pals ever made, kept across games
   var gameMax = 0;          // biggest pal in this game
   var bestAtStart = 0;      // to tell whether this game beat the record
@@ -773,7 +785,7 @@
   function persist(){
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        cells:values(), score:score, best:best, bestAtStart:bestAtStart, won:won, keepGoing:keepGoing, over:over,
+        cells:values(), score:score, undos:undosLeft, best:best, bestAtStart:bestAtStart, won:won, keepGoing:keepGoing, over:over,
         found:Object.keys(found).map(Number), sound:soundOn, seenHelp:seenHelp
       }));
     } catch(e){}
@@ -877,7 +889,7 @@
     var d = VEC[dir]; if (!d) return;
     boardEl.dataset.look = dir;
 
-    var before = { cells:values(), score:score, gameMax:gameMax };
+    var before = { cells:values(), score:score, gameMax:gameMax, undos:undosLeft };
     var rows = [0, 1, 2, 3], cols = [0, 1, 2, 3];
     if (d[0] === 1) rows.reverse();
     if (d[1] === 1) cols.reverse();
@@ -924,8 +936,9 @@
     if (history.length > 100) history.shift();
     boardEl.classList.remove('new-game');
 
-    var biggestMerge = 0;
-    merges.forEach(function(m){ if (m.v > biggestMerge) biggestMerge = m.v; });
+    var biggestMerge = 0, undoGain = 0;
+    merges.forEach(function(m){ if (m.v > biggestMerge) biggestMerge = m.v; undoGain += UNDO_BONUS[m.v] || 0; });
+    undosLeft += undoGain;
     var prevMax = gameMax;
     if (biggestMerge > gameMax) gameMax = biggestMerge;
 
@@ -949,6 +962,7 @@
       spawn();
       if (merges.length >= 2) showCombo(merges.length);
       if (biggestMerge >= 128) shake();
+      if (undoGain) showUndoGain(undoGain);
       if (brandNew.length) showPalCard(brandNew[brandNew.length - 1], true);
       else if (biggestMerge > prevMax && biggestMerge >= 64) showPalCard(biggestMerge, false);
       afterMove();
@@ -977,20 +991,21 @@
   }
 
   function undo(){
-    if (!history.length) return;
+    if (!canUndo()) return;
     if (overlayMode === 'win') return;
     flush();
     hideOverlay();
     var h = history.pop();
     setGridFromValues(h.cells);
-    score = h.score; gameMax = h.gameMax;
+    // going back also takes back any undos that move earned
+    score = h.score; gameMax = h.gameMax; undosLeft = h.undos - 1;
     over = false;
     boardEl.classList.remove('sad');
     updateScore(0);
     persist();
     syncButtons();
     sfx.tap();
-    say('Undone.');
+    say('Undone. ' + undosLeft + (undosLeft === 1 ? ' undo' : ' undos') + ' left.');
   }
 
   function newGame(){
@@ -998,6 +1013,7 @@
     hideOverlay();
     clearBoard();
     history = [];
+    undosLeft = UNDO_START;
     score = 0; won = false; keepGoing = false; over = false; gameMax = 0;
     boardEl.classList.remove('sad');
     spawn(); spawn();
@@ -1041,6 +1057,17 @@
     el.textContent = COMBO_WORDS[Math.min(n, 8)];
     wrap.appendChild(el);
     setTimeout(function(){ el.remove(); }, 1050);
+  }
+  function showUndoGain(n){
+    var b = $('undoBtn');
+    b.classList.remove('gain'); void b.offsetWidth; b.classList.add('gain');
+    if (!REDUCED_MOTION){
+      var f = document.createElement('span');
+      f.className = 'floater'; f.textContent = '+' + n;
+      b.appendChild(f);
+      setTimeout(function(){ f.remove(); }, 820);
+    }
+    say('Bonus! +' + n + (n === 1 ? ' undo' : ' undos') + '.');
   }
   var palCardTimer = 0;
   function showPalCard(v, isNew){
@@ -1106,7 +1133,8 @@
   function showHelp(){
     showOverlay('help', {
       title:'How to play', how:true, pal:null,
-      msg:'Keep popping pals together and try to make the <b>Star King — 2048</b>!',
+      msg:'Keep popping pals together and try to make the <b>Star King — 2048</b>!' +
+          '<br>You get <b>5 undos</b>. Make a 1024, 2048 or 4096 pal to earn <b>+1</b>, <b>+2</b> or <b>+4</b> more.',
       btn:"Let's play!"
     });
   }
@@ -1130,8 +1158,8 @@
     showOverlay('over', {
       title:'No more moves!', how:false, pal:top,
       msg:'Your biggest pal was <b>' + palFor(top).name + ' (' + top + ')</b> and you scored <b>' + score + '</b>' +
-          (isBest ? ' — a new best! 🎉' : '.') + ' Undo a move, or try again?',
-      btn:'Try again', btn2:'Undo'
+          (isBest ? ' — a new best! 🎉' : '.') + (canUndo() ? ' Undo a move, or try again?' : ' Try again?'),
+      btn:'Try again', btn2:canUndo() ? 'Undo (' + undosLeft + ' left)' : null
     });
     if (isBest) confetti(80);
     say('No more moves. Score ' + score + '.');
@@ -1173,8 +1201,10 @@
   }
 
   /* ---------- buttons ---------- */
+  function canUndo(){ return history.length > 0 && undosLeft > 0; }
   function syncButtons(){
-    $('undoBtn').disabled = !history.length;
+    $('undoBtn').disabled = !canUndo();
+    $('undoLeft').textContent = undosLeft;
   }
   function syncSound(){
     var b = $('soundBtn');
@@ -1247,8 +1277,9 @@
   /* ---------- test hook (only with ?debug) ---------- */
   if (/[?&]debug\b/.test(location.search)){
     window.__pals = {
-      state:function(){ return { cells:values(), score:score, best:best, won:won, over:over, overlay:overlayMode, history:history.length, found:Object.keys(found).map(Number) }; },
+      state:function(){ return { cells:values(), score:score, best:best, won:won, over:over, overlay:overlayMode, history:history.length, undos:undosLeft, found:Object.keys(found).map(Number) }; },
       setCells:function(cells){ flush(); hideOverlay(); setGridFromValues(cells); over = false; won = maxValue() >= 2048; boardEl.classList.remove('sad'); gameMax = maxValue(); history = []; syncButtons(); },
+      setUndos:function(n){ undosLeft = n; syncButtons(); },
       move:move, flush:flush, newGame:newGame, showPalCard:showPalCard, confetti:confetti
     };
   }
@@ -1259,6 +1290,7 @@
   if (saved){
     setGridFromValues(saved.cells);
     score = +saved.score || 0;
+    undosLeft = saved.undos >= 0 ? Math.floor(+saved.undos) : UNDO_START;
     won = !!saved.won; keepGoing = !!saved.keepGoing; over = !!saved.over && !canMove();
     gameMax = maxValue();
     bestAtStart = +saved.bestAtStart || 0;
