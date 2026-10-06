@@ -889,7 +889,7 @@
     var d = VEC[dir]; if (!d) return;
     boardEl.dataset.look = dir;
 
-    var before = { cells:values(), score:score, gameMax:gameMax, undos:undosLeft };
+    var before = { cells:values(), score:score, gameMax:gameMax, undoGain:0 };
     var rows = [0, 1, 2, 3], cols = [0, 1, 2, 3];
     if (d[0] === 1) rows.reverse();
     if (d[1] === 1) cols.reverse();
@@ -939,6 +939,7 @@
     var biggestMerge = 0, undoGain = 0;
     merges.forEach(function(m){ if (m.v > biggestMerge) biggestMerge = m.v; undoGain += UNDO_BONUS[m.v] || 0; });
     undosLeft += undoGain;
+    before.undoGain = undoGain;
     var prevMax = gameMax;
     if (biggestMerge > gameMax) gameMax = biggestMerge;
 
@@ -998,7 +999,7 @@
     var h = history.pop();
     setGridFromValues(h.cells);
     // going back also takes back any undos that move earned
-    score = h.score; gameMax = h.gameMax; undosLeft = h.undos - 1;
+    score = h.score; gameMax = h.gameMax; undosLeft = Math.max(0, undosLeft - 1 - h.undoGain);
     over = false;
     boardEl.classList.remove('sad');
     updateScore(0);
