@@ -13,11 +13,11 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const GAME = join(ROOT, 'games/meteor-math');
-const mod = p => import(join(GAME, 'js', p));
+const mod = p => import(pathToFileURL(join(GAME, 'js', p)).href);
 
 const { DT, SHIELDS, WAIT, FAST_MS } = await mod('config.js');
 const { FACTS, factPair, makeProblem, flipProblem, record, poolFor, pickFact, weakest, levelOf } = await mod('core/facts.js');

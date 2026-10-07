@@ -1,18 +1,68 @@
 // Draws one frame: the world, meteors, the UFO, a boss, the hero, the beams and
 // bursts, the score bar along the top and the answer being typed.
 
-import { W, H, GROUND, TOP, SHIELDS, POWER_TIME, comboMult } from '../config.js';
+import { W, H, GROUND, TOP, SHIELDS, POWER_TIME, DINO, comboMult } from '../config.js';
 import { drawBackground } from './themes.js';
 import { drawMeteor, drawUfo, drawBoss } from './things.js';
 import { drawHero } from './hero.js';
 import { heroById } from '../data/heroes.js';
 import { hintTarget } from '../core/game.js';
 import { powerById } from '../data/powerups.js';
+import { comboTier, comboColor } from './fx.js';
 
 const TAU = Math.PI * 2;
 const FONT = '"Baloo 2", "Quicksand", system-ui, sans-serif';
 
 const fits = (typed, answer) => typed && String(answer).startsWith(typed);
+// overshoots a little and settles: for things that pop in
+const backOut = t => { const c = 2.6; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2; };
+
+function starPath(ctx, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.45 : r;
+    ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath();
+}
+
+// a glow behind the hero during a streak, bigger and brighter as it grows
+function comboAura(ctx, fx, t) {
+  const tier = comboTier(fx.combo);
+  if (tier < 2) return;
+  const x = DINO.x, y = DINO.y - 48;
+  const r = 52 + tier * 14 + Math.sin(t * 7) * 5;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
+  g.addColorStop(0, comboColor(fx.combo, t, 0));
+  g.addColorStop(0.55, comboColor(fx.combo, t, 0.12 + tier * 0.06));
+  g.addColorStop(1, comboColor(fx.combo, t, 0));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  // spinning rays once it's really going
+  if (tier >= 3) {
+    ctx.translate(x, y); ctx.rotate(t * 1.5);
+    ctx.fillStyle = comboColor(fx.combo, t + 0.3, 0.1 + (tier - 3) * 0.04);
+    for (let i = 0; i < 8; i++) {
+      ctx.rotate(TAU / 8);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-9, -r * 1.25); ctx.lineTo(9, -r * 1.25); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// the edges of the screen glow during a huge streak
+function comboEdges(ctx, fx, t) {
+  const tier = comboTier(fx.combo);
+  if (tier < 4) return;
+  const a = (tier === 4 ? 0.16 : 0.24) + Math.sin(t * 6) * 0.06;
+  const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.38, W / 2, H / 2, H * 0.78);
+  g.addColorStop(0, comboColor(fx.combo, t, 0));
+  g.addColorStop(1, comboColor(fx.combo, t, a));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+}
 
 function drawOrb(ctx, t, power, rgb) {
   const r = 9 + Math.sin(t * 6) * 1.2 + power * 4;
@@ -66,10 +116,18 @@ function hud(ctx, s, view) {
   ctx.font = `800 24px ${FONT}`; ctx.fillStyle = '#fff';
   ctx.fillText(s.score, W - 14, 20);
   if (s.combo >= 2) {
-    const m = comboMult(s.combo);
-    ctx.font = `800 13px ${FONT}`;
-    ctx.fillStyle = m > 1 ? '#FFD84D' : 'rgba(255,255,255,.75)';
-    ctx.fillText((m > 1 ? `×${m} · ` : '') + `${s.combo} combo`, W - 14, 39);
+    const m = comboMult(s.combo), tier = comboTier(s.combo);
+    // grows with the streak and bumps on every hit
+    const k = 1 + view.fx.comboPulse * (0.25 + tier * 0.08);
+    ctx.save();
+    ctx.translate(W - 14, 40);
+    ctx.scale(k, k);
+    ctx.font = `800 ${13 + tier * 1.4}px ${FONT}`;
+    const txt = (tier >= 3 ? '🔥 ' : '') + (m > 1 ? `×${m} · ` : '') + `${s.combo} combo`;
+    if (tier >= 2) { ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,10,40,.7)'; ctx.strokeText(txt, 0, 0); }
+    ctx.fillStyle = tier ? comboColor(s.combo, view.t) : m > 1 ? '#FFD84D' : 'rgba(255,255,255,.75)';
+    ctx.fillText(txt, 0, 0);
+    ctx.restore();
   }
 
   // power-up timers under the shields
@@ -165,25 +223,42 @@ export function render(ctx, s, view) {
   for (const b of fx.beams) {
     const x0 = fx.hold.x, y0 = fx.hold.y;
     const k = 1 - b.age / b.life;
+    const tier = comboTier(b.combo || 0);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.lineCap = 'round';
+    // a wider beam in a streak, with a colour halo; rainbow from 10 in a row
+    if (tier >= 2) {
+      ctx.strokeStyle = tier >= 3 ? `hsla(${(view.t * 500 + b.combo * 29) % 360 | 0},100%,60%,${k * 0.6})` : comboColor(b.combo, view.t, k * 0.5);
+      ctx.lineWidth = (14 + tier * 7) * k;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(b.x1, b.y1); ctx.stroke();
+    }
     ctx.strokeStyle = b.gold ? `rgba(255,210,80,${k})` : `rgba(${beam},${k})`;
-    ctx.lineWidth = 14 * k;
+    ctx.lineWidth = (14 + tier * 2) * k;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(b.x1, b.y1); ctx.stroke();
-    ctx.strokeStyle = `rgba(255,255,255,${k})`; ctx.lineWidth = 5 * k;
+    ctx.strokeStyle = `rgba(255,255,255,${k})`; ctx.lineWidth = (5 + tier) * k;
     ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(b.x1, b.y1); ctx.stroke();
     ctx.restore();
   }
   for (const r of fx.rings) {
+    if (r.age < 0) continue;
     const k = r.age / r.life;
-    ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 4 * (1 - k);
+    ctx.strokeStyle = r.hue != null ? `hsla(${r.hue},100%,65%,${1 - k})` : `rgba(255,255,255,${1 - k})`;
+    ctx.lineWidth = (r.w || 4) * (1 - k);
     ctx.beginPath(); ctx.arc(r.x, r.y, r.r * (0.3 + k), 0, TAU); ctx.stroke();
   }
   for (const p of fx.parts) {
     ctx.globalAlpha = 1 - p.age / p.life;
     ctx.fillStyle = p.color;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+    if (p.star) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot + p.age * p.spin);
+      starPath(ctx, p.size * 1.7); ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
 
@@ -196,7 +271,10 @@ export function render(ctx, s, view) {
     const dx = target.x - h.x, dy = target.y - h.y, len = Math.hypot(dx, dy) || 1;
     d.lookX += (dx / len - d.lookX) * 0.15; d.lookY += (dy / len - d.lookY) * 0.15;
   } else { d.lookX *= 0.9; d.lookY *= 0.9; }
+  d.faceX = target ? target.x - DINO.x : 0;
   if (s && s.phase === 'play' && d.mood === 'idle' && target && target.y > GROUND - 150 && target.kind !== 'shower') { d.mood = 'worried'; d.moodLeft = 0.3; }
+  fx.combo = s ? s.combo : 0;
+  comboAura(ctx, fx, view.t);
   fx.hold = drawHero(ctx, view.hero, view.scale, d, c => drawOrb(c, view.t, d.throwAge != null ? 1 - d.throwAge / 0.4 : 0, beam));
 
   if (s) {
@@ -211,14 +289,25 @@ export function render(ctx, s, view) {
     ctx.globalAlpha = k < 0.75 ? 1 : 1 - (k - 0.75) / 0.25;
     ctx.font = `800 ${p.size}px ${FONT}`;
     const y = p.y - Math.min(1, k * 3) * 22;
+    ctx.save();
+    ctx.translate(Math.max(80, Math.min(W - 80, p.x)), y);
+    if (p.bounce) {
+      // combo labels spring in and wiggle, more for longer streaks
+      const sc = 0.4 + 0.6 * backOut(Math.min(1, p.age * 5));
+      ctx.scale(sc, sc);
+      ctx.rotate(Math.sin(p.age * 18) * 0.04 * comboTier(p.combo) * (1 - k));
+    }
     ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(20,10,40,.7)';
-    ctx.strokeText(p.text, p.x, y);
-    ctx.fillStyle = p.color; ctx.fillText(p.text, p.x, y);
+    ctx.strokeText(p.text, 0, 0);
+    ctx.fillStyle = p.combo ? comboColor(p.combo, view.t) : p.color;
+    ctx.fillText(p.text, 0, 0);
+    ctx.restore();
   }
   ctx.globalAlpha = 1;
 
-  // freeze tint and hit flash
+  // freeze tint, streak glow and hit flash
   if (frozen) { ctx.fillStyle = 'rgba(180,235,255,.12)'; ctx.fillRect(0, 0, W, H); }
+  comboEdges(ctx, fx, view.t);
   if (fx.flash > 0) { ctx.fillStyle = `rgba(${fx.flashColor},${fx.flash * 0.5})`; ctx.fillRect(0, 0, W, H); }
 
   if (s) hud(ctx, s, view);
@@ -229,14 +318,37 @@ export function render(ctx, s, view) {
   for (const b of fx.banners) {
     const k = b.age / b.life;
     const pop = Math.min(1, b.age * 6);
+    const fancy = b.fancy || 0;
     ctx.globalAlpha = k > 0.8 ? (1 - k) / 0.2 : 1;
     ctx.save();
     ctx.translate(W / 2, by);
-    ctx.scale(0.6 + 0.4 * pop, 0.6 + 0.4 * pop);
-    ctx.font = `800 40px ${FONT}`;
+    if (fancy) {
+      // combo milestones: a sunburst behind, a springy entrance and a wiggle
+      const sc = (0.2 + 0.8 * backOut(Math.min(1, b.age * 3.5))) * (1 + fancy * 0.05);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.rotate(b.age * (0.8 + fancy * 0.3));
+      const rays = 10 + fancy * 2, len = (110 + fancy * 24) * sc;
+      for (let i = 0; i < rays; i++) {
+        ctx.fillStyle = fancy >= 3 ? `hsla(${(i * 360) / rays + b.age * 200 | 0},100%,65%,.22)` : 'rgba(255,220,100,.2)';
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        ctx.arc(0, 0, len, (i * TAU) / rays, ((i + 0.5) * TAU) / rays);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.scale(sc, sc);
+      ctx.rotate(Math.sin(b.age * 12) * 0.05 * (1 - k));
+    } else ctx.scale(0.6 + 0.4 * pop, 0.6 + 0.4 * pop);
+    ctx.font = `800 ${40 + fancy * 3}px ${FONT}`;
     ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(20,10,40,.75)';
     ctx.strokeText(b.text, 0, 0);
-    ctx.fillStyle = b.color; ctx.fillText(b.text, 0, 0);
+    if (fancy >= 3) {
+      // rainbow letters that slide along
+      const w = ctx.measureText(b.text).width / 2, g = ctx.createLinearGradient(-w, 0, w, 0);
+      for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, `hsl(${(i * 60 + view.t * 300) % 360 | 0},100%,64%)`);
+      ctx.fillStyle = g;
+    } else ctx.fillStyle = b.color;
+    ctx.fillText(b.text, 0, 0);
     if (b.sub) {
       ctx.font = `700 17px ${FONT}`; ctx.lineWidth = 5;
       ctx.strokeText(b.sub, 0, 34); ctx.fillStyle = '#fff'; ctx.fillText(b.sub, 0, 34);

@@ -139,7 +139,7 @@ export function drawPalHero(ctx, pal, o, drawHeld) {
   switch (o.mood) {
     case 'cheer': { const p = (age * 2.2) % 1; hop = Math.sin(p * Math.PI) * 14; mood = 'happy'; lift = 0.6 + Math.sin(age * 12) * 0.3; break; }
     case 'wow': hop = Math.sin(Math.min(1, age * 3) * Math.PI) * 7; open = true; break;
-    case 'worried': shiver = Math.sin(t * 50) * 0.8; break;
+    case 'worried': shiver = Math.sin(t * 9) * 0.8; break;
     case 'sad': mood = 'sad'; squash = 0.96; break;
   }
   if (o.shot) { lift = Math.max(lift, o.shot); open = true; }

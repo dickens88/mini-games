@@ -77,7 +77,13 @@ export const sfx = {
   land: () => { noise(0.6, 0.35, 0, 500, 60, 'lowpass', 0.01); tone(80, 0.5, 'sine', 0.18, 0, 40); },
   fizzle: () => noise(0.3, 0.06, 0, 3000, 6000, 'highpass', 0.02),
   spawn: () => { if (limited('spawn', 0.3)) noise(0.5, 0.025, 0, 300, 900, 'bandpass', 0.2); },
-  combo: () => [784, 988, 1175].forEach((f, i) => tone(f, 0.1, 'triangle', 0.07, i * 0.06)),
+  // a longer, higher fanfare for bigger streaks
+  combo: (tier = 2) => {
+    const notes = [784, 988, 1175, 1319, 1568, 1760, 2093].slice(0, 2 + tier);
+    notes.forEach((f, i) => tone(f, 0.12, 'triangle', 0.07, i * 0.055));
+    if (tier >= 3) for (let i = 0; i < 6; i++) tone(2093 + i * 260, 0.08, 'sine', 0.03, notes.length * 0.055 + i * 0.04);
+  },
+  firework: () => { if (limited('firework', 0.05)) { noise(0.35, 0.1, 0, 2600, 400, 'bandpass', 0.004); tone(1800 + Math.random() * 900, 0.1, 'sine', 0.025, 0.02); } },
   power: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.05)),
   freeze: () => [2093, 2637, 3136].forEach((f, i) => tone(f, 0.2, 'sine', 0.05, i * 0.05)),
   ufo: () => { for (let i = 0; i < 6; i++) tone(900 + (i % 2) * 300, 0.09, 'sine', 0.035, i * 0.08); },

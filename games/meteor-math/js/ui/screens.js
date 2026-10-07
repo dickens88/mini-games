@@ -56,7 +56,7 @@ export function menuScreen(overlay, save, cb) {
     <p>Meteors are falling, and each one has a times-table question on it. Type the answer and ${name} zaps it!</p>
     ${heroPicker(save)}
     ${firstTime ? `<div class="first">
-      <p><b>New here?</b> Start with a 2-minute Quick Check so the game knows which facts you already have.</p>
+      <p><b>New here?</b> Start with a quick 5-question check so the game knows which facts you already have.</p>
       <button class="cta big" data-a="check" autofocus>Quick Check</button>
       <button class="link" data-a="play">Skip it, just play</button>
     </div>` : `<div class="btn-col">
@@ -66,7 +66,7 @@ export function menuScreen(overlay, save, cb) {
       <button class="mode" data-a="endless"><b>∞ Endless</b><small>How long can you last? Best ${save.best}</small></button>
       <button class="mode" data-a="weak"><b>🎯 Weak Spots</b><small>Slow, with dot hints, only your trickiest facts</small></button>
       <button class="mode" data-a="map"><b>📊 Fact Map</b><small>${k.mul} / ${k.total} × and ${k.div} / ${k.total} ÷ known by heart</small></button>
-      ${firstTime ? '' : '<button class="mode" data-a="check"><b>✅ Quick Check</b><small>Take the 2-minute check again</small></button>'}
+      ${firstTime ? '' : '<button class="mode" data-a="check"><b>✅ Quick Check</b><small>Take the 5-question check again</small></button>'}
     </div>`, card => {
     bind(card, {
       '[data-a=play]': cb.play, '[data-a=endless]': cb.endless, '[data-a=weak]': cb.weak,

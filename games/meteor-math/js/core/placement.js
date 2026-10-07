@@ -1,14 +1,15 @@
-// Quick Check: 24 calm questions (no meteors) on the harder facts, to find
+// Quick Check: 5 calm questions (no meteors) on the harder facts, to find
 // out what the player already knows. Facts answered quickly go straight to
 // "known by heart", and a strong showing fills in the easier facts too and
 // opens later worlds, so nobody has to grind through what they already know.
 
-import { makeRng, shuffle } from './rng.js';
+import { makeRng, shuffle, pick } from './rng.js';
 import { FACTS, factPair, makeProblem, rec, kindOf, peek } from './facts.js';
 import { FAST_MS } from '../config.js';
 
-export const CHECK_SIZE = 24;
-const MIX = { mul: 12, div: 8, miss: 4 };
+export const CHECK_SIZE = 5;
+// four from 1–9 (should be known: two ×, two ÷ / missing number) and one with 11 or 12
+const LOW_OPS = ['mul', 'mul', 'div', 'miss'];
 
 export function newCheck(seed) {
   const rng = makeRng(seed == null ? (Math.random() * 1e9) | 0 : seed);
@@ -16,16 +17,9 @@ export function newCheck(seed) {
   const hard = FACTS.filter(k => { const [a, b] = factPair(k); return a >= 3 && b >= 6 && a !== 10 && b !== 10; });
   const big = shuffle(rng, hard.filter(k => factPair(k)[1] >= 11));
   const mid = shuffle(rng, hard.filter(k => factPair(k)[1] <= 9));
-  // two thirds from 1–9 (should be known), a third with 11 or 12 (maybe not yet)
-  const keys = [];
-  for (let i = 0; keys.length < CHECK_SIZE; i++) {
-    const from = i % 3 === 2 ? big : mid;
-    keys.push(from.pop() || mid.pop() || big.pop());
-  }
-  const ops = [];
-  for (const op in MIX) for (let i = 0; i < MIX[op]; i++) ops.push(op);
-  shuffle(rng, ops);
-  const items = keys.map((k, i) => ({ prob: makeProblem(k, ops[i], rng), answer: null, ms: 0 }));
+  const items = LOW_OPS.map(op => ({ prob: makeProblem(mid.pop(), op, rng), answer: null, ms: 0 }));
+  items.push({ prob: makeProblem(big.pop(), pick(rng, ['mul', 'div']), rng), answer: null, ms: 0 });
+  shuffle(rng, items);
   return { rng, items, i: 0, done: false };
 }
 

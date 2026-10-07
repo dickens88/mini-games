@@ -85,7 +85,7 @@ export function drawDragon(ctx, px, m, drawHeld) {
       break;
     }
     case 'worried':
-      shiver = Math.sin(t * 50) * 0.6;
+      shiver = Math.sin(t * 9) * 0.8;
       sway = 0;
       pawSpread = -0.2;
       break;
