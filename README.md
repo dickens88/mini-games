@@ -67,10 +67,21 @@ games/rally-pals/
   ├── js/render/               小伙伴、球场、观众、道具图标、特效，全部用代码画
   ├── js/ui/                   键盘 / 触屏按钮 / 手柄、记分牌、选人选场 / 暂停 / 结算卡片
   └── cover.png                首页卡片 + 分享预览用的封面
+games/meteor-math/
+  ├── index.html               陨石算术（乘法口诀 1–12 的乘除练习；陨石带着算式往下掉，输入答案让小英雄打掉（小龙 Dino、小兔、小熊开局就能选，熊猫/狐狸/小猫/青蛙攒星星解锁）；4 个世界 24 关含 Boss、
+  │                            UFO 道具、流星雨、分裂陨石，无尽模式、薄弱口诀专练、开局小测、给家长看的口诀掌握图；多文件 ES 模块，无需构建）
+  ├── style.css
+  ├── js/core/                 规则：78 条口诀的熟练度（答得快升级、答错降级、弱的多出）、一局的陨石/输入/护盾/连击/道具/Boss、开局小测（不碰页面，可在 node 里跑）
+  ├── js/data/                 4 个世界每关的题型和节奏（调难度从 worlds.js 开始）、道具清单、小英雄（加角色从 heroes.js 开始）
+  ├── js/render/               四个世界的背景和陨石画风、UFO 和四个 Boss、小英雄（Dino 用图层，小动物照网球小伙伴的画法用代码画）、激光和特效
+  ├── js/ui/                   数字键盘（触屏 + 键盘）、菜单/选关/结算/口诀图/小测卡片
+  ├── img/dragon/              小龙 Dino 的图层，和泡泡伙伴同一份（CC-BY 3.0，署名在游戏帮助页）
+  └── cover.png                首页卡片 + 分享预览用的封面
 tools/dice-quest-sim.mjs       骰子大冒险自检：node tools/dice-quest-sim.mjs 每张地图随机下上万局，检查地图布置、不卡死、存档能还原、离线缓存没漏文件
 tools/garden-guard-sim.mjs     花园守卫自检：node tools/garden-guard-sim.mjs 用自动玩家打每一关，检查能通关、波次难度合理、关卡数据、存档能还原、离线缓存没漏文件
 tools/rally-pals-sim.mjs       网球小伙伴自检：node tools/rally-pals-sim.mjs 两个电脑在每个球场、每个难度打完整比赛，检查计分（平分/占先）、好球都能落在界内、比赛一定能打完、离线缓存没漏文件
 tools/bubble-buddies-sim.mjs   泡泡伙伴自检：node tools/bubble-buddies-sim.mjs 机器人把 100 关各打几遍，检查关卡布置、不会卡死、存档能还原、离线缓存没漏文件，并打印每关用了几发 / 三星线
+tools/meteor-math-sim.mjs     陨石算术自检：node tools/meteor-math-sim.mjs 每道题答案对不对、每关只出自己的口诀、「1 还是 12」的等待、熟练度升降、弱口诀多出、小测和存档，再让两种机器人小孩把 24 关各打几遍，打印通关率和每关时长
 ```
 
 ## 上线前必须替换的三处

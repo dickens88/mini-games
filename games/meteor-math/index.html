@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meteor Math — times tables 1 to 12, arcade style</title>
+<meta name="description" content="Meteors are falling, each with a times-table question. Type the answer and Dino zaps it! Practise multiplication and division from 1×1 to 12×12 in four worlds with bosses, UFOs and shooting stars. The game learns which facts are tricky and brings them back.">
+<meta name="theme-color" content="#1B1F4B">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/meteor-math/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Meteor Math — zap meteors with times tables">
+<meta property="og:description" content="Type the answer, zap the meteor: multiplication and division from 1×1 to 12×12, with bosses, UFOs and a fact map for grown-ups.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/meteor-math/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/meteor-math/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+  <span class="grow"></span>
+  <button class="icon-btn" id="helpBtn" type="button" aria-label="How to play" title="How to play (H)"><b>?</b></button>
+  <button class="icon-btn" id="menuBtn" type="button" aria-label="Pause and menu" title="Pause (Esc)">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg>
+  </button>
+  <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true" title="Sound (M)">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+</nav>
+
+<div class="page">
+  <div class="arena">
+    <div class="board-wrap">
+      <canvas id="board" aria-label="Meteors with times-table questions fall towards a planet. Dino the dragon stands at the bottom; type a meteor's answer to zap it."></canvas>
+      <div class="overlay" id="overlay" hidden><div class="card"></div></div>
+    </div>
+    <div class="keypad" id="keypad" aria-label="Number pad"></div>
+  </div>
+  <div class="keys-help">
+    <span>Type the answer with <kbd>0</kbd>–<kbd>9</kbd> · <kbd>Backspace</kbd> to fix · <kbd>Enter</kbd> to fire · <kbd>Esc</kbd> pause</span>
+  </div>
+</div>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
+</body>
+</html>

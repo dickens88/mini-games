@@ -7,7 +7,7 @@
  * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v8';
+var VERSION = 'v9';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -94,7 +94,23 @@ var PRECACHE = [
   '/games/rally-pals/js/save.js', '/games/rally-pals/js/ui/effects.js',
   '/games/rally-pals/js/ui/hud.js', '/games/rally-pals/js/ui/input.js',
   '/games/rally-pals/js/ui/overlay.js', '/games/rally-pals/js/ui/screens.js',
-  '/games/rally-pals/style.css'
+  '/games/rally-pals/style.css',
+  '/games/meteor-math/', '/games/meteor-math/cover.png',
+  '/games/meteor-math/img/dragon/body.svg', '/games/meteor-math/img/dragon/eyes.svg',
+  '/games/meteor-math/img/dragon/foot-l.svg', '/games/meteor-math/img/dragon/foot-r.svg',
+  '/games/meteor-math/img/dragon/paw-l.svg', '/games/meteor-math/img/dragon/paw-r.svg',
+  '/games/meteor-math/img/dragon/shade.svg', '/games/meteor-math/js/audio.js',
+  '/games/meteor-math/js/config.js', '/games/meteor-math/js/core/facts.js',
+  '/games/meteor-math/js/core/game.js', '/games/meteor-math/js/core/placement.js',
+  '/games/meteor-math/js/core/rng.js', '/games/meteor-math/js/data/heroes.js',
+  '/games/meteor-math/js/data/powerups.js', '/games/meteor-math/js/render/hero.js',
+  '/games/meteor-math/js/render/pals.js',
+  '/games/meteor-math/js/data/worlds.js', '/games/meteor-math/js/main.js',
+  '/games/meteor-math/js/render/dragon.js', '/games/meteor-math/js/render/fx.js',
+  '/games/meteor-math/js/render/renderer.js', '/games/meteor-math/js/render/themes.js',
+  '/games/meteor-math/js/render/things.js', '/games/meteor-math/js/save.js',
+  '/games/meteor-math/js/ui/keypad.js', '/games/meteor-math/js/ui/overlay.js',
+  '/games/meteor-math/js/ui/screens.js', '/games/meteor-math/style.css'
 ];
 
 function isFont(url){
