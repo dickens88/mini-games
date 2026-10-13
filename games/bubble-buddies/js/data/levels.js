@@ -3,13 +3,19 @@
 // bubble) plus a way of painting colours onto it; both get harder as you go.
 //
 // Adding a shape: add a mask to SHAPES and put it in ORDER.
+//
+// Levels from EXPERT_FROM on are the Ember Peaks: six colours, a ceiling that
+// drops after fewer misses, stone buddies that can't be matched (only dropped,
+// bombed or zapped), and later a short aim guide that stops at the first bounce.
 
-import { COLS, D, W, BUDDIES } from '../config.js';
+import { COLS, D, W, BUDDIES, STONE } from '../config.js';
 import { makeRng, next, int, shuffle } from '../core/rng.js';
 import { createGrid, put, cellX, rowLen, get, neighbors, each, count, clear } from '../core/grid.js';
 import { floating } from '../core/match.js';
 
-export const LEVEL_COUNT = 100;
+export const LEVEL_COUNT = 150;
+export const EXPERT_FROM = 101;
+export const SHORT_GUIDE_FROM = 126;
 export const THEMES = ['meadow', 'lagoon', 'starry'];
 
 // mask(u, v, x, r, rows): u ∈ [0,1] across the board, v ∈ [0,1] top to bottom, x in board units
@@ -33,7 +39,32 @@ const SHAPES = {
   zigzag: (u, v, x, r) => r < 1 || Math.abs(u - (0.5 + 0.32 * Math.sin(v * Math.PI * 2.2))) < 0.2,
   arch: (u, v) => ((u - 0.5) / 0.3) ** 2 + ((v - 1.05) / 0.62) ** 2 > 1,
   twins: (u, v, x, r) => r < 2 || Math.abs(u - 0.27) < 0.16 + v * 0.05 || Math.abs(u - 0.73) < 0.16 + v * 0.05,
-  wave: (u, v) => v <= 0.62 + 0.36 * Math.cos(u * Math.PI * 3)
+  wave: (u, v) => v <= 0.62 + 0.36 * Math.cos(u * Math.PI * 3),
+  // a big lump hanging from three thin stems: cut the stems and it all comes down
+  stems: (u, v, x, r) => r < 1 || (v < 0.3 ? [0.16, 0.5, 0.84].some(b => Math.abs(u - b) < 0.06) : Math.abs(u - 0.5) < 0.4),
+  hourglass: (u, v) => Math.abs(u - 0.5) <= 0.14 + Math.abs(v - 0.5) * 0.75 || v < 0.1
+};
+
+// where the stones go (expert levels). Never in the top row, so every stone
+// hangs from something that can be popped. d grows with the level number.
+const STONES = {
+  // a shelf two rows from the bottom with two narrow gaps to shoot through
+  shelf: (u, v, r, rows) => r === rows - 3 && Math.abs(u - 0.25) > 0.1 && Math.abs(u - 0.75) > 0.1,
+  // walls hanging from the ceiling that split the board into lanes
+  pillars: (u, v, r, rows) => r >= 1 && r <= rows - 3 && Math.abs(((u * 3 + 0.5) % 1) - 0.5) < 0.09,
+  // a heavy heart wrapped in colour
+  core: (u, v, r) => r >= 2 && Math.abs(u - 0.5) < 0.24 && v > 0.3 && v < 0.8,
+  // an X of stone across the board
+  cross: (u, v, r, rows) => r >= 2 && r <= rows - 2 && (Math.abs(u - (0.08 + v * 0.84)) < 0.05 || Math.abs(u - (0.92 - v * 0.84)) < 0.05),
+  // a cage with a door at the bottom, colour inside and out
+  cage: (u, v, r) => {
+    const d = Math.hypot(u - 0.5, (v - 0.5) * 0.9);
+    return r >= 1 && d > 0.25 && d < 0.31 && !(v > 0.6 && Math.abs(u - 0.5) < 0.16);
+  },
+  // the lump of the stems shape, all stone but a skin of colour
+  lump: (u, v, r, rows) => r >= 1 && v >= 0.45 && v < 0.88 && Math.abs(u - 0.5) < 0.22,
+  // stones sprinkled anywhere
+  scatter: (u, v, r, rows, s, d) => r >= 1 && next(s) < 0.08 + d * 0.05
 };
 
 // how colours are laid on: cluster (blobs), bands (columns), rows (stripes), blocks, rings
@@ -43,7 +74,15 @@ const ORDER = [
   ['wave', 'bands'], ['arch', 'cluster'], ['twins', 'rings'], ['full', 'rows']
 ];
 
+const EXPERT = [
+  ['full', 'cluster', 'shelf'], ['full', 'rows', 'pillars'], ['diamond', 'cluster', 'core'],
+  ['stems', 'cluster', 'lump'], ['wave', 'cluster', 'scatter'], ['full', 'blocks', 'cross'],
+  ['full', 'cluster', 'cage'], ['twins', 'rows', 'shelf'], ['hourglass', 'cluster', 'scatter'],
+  ['heart', 'cluster', 'core']
+];
+
 export function levelSpec(n) {
+  if (n >= EXPERT_FROM) return expertSpec(n);
   const [shape, paint] = n === 1 ? ['full', 'rows'] : ORDER[(n - 1) % ORDER.length];
   return {
     n, shape, paint,
@@ -54,6 +93,24 @@ export function levelSpec(n) {
     clump: Math.max(0.22, 0.55 - n * 0.004),  // how often a bubble copies its neighbour's colour
     noise: Math.min(0.55, 0.08 + n * 0.006),   // how often a patterned bubble gets a random colour instead
     theme: THEMES[Math.floor((n - 1) / 10) % THEMES.length],
+    seed: 7919 * n + 104729
+  };
+}
+
+function expertSpec(n) {
+  const k = n - EXPERT_FROM;                     // 0 … 49
+  const [shape, paint, stones] = EXPERT[k % EXPERT.length];
+  return {
+    n, shape, paint, stones,
+    depth: k / 49,                               // 0 → 1 across the chapter
+    colors: k < 5 ? 5 : 6,
+    rows: 8,
+    pushEvery: k < 25 ? 6 : 5,
+    gifts: k < 20 ? 1 : 0,
+    clump: Math.max(0.12, 0.24 - k * 0.003),
+    noise: Math.min(0.75, 0.55 + k * 0.004),
+    theme: 'ember',
+    guide: n >= SHORT_GUIDE_FROM ? 'short' : 'full',
     seed: 7919 * n + 104729
   };
 }
@@ -77,16 +134,38 @@ export function buildLevel(n) {
   for (const [r, c] of floating(g)) clear(g, r, c);
 
   paintGrid(g, s, spec, palette);
+  if (spec.stones) addStones(g, s, spec, palette);
   addGifts(g, s, spec.gifts);
 
   const cells = count(g);
+  let stones = 0;
+  each(g, cell => { if (cell.color === STONE) stones++; });
   return {
     grid: g,
     colors: palette,
     pushEvery: spec.pushEvery,
     theme: spec.theme,
-    par: Math.max(8, Math.round(cells * 0.4 + spec.colors * 2.4 - 8))   // fitted to the robot in tools/, then loosened for people
+    guide: spec.guide || 'full',
+    // fitted to the robot in tools/, then loosened for people (less so in the expert chapter)
+    par: spec.stones
+      ? Math.max(12, Math.round(((cells - stones) * 0.5 + stones * 0.84) * 1.1))
+      : Math.max(8, Math.round(cells * 0.4 + spec.colors * 2.4 - 8))
   };
+}
+
+function addStones(g, s, spec, palette) {
+  const test = STONES[spec.stones];
+  each(g, (cell, r, c) => {
+    const x = cellX(g, r, c);
+    const u = (x - D / 2) / (W - D), v = r / (spec.rows - 1);
+    if (r >= 1 && test(u, v, r, spec.rows, s, spec.depth)) cell.color = STONE;
+  });
+  // stones may have buried a whole colour; bring each one back somewhere
+  const left = [];
+  each(g, cell => { if (cell.color !== STONE) left.push(cell); });
+  const used = new Set(left.map(cell => cell.color));
+  shuffle(s, left);
+  palette.filter(col => !used.has(col)).forEach((col, i) => { if (left[i]) left[i].color = col; });
 }
 
 function paintGrid(g, s, spec, palette) {
@@ -119,7 +198,7 @@ function paintGrid(g, s, spec, palette) {
 
 function addGifts(g, s, n) {
   const spots = [];
-  each(g, (cell, r) => { if (r >= 1) spots.push(cell); });
+  each(g, (cell, r) => { if (r >= 1 && cell.color !== STONE) spots.push(cell); });
   shuffle(s, spots);
   spots.slice(0, n).forEach(cell => { cell.gift = true; });
 }

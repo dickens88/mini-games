@@ -188,6 +188,8 @@ button{ font:inherit; color:inherit; }
 .world[data-theme="meadow"]{ --w1:#E3F6DD; --w2:#B5E2A8; }
 .world[data-theme="lagoon"]{ --w1:#DDF7FA; --w2:#A5E2EC; }
 .world[data-theme="starry"]{ --w1:#ECE5FF; --w2:#C9B8F2; }
+.world[data-theme="ember"]{ --w1:#FBE3D6; --w2:#E9A98A; }
+.badge.expert{ background:#7A3A4E; color:#FFE9D6; animation:none; }
 
 /* ---------- result cards ---------- */
 .big-stars{ display:flex; justify-content:center; gap:6px; font-size:3.2rem; line-height:1; }

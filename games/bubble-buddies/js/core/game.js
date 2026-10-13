@@ -19,14 +19,14 @@ function base(mode, seed) {
     rng: seed | 0, nextId: 1,
     shots: 0, misses: 0, pushEvery: 8, par: 0,
     score: 0, streak: 0, bestStreak: 0, charge: 0,
-    over: null, stars: 0
+    over: null, stars: 0, guide: 'full'
   };
 }
 
 export function newLevel(n, seed) {
   const L = buildLevel(n);
   const st = base('level', seed);
-  Object.assign(st, { level: n, grid: L.grid, colors: L.colors, pushEvery: L.pushEvery, par: L.par, theme: L.theme });
+  Object.assign(st, { level: n, grid: L.grid, colors: L.colors, pushEvery: L.pushEvery, par: L.par, theme: L.theme, guide: L.guide });
   giveIds(st);
   deal(st);
   return st;
@@ -131,8 +131,8 @@ export function shoot(st, angle) {
     put(g, r, c, cell);
     ev.push({ t: 'land', id, r, c, x, y, rainbow });
     if (rainbow) {
-      // a rainbow joins every colour it touches
-      const touching = [...new Set(neighbors(g, r, c).map(([a, b]) => get(g, a, b)).filter(Boolean).map(n => n.color))];
+      // a rainbow joins every colour it touches (stones have none)
+      const touching = [...new Set(neighbors(g, r, c).map(([a, b]) => get(g, a, b)).filter(n => n && n.color >= 0).map(n => n.color))];
       const keys = new Set();
       for (const k of touching) {
         const cl = cluster(g, r, c, n => n === cell || n.color === k);
@@ -141,7 +141,7 @@ export function shoot(st, angle) {
       if (keys.size) hits = [...keys].map(k => k.split(',').map(Number));
       else {
         const hit = tr.hit && get(g, tr.hit[0], tr.hit[1]);
-        cell.color = hit ? hit.color : touching.length ? touching[0] : pickColor(st);
+        cell.color = hit && hit.color >= 0 ? hit.color : touching.length ? touching[0] : pickColor(st);
       }
       ev.push({ t: 'rainbow', id, x, y, color: cell.color, popped: keys.size > 0 });
     } else {

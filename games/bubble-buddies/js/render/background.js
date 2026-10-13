@@ -10,6 +10,7 @@ export const THEME_ART = {
   meadow: { top: '#86CFFF', bottom: '#FFE1EE', hill: '#9BE08A', hill2: '#7CCB6E', page: ['#7CC8FF', '#FFD9E8'], ceil: '#FFFFFF', name: 'Cloud Meadow' },
   lagoon: { top: '#4FC9E0', bottom: '#D9FFF4', hill: '#FFE3A8', hill2: '#F7CF84', page: ['#38B7D6', '#C7FAEC'], ceil: '#E6FBFF', name: 'Lagoon Bay' },
   starry: { top: '#3A2C78', bottom: '#B28BE2', hill: '#6E59B8', hill2: '#5A4AA0', page: ['#2E2468', '#A985DB'], ceil: '#E9E2FF', name: 'Starlight Sky', dark: true },
+  ember: { top: '#5A2A3C', bottom: '#FFB07A', hill: '#6B4A4F', hill2: '#4E363E', page: ['#4A2236', '#F59A6A'], ceil: '#FFE9D6', name: 'Ember Peaks', dark: true },
   candy: { top: '#FF8FBA', bottom: '#FFE1A1', hill: '#FFC6DD', hill2: '#FFAFCF', page: ['#FF86B3', '#FFDE9C'], ceil: '#FFF4FA', name: 'Candy Rush' }
 };
 
@@ -34,7 +35,17 @@ function paintStatic(theme, px) {
   glow.addColorStop(0, 'rgba(255,255,255,.28)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
 
-  if (theme === 'starry') {
+  if (theme === 'ember') {
+    // far-off peaks with glowing tops
+    g.fillStyle = 'rgba(60,30,45,.55)';
+    g.beginPath(); g.moveTo(0, H - 90);
+    for (const [x, y] of [[60, H - 230], [120, H - 150], [200, H - 290], [290, H - 170], [350, H - 240], [W, H - 120]]) g.lineTo(x, y);
+    g.lineTo(W, H); g.lineTo(0, H); g.fill();
+    g.fillStyle = 'rgba(255,140,80,.55)';
+    for (const [x, y] of [[60, H - 230], [200, H - 290], [350, H - 240]]) {
+      g.beginPath(); g.moveTo(x - 12, y + 18); g.lineTo(x, y); g.lineTo(x + 12, y + 18); g.fill();
+    }
+  } else if (theme === 'starry') {
     g.fillStyle = 'rgba(255,248,214,.95)';
     g.beginPath(); g.arc(W - 70, 120, 26, 0, TAU); g.fill();
     g.fillStyle = a.top;
@@ -71,6 +82,9 @@ function paintStatic(theme, px) {
     for (const x of [100, W - 120]) star(g, x, H - 16, 9, 4, 0.2, '#FF9B8A');
   } else if (theme === 'candy') {
     for (let i = 0; i < 6; i++) lolly(g, 30 + i * 78, H - 30 - (i % 2) * 14);
+  } else if (theme === 'ember') {
+    g.fillStyle = 'rgba(255,170,90,.8)';
+    for (let i = 0; i < 9; i++) { g.beginPath(); g.arc(20 + i * 50 + (i % 2) * 12, H - 14 - (i % 3) * 8, 2.2 + (i % 2), 0, TAU); g.fill(); }
   }
 
   // inner shade at the walls
@@ -113,6 +127,16 @@ export function createBackground() {
   return {
     draw(ctx, px, theme, time, dt, danger) {
       ctx.drawImage(paintStatic(theme, px), 0, 0, W, H);
+      if (theme === 'ember') {
+        // embers drift up
+        for (const t of twinkles) {
+          const y = H - ((time * 22 * t.s + t.ph * 90) % H);
+          ctx.globalAlpha = 0.25 + 0.5 * (y / H);
+          ctx.fillStyle = '#FFB070';
+          ctx.beginPath(); ctx.arc(t.x + Math.sin(time + t.ph) * 6, y, t.s * 0.8, 0, TAU); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
       if (theme === 'starry') {
         for (const t of twinkles) {
           const k = (Math.sin(time * 2 + t.ph) + 1) / 2;

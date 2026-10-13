@@ -1,6 +1,7 @@
 // Bubble Buddies rules check — a simple robot plays every level.
 //
-//   node tools/bubble-buddies-sim.mjs          every level, 2 tries each, plus endless runs
+//   node tools/bubble-buddies-sim.mjs          every level, 2 tries each (6 for expert levels), plus endless runs
+//   FROM=101 node tools/bubble-buddies-sim.mjs  only from level 101 on
 //   node tools/bubble-buddies-sim.mjs 5        5 tries per level
 //
 // Checks every file is in the offline list, every level is laid out sensibly
@@ -16,8 +17,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const GAME = join(ROOT, 'games/bubble-buddies');
 const mod = p => import(join(GAME, 'js', p));
 
-const { MIN_ANGLE, MAX_ANGLE, DEAD_ROW } = await mod('config.js');
-const { LEVEL_COUNT, buildLevel } = await mod('data/levels.js');
+const { MIN_ANGLE, MAX_ANGLE, DEAD_ROW, STONE } = await mod('config.js');
+const { LEVEL_COUNT, EXPERT_FROM, buildLevel } = await mod('data/levels.js');
 const { newLevel, newEndless, shoot, swap, aim, serialize, deserialize } = await mod('core/game.js');
 const { each, get, neighbors, count, lowest, inside, colorsIn } = await mod('core/grid.js');
 const { floating } = await mod('core/match.js');
@@ -47,6 +48,7 @@ for (let n = 1; n <= LEVEL_COUNT; n++) {
   if (lowest(L.grid) + 3 >= DEAD_ROW) fail(`level ${n}: starts too close to the line`);
   const used = new Set(colorsIn(L.grid));
   if (used.size < L.colors.length) fail(`level ${n}: only ${used.size} of ${L.colors.length} colours used`);
+  if ((L.grid.rows[0] || []).some(cell => cell && cell.color === STONE)) fail(`level ${n}: a stone in the top row can never fall`);
   // a colour with fewer than 3 bubbles is fine (you shoot more in), but none may be missing
 }
 
@@ -88,7 +90,7 @@ function bestMove(st) {
 function checkGrid(st, where) {
   each(st.grid, (cell, r, c) => {
     if (!inside(st.grid, r, c)) fail(`${where}: bubble outside the grid at ${r},${c}`);
-    if (!(cell.color >= 0)) fail(`${where}: bubble with no colour at ${r},${c}`);
+    if (!(cell.color >= 0) && cell.color !== STONE) fail(`${where}: bubble with no colour at ${r},${c}`);
   });
   if (floating(st.grid).length) fail(`${where}: bubbles left floating`);
 }
@@ -115,24 +117,27 @@ function play(st, where, maxShots) {
 const t0 = Date.now();
 let wins = 0, games = 0, threeStar = 0;
 const rows = [];
-for (let n = 1; n <= LEVEL_COUNT; n++) {
+const FROM = Number(process.env.FROM) || 1;
+for (let n = FROM; n <= LEVEL_COUNT; n++) {
   const shots = [];
   let w = 0;
-  for (let k = 0; k < TRIES; k++) {
+  // expert levels are meant to be lost now and then, so the robot gets more goes at them
+  const tries = n >= EXPERT_FROM ? Math.max(TRIES, 6) : TRIES;
+  for (let k = 0; k < tries; k++) {
     const st = play(newLevel(n, 1000 * k + n), `level ${n} try ${k}`, 250);
     games++;
     if (st.over === 'win') { w++; wins++; shots.push(st.shots); if (st.stars === 3) threeStar++; }
   }
   const par = buildLevel(n).par;
   const avg = shots.length ? shots.reduce((a, b) => a + b, 0) / shots.length : NaN;
-  rows.push({ n, par, avg, w, cells: count(buildLevel(n).grid), colors: buildLevel(n).colors.length });
+  rows.push({ n, par, avg, w, tries, cells: count(buildLevel(n).grid), colors: buildLevel(n).colors.length });
   if (w === 0) fail(`level ${n}: the robot never cleared it`);
 }
 
 for (let i = 0; i < rows.length; i += 10) {
-  console.log(rows.slice(i, i + 10).map(r => `${String(r.n).padStart(3)}:${String(Math.round(r.avg)).padStart(3)}/${String(r.par).padStart(2)}${r.w < TRIES ? '!' : ' '}`).join(' '));
+  console.log(rows.slice(i, i + 10).map(r => `${String(r.n).padStart(3)}:${String(Math.round(r.avg)).padStart(3)}/${String(r.par).padStart(2)}${r.w < r.tries ? '!' : ' '}`).join(' '));
 }
-if (process.env.FIT) for (const r of rows) console.log('FIT', r.n, r.cells, r.colors, r.avg.toFixed(1));
+if (process.env.FIT) for (const r of rows) console.log('FIT', r.n, r.cells, r.colors, r.avg.toFixed(1), r.w + '/' + r.tries);
 console.log(`levels: robot cleared ${wins}/${games}, 3 stars in ${threeStar}  (shots/par, ! = lost a try)`);
 
 // ---- endless: the robot keeps going; it must survive a few waves and the game must end eventually or keep sane ----

@@ -50,7 +50,7 @@ games/garden-guard/
   ├── js/render/ js/ui/        画布绘制、精灵、粒子、建造/升级面板、弹窗
   └── cover.png                首页卡片 + 分享预览用的封面
 games/bubble-buddies/
-  ├── index.html               泡泡伙伴（泡泡龙；100 关按关卡号固定生成 + 无尽模式，彩虹/炸弹/闪电道具、礼物泡泡、连击；多文件 ES 模块，无需构建）
+  ├── index.html               泡泡伙伴（泡泡龙；150 关按关卡号固定生成（101–150 为专家章节「Ember Peaks」：石头泡泡、短瞄准线）+ 无尽模式，彩虹/炸弹/闪电道具、礼物泡泡、连击；多文件 ES 模块，无需构建）
   ├── style.css
   ├── js/core/                 规则：蜂窝网格、弹墙轨迹、三消、掉落、天花板下压、计分（不碰页面，可在 node 里跑）
   ├── js/data/levels.js        关卡生成：形状（爱心、吊链、小岛……）+ 上色方式（加新形状从这里开始）
@@ -80,7 +80,7 @@ games/meteor-math/
 tools/dice-quest-sim.mjs       骰子大冒险自检：node tools/dice-quest-sim.mjs 每张地图随机下上万局，检查地图布置、不卡死、存档能还原、离线缓存没漏文件
 tools/garden-guard-sim.mjs     花园守卫自检：node tools/garden-guard-sim.mjs 用自动玩家打每一关，检查能通关、波次难度合理、关卡数据、存档能还原、离线缓存没漏文件
 tools/rally-pals-sim.mjs       网球小伙伴自检：node tools/rally-pals-sim.mjs 两个电脑在每个球场、每个难度打完整比赛，检查计分（平分/占先）、好球都能落在界内、比赛一定能打完、离线缓存没漏文件
-tools/bubble-buddies-sim.mjs   泡泡伙伴自检：node tools/bubble-buddies-sim.mjs 机器人把 100 关各打几遍，检查关卡布置、不会卡死、存档能还原、离线缓存没漏文件，并打印每关用了几发 / 三星线
+tools/bubble-buddies-sim.mjs   泡泡伙伴自检：node tools/bubble-buddies-sim.mjs 机器人把 150 关各打几遍（FROM=101 只测专家章节），检查关卡布置、不会卡死、存档能还原、离线缓存没漏文件，并打印每关用了几发 / 三星线
 tools/meteor-math-sim.mjs     陨石算术自检：node tools/meteor-math-sim.mjs 每道题答案对不对、每关只出自己的口诀、「1 还是 12」的等待、熟练度升降、弱口诀多出、小测和存档，再让两种机器人小孩把 24 关各打几遍，打印通关率和每关时长
 ```
 

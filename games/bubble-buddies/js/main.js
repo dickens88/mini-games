@@ -4,7 +4,7 @@
 import { SHOOTER, MIN_ANGLE, MAX_ANGLE } from './config.js';
 import { newLevel, newEndless, shoot, swap, aim, serialize, deserialize } from './core/game.js';
 import { clampAngle } from './core/shot.js';
-import { LEVEL_COUNT } from './data/levels.js';
+import { LEVEL_COUNT, EXPERT_FROM, SHORT_GUIDE_FROM } from './data/levels.js';
 import { createRenderer, THEME_ART } from './render/renderer.js';
 import { onDragon, holdPoint } from './render/dragon.js';
 import { createOverlay } from './ui/overlay.js';
@@ -28,6 +28,12 @@ const hud = createHud($('hud'));
 let state = deserialize(save.game);
 const resumed = !!state;
 if (!state) state = newLevel(Math.min(save.unlocked, LEVEL_COUNT), seed());
+
+// the first level of each new twist says what changed
+const LEVEL_TIPS = {
+  [EXPERT_FROM]: 'Stone buddies never match — drop them!',
+  [SHORT_GUIDE_FROM]: 'The aim line is short now — trust your eye'
+};
 
 let angle = Math.PI / 2;
 let trace = null, traceFor = '';
@@ -58,7 +64,7 @@ function start(st, { quiet } = {}) {
   renderer.reset(state, quiet ? { intro: true } : {
     intro: true,
     banner: state.mode === 'level' ? 'Level ' + state.level : 'Endless',
-    sub: state.mode === 'level' ? THEME_ART[state.theme].name : 'Wave ' + state.wave
+    sub: state.mode === 'level' ? LEVEL_TIPS[state.level] || THEME_ART[state.theme].name : 'Wave ' + state.wave
   });
   hud.show(state, save.endlessBest);
   hud.score(state.score);

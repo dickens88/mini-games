@@ -3,7 +3,7 @@
 // inside (behind the face) and the shiny surface (in front of it). A glint
 // sweeps across now and then.
 
-import { BUDDIES, R } from '../config.js';
+import { BUDDIES, R, STONE } from '../config.js';
 
 const TAU = Math.PI * 2;
 const INK = '#3B2340';
@@ -36,6 +36,7 @@ const GLASS = {
   bomb: { light: '#A9ADE6', main: '#5B5F9A', dark: '#26284F' },
   lightning: { light: '#FFFBD6', main: '#FFD23C', dark: '#E08A00' },
   grey: { light: '#F2F0F6', main: '#BDB7C8', dark: '#857E95' },
+  stone: { light: '#C9C1B6', main: '#857B70', dark: '#4A433D' },
   rainbow: { light: '#FFFFFF', main: '#FFB8D8', dark: '#9A6BFF' }
 };
 const colorsFor = kind => GLASS[kind] || BUDDIES[kind] || BUDDIES[0];
@@ -111,8 +112,31 @@ function sparkle4(g, x, y, s, color) {
   g.fillStyle = color; g.fill();
 }
 
-const backFor = (kind, px) => cached('b' + kind, px, g => glassBack(g, colorsFor(kind)));
-const frontFor = (kind, px) => cached('f' + kind, px, g => glassFront(g, colorsFor(kind)));
+// a stone buddy is solid rock, not glass: speckles, a crack and a dull shine
+function stoneBack(g, c) {
+  const r = R - 0.6;
+  const body = g.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
+  body.addColorStop(0, c.light); body.addColorStop(0.55, c.main); body.addColorStop(1, c.dark);
+  g.beginPath(); g.arc(0, 0, r, 0, TAU); g.fillStyle = body; g.fill();
+  g.save(); g.clip();
+  for (const [x, y, s, a] of [[-0.55, 0.45, 0.09, 0.35], [0.5, 0.55, 0.07, 0.3], [0.62, -0.3, 0.06, 0.25], [-0.2, 0.72, 0.05, 0.3], [-0.7, -0.1, 0.05, 0.25]]) {
+    g.beginPath(); g.arc(x * r, y * r, s * r, 0, TAU); g.fillStyle = rgba(c.dark, a); g.fill();
+  }
+  g.restore();
+}
+function stoneFront(g, c) {
+  const r = R - 0.6;
+  g.beginPath(); g.arc(0, 0, r - 0.5, 0, TAU);
+  g.strokeStyle = rgba(c.dark, 1); g.lineWidth = 1.6; g.stroke();
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(r * 0.55, -r * 0.72); g.lineTo(r * 0.38, -r * 0.5); g.lineTo(r * 0.5, -r * 0.36); g.lineTo(r * 0.3, -r * 0.14);
+  g.strokeStyle = rgba(c.dark, 0.85); g.lineWidth = 1.3; g.stroke();
+  g.beginPath(); g.arc(0, 0, r - 3, Math.PI * 1.08, Math.PI * 1.45);
+  g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 2.2; g.stroke();
+}
+
+const backFor = (kind, px) => cached('b' + kind, px, g => kind === 'stone' ? stoneBack(g, GLASS.stone) : glassBack(g, colorsFor(kind)));
+const frontFor = (kind, px) => cached('f' + kind, px, g => kind === 'stone' ? stoneFront(g, GLASS.stone) : glassFront(g, colorsFor(kind)));
 
 // o: { x, y, color, special, gift, scale, sx, sy, rot, alpha, mood, blink, lx, ly, t, grey, shine }
 export function drawBuddy(ctx, px, o) {
@@ -125,7 +149,7 @@ export function drawBuddy(ctx, px, o) {
   if (o.alpha != null && o.alpha < 1) ctx.globalAlpha *= o.alpha;
 
   const sp = o.special;
-  const kind = o.grey ? 'grey' : sp || o.color;
+  const kind = o.grey ? 'grey' : sp || (o.color === STONE ? 'stone' : o.color);
   const size = (R + PAD) * 2;
   if (sp === 'rainbow' && !o.grey) rainbowBack(ctx, o.t || 0);
   else ctx.drawImage(backFor(kind, px), -R - PAD, -R - PAD, size, size);
@@ -133,7 +157,7 @@ export function drawBuddy(ctx, px, o) {
   face(ctx, o);
 
   ctx.drawImage(frontFor(kind, px), -R - PAD, -R - PAD, size, size);
-  if (o.shine != null && o.shine >= 0 && o.shine < 1) glint(ctx, o.shine);
+  if (o.shine != null && o.shine >= 0 && o.shine < 1 && kind !== 'stone') glint(ctx, o.shine);
   if (sp === 'bomb') fuse(ctx, o.t || 0);
   if (sp === 'lightning') crackle(ctx, o.t || 0);
   if (o.gift && !o.grey) bow(ctx, o.t || 0);
@@ -212,8 +236,10 @@ function bow(ctx, t) {
 
 /* ---------- faces ---------- */
 
+const STONE_FACE = { eyes: 'sleepy', mouth: 'smirk' };
+
 function face(ctx, o) {
-  const b = o.special ? null : BUDDIES[o.color] || BUDDIES[0];
+  const b = o.special ? null : o.color === STONE ? STONE_FACE : BUDDIES[o.color] || BUDDIES[0];
   let eyes = o.special === 'rainbow' ? 'star' : o.special === 'bomb' ? 'dot' : o.special === 'lightning' ? 'wide' : b.eyes;
   let mouth = o.special === 'rainbow' ? 'open' : o.special === 'bomb' ? 'smirk' : o.special === 'lightning' ? 'open' : b.mouth;
   const mood = o.mood || 'idle';
@@ -362,4 +388,5 @@ export const colorOf = (color, special) =>
   special === 'bomb' ? { main: '#5B5F9A', light: '#B9BCE8', dark: '#2A2C55' }
     : special === 'lightning' ? { main: '#FFD83D', light: '#FFF6B0', dark: '#E09000' }
       : special === 'rainbow' ? { main: '#FF7EB0', light: '#FFFFFF', dark: '#A97BFF' }
-        : BUDDIES[color] || BUDDIES[0];
+        : color === STONE ? GLASS.stone
+          : BUDDIES[color] || BUDDIES[0];

@@ -21,6 +21,7 @@ export const COLLIDE = 0.8;             // a shot sticks when it comes this clos
 export const CHARGE_MAX = 24;           // power meter: 1 per popped bubble, 2 per dropped one
 export const SPECIALS = ['rainbow', 'bomb', 'lightning'];
 export const BOMB_REACH = D * 2.05;     // a bomb clears everything this close to where it lands
+export const STONE = -2;                // colour of a stone buddy: never matches, only drops (or gets bombed / zapped)
 
 // one buddy per colour; the face differs too, so colours never have to be told apart by hue alone
 export const BUDDIES = [

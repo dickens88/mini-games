@@ -1,8 +1,8 @@
 // The cards shown in the overlay: menu, level list, how to play and the
 // end-of-round cards.
 
-import { BUDDIES, R } from '../config.js';
-import { LEVEL_COUNT, levelSpec } from '../data/levels.js';
+import { BUDDIES, R, STONE } from '../config.js';
+import { LEVEL_COUNT, EXPERT_FROM, levelSpec } from '../data/levels.js';
 import { THEME_ART } from '../render/background.js';
 import { drawBuddy } from '../render/buddy.js';
 
@@ -55,7 +55,8 @@ export function levelsScreen(overlay, save, { onPick, onBack }) {
         aria-label="Level ${n}${open ? (st ? `, ${st} stars` : '') : ', locked'}">
         <b>${open ? n : '🔒'}</b><span class="lv-stars">${open ? '★'.repeat(st) + `<i>${'★'.repeat(3 - st)}</i>` : ''}</span></button>`;
     }
-    worlds.push(`<section class="world" data-theme="${theme}"><h3>${THEME_ART[theme].name} <small>${start}–${Math.min(start + 9, LEVEL_COUNT)}</small></h3><div class="lv-grid">${cells}</div></section>`);
+    const expert = start >= EXPERT_FROM ? ' <span class="badge expert">Expert</span>' : '';
+    worlds.push(`<section class="world" data-theme="${theme}"><h3>${THEME_ART[theme].name}${expert} <small>${start}–${Math.min(start + 9, LEVEL_COUNT)}</small></h3><div class="lv-grid">${cells}</div></section>`);
   }
   const total = Object.values(save.stars).reduce((a, b) => a + b, 0);
   overlay.show(`
@@ -87,7 +88,9 @@ export function helpScreen(overlay, onClose) {
         <li><canvas data-p="bomb"></canvas><span><b>Bomb</b> pops everything nearby.</span></li>
         <li><canvas data-p="lightning"></canvas><span><b>Lightning</b> clears the whole row it lands in.</span></li>
         <li><canvas data-p="gift"></canvas><span><b>Gift buddies</b> wear a bow — pop or drop one to get a power-up.</span></li>
+        <li><canvas data-p="stone"></canvas><span><b>Stone buddies</b> (Ember Peaks) never match. Pop what holds them up and they drop — or bomb or zap them.</span></li>
       </ul>
+      <p class="small">From level ${EXPERT_FROM} the Ember Peaks get tough: six colours, a ceiling that drops sooner, and later an aim line that stops at the first bounce.</p>
       <p class="small">Clear a level in few shots for three stars. In <b>Endless</b> a new row arrives every few shots — how many waves can you clear?</p>
       <p class="small">Dino is based on <a href="https://opengameart.org/content/cute-dragon-0" target="_blank" rel="noopener">Cute dragon</a> by lzubiaur (Voodoo Cactus), CC-BY 3.0.</p>
       <p class="small keys-only">Keys: <kbd>←</kbd> <kbd>→</kbd> aim · <kbd>Space</kbd> shoot · <kbd>S</kbd> swap · <kbd>H</kbd> help</p>
@@ -95,7 +98,7 @@ export function helpScreen(overlay, onClose) {
     <div class="btn-row"><button class="cta" type="button" data-act="ok">Got it!</button></div>`, card => {
     card.querySelectorAll('canvas[data-p]').forEach(cv => {
       const p = cv.dataset.p;
-      paintBuddies(cv, [p === 'gift' ? { color: 0, gift: true } : { special: p, color: -1 }]);
+      paintBuddies(cv, [p === 'gift' ? { color: 0, gift: true } : p === 'stone' ? { color: STONE } : { special: p, color: -1 }]);
     });
     card.querySelector('[data-act="ok"]').addEventListener('click', onClose);
   }, onClose);

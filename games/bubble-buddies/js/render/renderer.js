@@ -18,6 +18,7 @@ const TAU = Math.PI * 2;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const easeOutBack = t => t >= 1 ? 1 : 1 + 2.7 * Math.pow(t - 1, 3) + 1.7 * Math.pow(t - 1, 2);
 const FLOOR = H - 26;
+const SHORT_AIM = 230;
 
 export function createRenderer(canvas, sfx, { lite = false } = {}) {
   const ctx = canvas.getContext('2d');
@@ -186,9 +187,12 @@ export function createRenderer(canvas, sfx, { lite = false } = {}) {
   }
 
   /* ---------- aim guide ---------- */
-  function drawAim(tr, ball) {
+  // short: expert levels show the line only up to the first bounce (and never
+  // further than SHORT_AIM), with no landing spot — the rest is up to you
+  function drawAim(tr, ball, short) {
     const col = colorOf(ball.color, ball.special);
-    const pts = tr.points, total = tr.length;
+    const pts = tr.points;
+    const total = short ? Math.min(SHORT_AIM, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y)) : tr.length;
     const gap = 15;
     let dist = (time * 50) % gap + 26;
     let seg = 1, segStart = 0;
@@ -199,13 +203,14 @@ export function createRenderer(canvas, sfx, { lite = false } = {}) {
       const k = (dist - segStart) / (len || 1);
       const x = a.x + (b.x - a.x) * k, y = a.y + (b.y - a.y) * k;
       const f = dist / total;
-      ctx.globalAlpha = 0.95 - f * 0.45;
+      ctx.globalAlpha = short ? 0.95 - f * 0.8 : 0.95 - f * 0.45;
       ctx.beginPath(); ctx.arc(x, y, 3.6 - f * 1.3, 0, TAU);
       ctx.fillStyle = '#FFFFFF'; ctx.fill();
       ctx.lineWidth = 1.6; ctx.strokeStyle = col.dark; ctx.stroke();
       dist += gap;
     }
     ctx.globalAlpha = 1;
+    if (short) return;
     const end = pts[pts.length - 1];
     const pulse = (Math.sin(time * 6) + 1) / 2;
     if (ball.special === 'bomb') {
@@ -264,7 +269,8 @@ export function createRenderer(canvas, sfx, { lite = false } = {}) {
     if (mascot.until < time) mascot.mood = over === 'lose' ? 'sad' : dz ? 'worried' : 'idle';
 
     // where everyone looks: the bubble in flight, else the aim spot
-    const pt = shot ? { x: shot.x, y: shot.y } : view.trace ? view.trace.points[view.trace.points.length - 1] : { x: SHOOTER.x, y: SHOOTER.y };
+    // (with the short guide nobody gives the landing spot away by looking at it)
+    const pt = shot ? { x: shot.x, y: shot.y } : view.trace && st.guide !== 'short' ? view.trace.points[view.trace.points.length - 1] : { x: SHOOTER.x, y: SHOOTER.y };
 
     // draw
     ctx.setTransform(px, 0, 0, px, 0, 0);
@@ -283,7 +289,7 @@ export function createRenderer(canvas, sfx, { lite = false } = {}) {
       const k = Math.max(0, Math.min(1, 1 - pre / 0.14));
       drawSprite(p.sp, pt, false, { scale: 1 + k * 0.28, rot: Math.sin(time * 40 + p.sp.phase) * 0.12 * k });
     }
-    if (view.trace && !shot && ready && !st.over) drawAim(view.trace, queue.cur);
+    if (view.trace && !shot && ready && !st.over) drawAim(view.trace, queue.cur, st.guide === 'short');
     if (shot) drawShot();
     ctx.restore();
 
