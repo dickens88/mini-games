@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gomoku Party — five in a row with bombs, portals and surprises</title>
+<meta name="description" content="Five in a row for two players on one screen, with a twist: grab gift boxes for bombs, rocks, paint and shields, and survive meteors, lightning and eruptions on four wild boards — garden, ice pond, volcano and space station.">
+<meta name="theme-color" content="#9FDBFF">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<link rel="canonical" href="https://games.dearcharles.cn/games/gomoku-party/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Gomoku Party — five in a row, party style">
+<meta property="og:description" content="Two players, one board, five in a row — plus bombs, portals, meteors and slippery ice.">
+<meta property="og:url" content="https://games.dearcharles.cn/games/gomoku-party/">
+<meta property="og:image" content="https://games.dearcharles.cn/games/gomoku-party/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    All games
+  </a>
+  <span class="grow"></span>
+  <button class="icon-btn" id="helpBtn" type="button" aria-label="How to play" title="How to play (H)"><b>?</b></button>
+  <button class="icon-btn" id="menuBtn" type="button" aria-label="Menu" title="Menu (Esc)">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+  </button>
+  <button class="icon-btn" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true" title="Sound (M)">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+</nav>
+
+<div class="page">
+  <header class="hero"><h1>Gomoku Party</h1></header>
+
+  <div class="status" id="status" aria-live="polite">
+    <span class="say" data-hud="say"></span>
+    <span class="party" data-hud="party"></span>
+  </div>
+
+  <div class="arena" id="arena">
+    <section class="panel" data-panel="0" style="--side:var(--p1)" aria-label="Player 1"></section>
+    <div class="board-wrap">
+      <canvas id="board" aria-label="The game board. Click or tap a spot to put your stone there."></canvas>
+      <div class="banner" id="banner" hidden></div>
+      <div class="overlay" id="overlay" hidden><div class="card"></div></div>
+    </div>
+    <section class="panel" data-panel="1" style="--side:var(--p2)" aria-label="Player 2"></section>
+  </div>
+
+  <div class="keys-help">
+    <span>Click a spot to put your stone · <kbd>1</kbd> <kbd>2</kbd> use an item · <kbd>U</kbd> take back · <kbd>Esc</kbd> menu</span>
+  </div>
+</div>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });</script>
+</body>
+</html>

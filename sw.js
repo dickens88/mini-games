@@ -7,7 +7,7 @@
  * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v11';
+var VERSION = 'v12';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -110,7 +110,20 @@ var PRECACHE = [
   '/games/meteor-math/js/render/renderer.js', '/games/meteor-math/js/render/themes.js',
   '/games/meteor-math/js/render/things.js', '/games/meteor-math/js/save.js',
   '/games/meteor-math/js/ui/keypad.js', '/games/meteor-math/js/ui/overlay.js',
-  '/games/meteor-math/js/ui/screens.js', '/games/meteor-math/style.css'
+  '/games/meteor-math/js/ui/screens.js', '/games/meteor-math/style.css',
+  '/games/gomoku-party/', '/games/gomoku-party/cover.png',
+  '/games/gomoku-party/js/audio.js', '/games/gomoku-party/js/config.js',
+  '/games/gomoku-party/js/core/board.js', '/games/gomoku-party/js/core/events.js',
+  '/games/gomoku-party/js/core/game.js', '/games/gomoku-party/js/core/rng.js',
+  '/games/gomoku-party/js/core/state.js', '/games/gomoku-party/js/data/boards.js',
+  '/games/gomoku-party/js/data/items.js', '/games/gomoku-party/js/data/pals.js',
+  '/games/gomoku-party/js/main.js', '/games/gomoku-party/js/render/fx.js',
+  '/games/gomoku-party/js/render/icons.js', '/games/gomoku-party/js/render/pals.js',
+  '/games/gomoku-party/js/render/renderer.js', '/games/gomoku-party/js/render/stones.js',
+  '/games/gomoku-party/js/render/themes.js', '/games/gomoku-party/js/save.js',
+  '/games/gomoku-party/js/ui/hud.js', '/games/gomoku-party/js/ui/input.js',
+  '/games/gomoku-party/js/ui/overlay.js', '/games/gomoku-party/js/ui/screens.js',
+  '/games/gomoku-party/style.css'
 ];
 
 function isFont(url){
