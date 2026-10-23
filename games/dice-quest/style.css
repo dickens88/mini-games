@@ -151,6 +151,35 @@ button{ font:inherit; color:inherit; }
 .card h2{ margin:0; font-family:var(--display); font-weight:800; font-size:1.6rem; line-height:1.1; }
 .card p{ margin:0; color:var(--muted); font-size:.92rem; line-height:1.5; }
 
+/* prize wheel */
+.wheel-wrap{ --w:min(64vw, 250px); position:relative; width:var(--w); height:var(--w); margin:4px auto 0; }
+.wheel{
+  position:absolute; inset:0; border-radius:50%;
+  border:6px solid #fff; box-shadow:0 0 0 4px #2B2F4A, 0 14px 26px -12px rgba(0,0,0,.55);
+}
+.wheel::after{ content:''; position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 2px rgba(255,255,255,.5); }
+.wheel-icon{
+  position:absolute; left:50%; top:50%; font-size:calc(var(--w) * .12); line-height:1;
+  transform:translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--w) * -.33));
+  transition:font-size .25s ease;
+}
+.wheel-icon.won{ font-size:calc(var(--w) * .17); filter:drop-shadow(0 0 6px #fff); }
+.wheel-pointer{
+  position:absolute; left:50%; top:-12px; transform:translateX(-50%);
+  border-left:14px solid transparent; border-right:14px solid transparent; border-top:26px solid #2B2F4A;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));
+}
+.wheel-hub{
+  position:absolute; left:50%; top:50%; transform:translate(-50%, -50%);
+  width:calc(var(--w) * .27); height:calc(var(--w) * .27); border-radius:50%;
+  border:4px solid #2B2F4A; background:#fff; cursor:pointer;
+  font-family:var(--display); font-weight:800; font-size:calc(var(--w) * .07); color:#2B2F4A;
+}
+.wheel-hub:disabled{ cursor:default; }
+.wheel-result{ min-height:2.6em; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.wheel-result b{ font-family:var(--display); font-weight:800; font-size:1.3rem; color:var(--text); }
+.wheel-result small{ color:var(--muted); }
+
 .seg{ display:flex; gap:6px; background:#EEF4FB; padding:4px; border-radius:999px; }
 .seg button{
   flex:1; cursor:pointer; border:0; background:transparent; border-radius:999px;
@@ -159,7 +188,7 @@ button{ font:inherit; color:inherit; }
 .seg button[aria-checked="true"]{ background:#fff; color:var(--text); box-shadow:0 2px 6px rgba(31,42,68,.15); }
 .seg button:focus-visible{ outline:2px solid var(--text); outline-offset:1px; }
 
-.maps{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+.maps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
 .map-card{
   cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;
   background:#F3F6FA; border:3px solid transparent; border-radius:14px; padding:6px 6px 8px;

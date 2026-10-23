@@ -7,7 +7,7 @@
  * script and stylesheet) to PRECACHE below and bump VERSION.
  * Changing any file: bump VERSION so returning players fetch the new copy.
  */
-var VERSION = 'v12';
+var VERSION = 'v14';
 var CACHE = 'mini-games-' + VERSION;
 var FONT_CACHE = 'mini-games-fonts';   // fonts never change, so they outlive version bumps
 
@@ -34,6 +34,7 @@ var PRECACHE = [
   '/games/dice-quest/js/core/turn.js', '/games/dice-quest/js/data/items.js',
   '/games/dice-quest/js/data/maps/index.js', '/games/dice-quest/js/data/maps/jungle.js',
   '/games/dice-quest/js/data/maps/sea.js', '/games/dice-quest/js/data/maps/space.js',
+  '/games/dice-quest/js/data/maps/mushroom.js', '/games/dice-quest/js/render/themes/mushroom.js',
   '/games/dice-quest/js/main.js', '/games/dice-quest/js/render/anim.js',
   '/games/dice-quest/js/render/board-art.js', '/games/dice-quest/js/render/kit.js',
   '/games/dice-quest/js/render/renderer.js', '/games/dice-quest/js/render/themes/index.js',
@@ -42,6 +43,7 @@ var PRECACHE = [
   '/games/dice-quest/js/strings.js', '/games/dice-quest/js/ui/dice.js',
   '/games/dice-quest/js/ui/hud.js', '/games/dice-quest/js/ui/input.js',
   '/games/dice-quest/js/ui/overlay.js', '/games/dice-quest/js/ui/screens.js',
+  '/games/dice-quest/js/ui/wheel.js',
   '/games/dice-quest/style.css',
   '/games/garden-guard/', '/games/garden-guard/cover.png',
   '/games/garden-guard/js/audio.js', '/games/garden-guard/js/config.js',

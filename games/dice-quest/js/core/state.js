@@ -22,6 +22,7 @@ export function createState({ map = 'jungle', players = [], seed }) {
       shield: false,
       skip: 0,
       rank: 0,
+      behind: 0,     // turns in a row started in last place
       stats: { ladders: 0, slides: 0, bumps: 0, bumped: 0, items: 0, portals: 0 }
     })),
     turn: 0,
@@ -47,7 +48,10 @@ export function deserialize(text) {
     const s = typeof text === 'string' ? JSON.parse(text) : text;
     if (!s || s.v !== VERSION || !MAP_BY_ID[s.map] || !Array.isArray(s.players) || s.players.length < 2) return null;
     // faces from older versions fall back to the seat's default animal
-    s.players.forEach(p => { if (!AVATAR_IDS.includes(p.avatar)) p.avatar = DEFAULT_AVATARS[p.seat] || AVATAR_IDS[0]; });
+    s.players.forEach(p => {
+      if (!AVATAR_IDS.includes(p.avatar)) p.avatar = DEFAULT_AVATARS[p.seat] || AVATAR_IDS[0];
+      p.behind = p.behind || 0;
+    });
     s.events = [];
     return s;
   } catch (e) {

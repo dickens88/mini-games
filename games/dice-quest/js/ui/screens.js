@@ -86,14 +86,16 @@ export function setupScreen(overlay, setup, { canResume, onStart, onResume, onMa
 
 export function helpScreen(overlay, mapDef, onClose) {
   const k = mapDef.kinds;
-  const order = ['ladder', 'slide', 'portal', 'boost', 'setback', 'trap', 'box', 'again', 'quake', 'kraken', 'shuffle'];
+  const order = ['ladder', 'slide', 'portal', 'boost', 'setback', 'trap', 'box', 'again', 'quake', 'kraken', 'shuffle', 'spell'];
   overlay.show(`
     <h2>${S.help}</h2>
     <div class="how">
       <p>Everyone starts at the ${esc(mapDef.start.name)}. Take turns rolling the dice and race along the trail — first to reach the ${esc(mapDef.goal.name)} wins! You need the exact number to land on the finish; extra steps bounce you back.</p>
       <ul>
         <li>Roll a <b>6</b> and you roll again.</li>
-        <li>Land on another player and you <b>bump</b> them back 2 cells.</li>
+        <li>Land on another player and you <b>bump</b> them back 2 cells — and grab one of their items!</li>
+        <li>Prize cells spin the <b>prize wheel</b> for an item.</li>
+        <li>Last place four turns in a row? You get a free spin.</li>
       </ul>
       <h3>${mapDef.icon} ${esc(mapDef.name)}</h3>
       <ul class="cells">

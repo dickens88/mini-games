@@ -8,6 +8,8 @@ export const BOOST = 3;          // boost cells
 export const SETBACK = 3;        // setback cells and bananas
 export const QUAKE_BACK = 2;     // jungle earthquake: everyone else
 export const KRAKEN_BACK = 6;    // sea kraken: the leader
+export const SPELL_ZOOM = 5;     // mushroom wizard: the zoom spell
+export const COMEBACK_TURNS = 4; // last at the start of this many turns in a row → a free prize spin
 
 export const SEATS = [
   { id: 'red',    name: 'Red',    main: '#FF5A6E', dark: '#C9364C', soft: '#FFD3D9' },

@@ -16,6 +16,7 @@ import { createDice } from './ui/dice.js';
 import { createOverlay } from './ui/overlay.js';
 import { createInput } from './ui/input.js';
 import { setupScreen, helpScreen, targetScreen, winnerScreen, resultsScreen } from './ui/screens.js';
+import { spinWheel } from './ui/wheel.js';
 import { ITEM_BY_ID } from './data/items.js';
 import { sfx, setSound } from './audio.js';
 import { preloadAvatars } from './render/avatars.js';
@@ -322,6 +323,17 @@ const DIRECT = {
     await scene.wait(0.1);
   },
   async item(e) {
+    // treasure cells and comeback spins are won on the prize wheel
+    if (e.from === 'box' || e.from === 'comeback') {
+      const name = who(e.pi).name, comeback = e.from === 'comeback';
+      await spinWheel(overlay, {
+        title: comeback ? S.wheelComeback(name) : S.wheelTitle(name),
+        sub: comeback ? S.wheelComebackSub : '',
+        item: e.item,
+        onTick: () => sfx.tick(),
+        onWin: () => sfx.star()
+      });
+    }
     sfx.item();
     const it = ITEM_BY_ID[e.item], p = cell(e.pos);
     renderer.burst(p.x, p.y, ['#FFE27A', '#fff', colour(e.pi).main], 22, 22, 'spark');
@@ -359,6 +371,40 @@ const DIRECT = {
     renderer.swirl(b.x, b.y, ['#5EF2FF', '#fff'], true);
     await scene.hopPair(e.pi, b, e.qi, a, 0.9, 3.5);
   },
+  async spell(e) {
+    sfx.spell();
+    const p = cell(e.pos), cols = ['#C69CFF', '#7FF2D4', '#FFE27A', '#fff'];
+    renderer.swirl(p.x, p.y, cols, false);
+    renderer.burst(p.x, p.y, cols, 26, 24, 'spark');
+    popAt(e.pi, '🧙 ' + S.spellName[e.spell] + '!');
+    toast(e.spell === 'gift' ? '🧙 ' + S.gift : '🧙 ' + S.spell(who(e.pi).name, S.spellName[e.spell]));
+    await scene.cheer(e.pi, 1);
+  },
+  async zoom(e) {
+    sfx.whoosh();
+    for (let k = 0; k < e.path.length; k++) {
+      await scene.hop(e.pi, cell(e.path[k]), 0.12, 0.9, v => { renderer.trail(v.x, v.y, '#C69CFF'); renderer.trail(v.x, v.y, '#FFE27A'); });
+    }
+    const p = cell(e.to);
+    renderer.burst(p.x, p.y, ['#C69CFF', '#FFE27A', '#fff'], 16, 18, 'spark');
+  },
+  async sleep(e) {
+    sfx.bad();
+    const v = visOf(e.victim);
+    if (v) renderer.burst(v.x, v.y, ['#E9D8FF', '#C69CFF', '#fff'], 18, 14, 'puff');
+    popAt(e.victim, '💤 Zzz…');
+    toast('💤 ' + S.sleep(who(e.victim).name));
+    await scene.sink(e.victim, 1);
+    scene.dizzy(e.victim, 1.2);
+  },
+  async mirror(e) {
+    sfx.warp();
+    toast('🪞 ' + S.mirror(who(e.pi).name, who(e.qi).name));
+    const a = cell(e.a), b = cell(e.b);
+    renderer.swirl(a.x, a.y, ['#C69CFF', '#fff'], true);
+    renderer.swirl(b.x, b.y, ['#7FF2D4', '#fff'], true);
+    await scene.hopPair(e.pi, b, e.qi, a, 0.9, 3.5);
+  },
   async swap(e) {
     sfx.whoosh();
     toast(S.swap(who(e.pi).name, who(e.qi).name));
@@ -375,6 +421,24 @@ const DIRECT = {
     sfx.bump();
     toast(S.bump(who(e.pi).name, who(e.qi).name));
     await scene.wait(0.12);
+  },
+  async steal(e) {
+    sfx.use();
+    const it = ITEM_BY_ID[e.item], v = visOf(e.qi);
+    if (v) {
+      renderer.pop(v.x, v.y - 3, it.icon + ' ' + S.grabbed, colour(e.pi).dark);
+      flyToCard(e.pi, it.icon, v);
+    }
+    toast(S.steal(who(e.pi).name, who(e.qi).name, it.icon + ' ' + it.name));
+    await scene.wait(0.6);
+  },
+  async comeback(e) {
+    sfx.star();
+    const v = visOf(e.pi);
+    if (v) renderer.burst(v.x, v.y, ['#FFE27A', '#fff', colour(e.pi).main], 22, 22, 'spark');
+    popAt(e.pi, '🐢 ' + S.comebackPop);
+    toast(S.comeback(who(e.pi).name));
+    await scene.cheer(e.pi, 1);
   },
   async blocked(e) {
     const v = visOf(e.pi);

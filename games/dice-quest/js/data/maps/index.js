@@ -4,6 +4,7 @@
 import jungle from './jungle.js';
 import sea from './sea.js';
 import space from './space.js';
+import mushroom from './mushroom.js';
 
-export const MAPS = [jungle, sea, space];
+export const MAPS = [jungle, sea, space, mushroom];
 export const MAP_BY_ID = Object.fromEntries(MAPS.map(m => [m.id, m]));

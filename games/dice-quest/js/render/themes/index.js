@@ -3,5 +3,6 @@
 import jungle from './jungle.js';
 import sea from './sea.js';
 import space from './space.js';
+import mushroom from './mushroom.js';
 
-export const THEMES = { jungle, sea, space };
+export const THEMES = { jungle, sea, space, mushroom };

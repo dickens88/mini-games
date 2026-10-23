@@ -2,7 +2,7 @@
 // roll again on a single 6 (or a lucky cell) → next player. These are the
 // only functions the page and the balance script call to change the game.
 
-import { current, mapOf, walk, arrive } from './rules.js';
+import { current, mapOf, walk, arrive, comebackCheck } from './rules.js';
 import { nextRandom } from './rng.js';
 import { emit } from './events.js';
 
@@ -71,10 +71,11 @@ function endTurn(state, six) {
     i = (i + 1) % n;
     const q = state.players[i];
     if (q.rank) continue;
-    if (q.skip > 0) { q.skip--; emit(state, 'skipped', { pi: i }); continue; }
+    if (q.skip > 0) { q.skip--; emit(state, 'skipped', { pi: i }); comebackCheck(state, i); continue; }
     break;
   }
   state.turn = i;
   state.turns++;
   emit(state, 'turn', { pi: i });
+  comebackCheck(state, i);
 }

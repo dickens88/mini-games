@@ -111,8 +111,8 @@ for (const def of MAPS) {
       for (const k in r.tally) tally[k] = (tally[k] || 0) + r.tally[k];
     }
     const per = k => ((tally[k] || 0) / GAMES).toFixed(1);
-    console.log(`${def.name.padEnd(12)} ${count}p: winner after ${(sum / GAMES).toFixed(1)} rounds (max ${max.toFixed(0)}), all done ${(all / GAMES).toFixed(1)}` +
-      ` | per game: ${per('ladder')} up, ${per('slide')} down, ${per('portal')} portals, ${per('bump')} bumps, ${per('item')} items, ${per('trap')} traps`);
+    console.log(`${def.name.padEnd(15)} ${count}p: winner after ${(sum / GAMES).toFixed(1)} rounds (max ${max.toFixed(0)}), all done ${(all / GAMES).toFixed(1)}` +
+      ` | per game: ${per('ladder')} up, ${per('slide')} down, ${per('portal')} portals, ${per('bump')} bumps, ${per('item')} items, ${per('trap')} traps, ${per('spell')} spells, ${per('steal')} steals, ${per('comeback')} comebacks`);
   }
 }
 if (failed) process.exit(1);

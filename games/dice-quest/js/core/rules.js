@@ -1,7 +1,7 @@
 // Moving along the route and everything a cell can do. Nothing here draws;
 // it records events for the page to animate.
 
-import { MAX_ITEMS, BUMP_BACK, BOOST, SETBACK, QUAKE_BACK, KRAKEN_BACK } from '../config.js';
+import { MAX_ITEMS, BUMP_BACK, BOOST, SETBACK, QUAKE_BACK, KRAKEN_BACK, SPELL_ZOOM, COMEBACK_TURNS } from '../config.js';
 import { getMap } from './map.js';
 import { ITEMS } from '../data/items.js';
 import { nextRandom } from './rng.js';
@@ -98,13 +98,9 @@ function cellEffect(state, pi, depth) {
       moveBy(state, pi, -SETBACK, 'pushed');
       if (depth < 2) cellEffect(state, pi, depth + 1);
       break;
-    case 'box': {
-      const item = drawItem(state, pi);
-      if (pl.items.length >= MAX_ITEMS) pl.items.shift();
-      pl.items.push(item);
-      emit(state, 'item', { pi, item, pos: pl.pos });
+    case 'box':
+      giveItem(state, pi, 'box');
       break;
-    }
     case 'again':
       state.extra = true;
       emit(state, 'again', { pi, pos: pl.pos });
@@ -132,6 +128,67 @@ function cellEffect(state, pi, depth) {
       swapPlaces(state, pi, qi, 'shuffle');
       break;
     }
+    case 'spell':
+      castSpell(state, pi, depth);
+      break;
+  }
+}
+
+// from: 'box' (a treasure cell), 'gift' (the wizard) or 'comeback' (last for too long)
+function giveItem(state, pi, from) {
+  const pl = state.players[pi];
+  const item = drawItem(state, pi);
+  addItem(pl, item);
+  emit(state, 'item', { pi, item, pos: pl.pos, from });
+}
+
+// a full hand drops its oldest item
+function addItem(pl, item) {
+  if (pl.items.length >= MAX_ITEMS) pl.items.shift();
+  pl.items.push(item);
+}
+
+// a player's turn comes round: last place too many turns in a row earns a free prize spin
+export function comebackCheck(state, pi) {
+  const pl = state.players[pi];
+  const others = active(state).filter(q => q !== pl);
+  const last = others.length > 0 && others.every(q => q.pos > pl.pos);
+  pl.behind = last ? pl.behind + 1 : 0;
+  if (pl.behind < COMEBACK_TURNS) return;
+  pl.behind = 0;
+  emit(state, 'comeback', { pi });
+  giveItem(state, pi, 'comeback');
+}
+
+// the mushroom wizard picks one of these at random (mirror only when there's a gap to swap)
+export const SPELLS = ['zoom', 'sleep', 'mirror', 'gift'];
+
+function castSpell(state, pi, depth) {
+  const pl = state.players[pi];
+  // still racing, furthest first; on a tie the wizard would rather pick someone else as the leader
+  const racing = state.players.map((q, qi) => qi).filter(qi => !state.players[qi].rank)
+    .sort((a, b) => state.players[b].pos - state.players[a].pos || (a === pi) - (b === pi));
+  const first = racing[0], last = racing[racing.length - 1];
+  const options = SPELLS.filter(s => s !== 'mirror' || state.players[first].pos > state.players[last].pos);
+  const spell = options[Math.floor(nextRandom(state) * options.length)];
+  emit(state, 'spell', { pi, spell, pos: pl.pos });
+  switch (spell) {
+    case 'zoom':
+      moveBy(state, pi, SPELL_ZOOM, 'zoom');
+      if (depth < 2) cellEffect(state, pi, depth + 1);
+      break;
+    case 'sleep':
+      if (shielded(state, first)) break;
+      state.players[first].skip++;
+      emit(state, 'sleep', { pi, victim: first });
+      break;
+    case 'mirror':
+      if (shielded(state, first)) break;
+      swapPlaces(state, first, last, 'mirror');
+      break;
+    case 'gift':
+      racing.forEach(qi => giveItem(state, qi, 'gift'));
+      break;
   }
 }
 
@@ -152,6 +209,12 @@ function bump(state, pi) {
     if (shielded(state, qi)) return;
     pl.stats.bumps++;
     q.stats.bumped++;
+    // the bumper grabs one of their items at random
+    if (q.items.length) {
+      const item = q.items.splice(Math.floor(nextRandom(state) * q.items.length), 1)[0];
+      addItem(pl, item);
+      emit(state, 'steal', { pi, qi, item });
+    }
     moveBy(state, qi, -BUMP_BACK, 'pushed');
   });
 }
