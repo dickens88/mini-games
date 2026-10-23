@@ -11,7 +11,8 @@ const SPIN_TIME = REDUCED_MOTION ? 0.8 : 3.4;
 const easeOut = t => 1 - Math.pow(1 - t, 4);
 
 // resolves once the prize has been shown and the card is closed
-export function spinWheel(overlay, { title, sub, item, onTick, onWin }) {
+// seat: { main, dark } colours of the player spinning
+export function spinWheel(overlay, { title, sub, item, seat, onTick, onWin }) {
   const n = ITEMS.length, seg = 360 / n;
   const target = ITEMS.findIndex(it => it.id === item);
   const stops = ITEMS.map((it, k) => `${COLOURS[k % COLOURS.length]} ${k * seg}deg ${(k + 1) * seg}deg`).join(',');
@@ -21,7 +22,7 @@ export function spinWheel(overlay, { title, sub, item, onTick, onWin }) {
     overlay.show(`
       <h2>${title}</h2>
       ${sub ? `<p>${sub}</p>` : ''}
-      <div class="wheel-wrap">
+      <div class="wheel-wrap" style="--c:${seat.main};--d:${seat.dark}">
         <div class="wheel" style="background:conic-gradient(${stops})">
           ${ITEMS.map((it, k) => `<span class="wheel-icon" data-k="${k}" style="--a:${k * seg + seg / 2}deg">${it.icon}</span>`).join('')}
         </div>
@@ -29,7 +30,7 @@ export function spinWheel(overlay, { title, sub, item, onTick, onWin }) {
         <button class="wheel-hub" type="button" data-act="spin" aria-label="${S.wheelSpin}">${S.wheelSpin}</button>
       </div>
       <p class="wheel-result" aria-live="polite"></p>
-      <div class="btn-row"><button class="cta" type="button" data-act="spin">${S.wheelSpin}</button></div>`, card => {
+      <div class="btn-row" style="--c:${seat.main};--d:${seat.dark}"><button class="cta seat" type="button" data-act="spin">${S.wheelSpin}</button></div>`, card => {
       const wheel = card.querySelector('.wheel');
       const cta = card.querySelector('.cta');
       let state = 'ready';

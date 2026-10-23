@@ -112,10 +112,11 @@ export function helpScreen(overlay, mapDef, onClose) {
   card => card.querySelector('[data-act="close"]').addEventListener('click', onClose), onClose);
 }
 
-// who to aim a Swap / Freeze at, or which face to roll with the Golden / Remote die
-export function targetScreen(overlay, state, itemId, choices, { onPick, onCancel }) {
+// who to aim a Swap / Freeze / Remote die at, or which face to roll with the Golden / Remote die.
+// `forPlayer`: the Remote die's second step, picking the face that player will roll
+export function targetScreen(overlay, state, itemId, choices, { onPick, onCancel, forPlayer }) {
   const it = ITEM_BY_ID[itemId];
-  const number = it.target === 'number';
+  const number = it.target === 'number' || forPlayer !== undefined;
   const body = number
     ? `<div class="faces">${[1, 2, 3, 4, 5, 6].map(n => `<button type="button" class="face-pick" data-pick="${n}">${n}</button>`).join('')}</div>`
     : `<div class="targets">${choices.map(qi => {
@@ -123,7 +124,7 @@ export function targetScreen(overlay, state, itemId, choices, { onPick, onCancel
       return `<button type="button" class="target" data-pick="${qi}" style="${seatStyle(q.seat)}"><span class="face">${avatarHtml(q.avatar)}</span><b>${esc(q.name)}</b><small>cell ${q.pos}${q.shield ? ' · 🛡️' : ''}</small></button>`;
     }).join('')}</div>`;
   overlay.show(`
-    <h2>${it.icon} ${number ? S.pickNumber(it.name) : S.pickPlayer(it.name)}</h2>
+    <h2>${it.icon} ${forPlayer !== undefined ? esc(S.pickNumberFor(it.name, state.players[forPlayer].name)) : number ? S.pickNumber(it.name) : S.pickPlayer(it.name)}</h2>
     ${body}
     <div class="btn-row"><button class="cta ghost" type="button" data-act="cancel">${S.cancel}</button></div>`, card => {
     card.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => onPick(Number(b.dataset.pick))));

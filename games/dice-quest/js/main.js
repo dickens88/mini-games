@@ -175,8 +175,12 @@ function doItem(slot) {
   const kind = needsTarget(id);
   if (!kind) { run(s => useItem(s, slot)); return; }
   sfx.click();
+  const use = arg => { overlay.hide(); run(s => useItem(s, slot, arg)); };
   targetScreen(overlay, state, id, targets(state), {
-    onPick: arg => { overlay.hide(); run(s => useItem(s, slot, arg)); },
+    // the Remote die asks whom, then which number
+    onPick: kind === 'player-number'
+      ? qi => { sfx.click(); targetScreen(overlay, state, id, [], { forPlayer: qi, onPick: n => use({ qi, n }), onCancel: () => overlay.hide() }); }
+      : use,
     onCancel: () => overlay.hide()
   });
 }
@@ -251,6 +255,7 @@ const DIRECT = {
     const dock = e.dice.length > 1 ? Promise.all([dice.roll(e.dice[0]), dice2.roll(e.dice[1])]) : dice.roll(e.dice[0]);
     await Promise.all([dock, renderer.throwDice(e.dice, colour(e.pi))]);
     sfx.dice(e.dice[0]);
+    if (e.remote) popAt(e.pi, S.remotePop);
     again = false;
     await scene.wait(0.15);
   },
@@ -330,6 +335,7 @@ const DIRECT = {
         title: comeback ? S.wheelComeback(name) : S.wheelTitle(name),
         sub: comeback ? S.wheelComebackSub : '',
         item: e.item,
+        seat: colour(e.pi),
         onTick: () => sfx.tick(),
         onWin: () => sfx.star()
       });
@@ -455,6 +461,14 @@ const DIRECT = {
     popAt(e.qi, '❄️ Frozen!');
     toast(S.frozen(who(e.pi).name, who(e.qi).name));
     await scene.shake(e.qi, 0.5, 0.5);
+  },
+  async remote(e) {
+    sfx.use();
+    const v = visOf(e.qi);
+    if (v) renderer.burst(v.x, v.y, ['#7FD0FF', '#fff', colour(e.pi).main], 18, 18, 'spark');
+    popAt(e.qi, '📡 ' + e.n);
+    toast(S.remoteSet(who(e.pi).name, who(e.qi).name, e.n));
+    await scene.shake(e.qi, 0.4, 0.4);
   },
   async 'banana-drop'(e) {
     sfx.use();

@@ -80,7 +80,8 @@ function play(map, count) {
       const id = state.players[state.turn].items[k];
       const t = needsTarget(id);
       const tg = targets(state);
-      const arg = t === 'number' ? 1 + Math.floor(rand() * 6) : t === 'player' ? tg[Math.floor(rand() * tg.length)] : undefined;
+      const pick = () => tg[Math.floor(rand() * tg.length)], face = () => 1 + Math.floor(rand() * 6);
+      const arg = t === 'number' ? face() : t === 'player' ? pick() : t === 'player-number' ? { qi: pick(), n: face() } : undefined;
       useItem(state, k, arg);
     } else {
       roll(state);

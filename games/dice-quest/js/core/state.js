@@ -23,6 +23,7 @@ export function createState({ map = 'jungle', players = [], seed }) {
       skip: 0,
       rank: 0,
       behind: 0,     // turns in a row started in last place
+      remote: 0,     // next roll, set by a rival's Remote die
       stats: { ladders: 0, slides: 0, bumps: 0, bumped: 0, items: 0, portals: 0 }
     })),
     turn: 0,
@@ -30,7 +31,6 @@ export function createState({ map = 'jungle', players = [], seed }) {
     dice: [],          // the last roll
     double: false,     // Double dice is armed for this roll
     golden: 0,         // Golden die: the chosen face
-    remote: 0,         // Remote die: the chosen face (a 6 still rolls again)
     extra: false,      // something earned another roll
     bananas: [],
     ranks: [],         // player indexes in finishing order
@@ -51,7 +51,11 @@ export function deserialize(text) {
     s.players.forEach(p => {
       if (!AVATAR_IDS.includes(p.avatar)) p.avatar = DEFAULT_AVATARS[p.seat] || AVATAR_IDS[0];
       p.behind = p.behind || 0;
+      p.remote = p.remote || 0;
     });
+    // older saves armed the Remote die for the player rolling
+    if (s.remote) s.players[s.turn].remote = s.remote;
+    delete s.remote;
     s.events = [];
     return s;
   } catch (e) {

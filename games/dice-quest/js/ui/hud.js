@@ -24,7 +24,8 @@ export function createHud(els, on) {
       const active = pi === state.turn && state.phase !== 'over';
       const pct = Math.round(pl.pos / goal * 100);
       const items = pl.items.map(id => `<span title="${esc(ITEM_BY_ID[id].name)}">${ITEM_BY_ID[id].icon}</span>`).join('');
-      const badges = (pl.shield ? '<span title="Shield">🛡️</span>' : '') + (pl.skip ? '<span title="Misses a turn">💤</span>' : '');
+      const badges = (pl.shield ? '<span title="Shield">🛡️</span>' : '') + (pl.skip ? '<span title="Misses a turn">💤</span>' : '')
+        + (pl.remote ? `<span title="Next roll: ${pl.remote}">📡</span>` : '');
       return `<div class="chip${active ? ' active' : ''}${pl.rank ? ' done' : ''}" style="--c:${c.main};--d:${c.dark};--s:${c.soft}">
         <span class="chip-face" aria-hidden="true">${avatarHtml(pl.avatar)}</span>
         <span class="chip-main">
@@ -47,7 +48,7 @@ export function createHud(els, on) {
 
     if (!busy && !over) {
       els.msg.textContent = again ? S.rollAgain(pl.name) : S.rollPrompt(pl.name);
-      els.sub.textContent = state.double ? S.armedDouble : state.golden ? S.armedGolden(state.golden) : state.remote ? S.armedRemote(state.remote) : usable.some(Boolean) ? S.itemHint : '';
+      els.sub.textContent = pl.remote ? S.controlled(pl.remote) : state.double ? S.armedDouble : state.golden ? S.armedGolden(state.golden) : usable.some(Boolean) ? S.itemHint : '';
     }
     if (over) { els.msg.textContent = ''; els.sub.textContent = ''; }
 

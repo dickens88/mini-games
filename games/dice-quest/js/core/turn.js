@@ -11,13 +11,14 @@ const d6 = state => 1 + Math.floor(nextRandom(state) * 6);
 export function roll(state) {
   if (state.phase !== 'roll') return false;
   const pi = state.turn, pl = current(state), goal = mapOf(state).goal;
-  const golden = state.golden, remote = state.remote;
-  const dice = golden ? [golden] : remote ? [remote] : state.double ? [d6(state), d6(state)] : [d6(state)];
+  // a rival's Remote die beats everything (Golden and Double dice can't be armed meanwhile)
+  const golden = state.golden, remote = pl.remote;
+  const dice = remote ? [remote] : golden ? [golden] : state.double ? [d6(state), d6(state)] : [d6(state)];
   state.golden = 0;
-  state.remote = 0;
+  pl.remote = 0;
   state.double = false;
   state.dice = dice;
-  emit(state, 'roll', { pi, dice, golden: !!golden });
+  emit(state, 'roll', { pi, dice, golden: !!golden, remote: !!remote });
 
   const steps = dice.reduce((a, b) => a + b, 0);
   const path = walk(pl.pos, steps, goal);

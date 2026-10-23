@@ -1,5 +1,5 @@
 // Using items. Every item is used before rolling; some need a target
-// (a player, or a die face for the Golden die and the Remote die).
+// (a player, a die face for the Golden die, or both for the Remote die).
 
 import { MAX_BANANAS } from '../config.js';
 import { current, mapOf, shielded, swapPlaces } from './rules.js';
@@ -13,18 +13,23 @@ export function targets(state) {
 
 const EFFECTS = {
   double: {
-    can: s => !s.double && !s.golden && !s.remote,
+    can: s => !s.double && !s.golden && !current(s).remote,
     use: s => { s.double = true; }
   },
   golden: {
-    can: s => !s.double && !s.golden && !s.remote,
+    can: s => !s.double && !s.golden && !current(s).remote,
     ok: (s, n) => Number.isInteger(n) && n >= 1 && n <= 6,
     use: (s, n) => { s.golden = n; }
   },
+  // pick a rival and the number they roll next
   remote: {
-    can: s => !s.double && !s.golden && !s.remote,
-    ok: (s, n) => Number.isInteger(n) && n >= 1 && n <= 6,
-    use: (s, n) => { s.remote = n; }
+    can: s => targets(s).length > 0,
+    ok: (s, a) => !!a && targets(s).includes(a.qi) && Number.isInteger(a.n) && a.n >= 1 && a.n <= 6,
+    use: (s, a) => {
+      if (shielded(s, a.qi)) return;
+      s.players[a.qi].remote = a.n;
+      emit(s, 'remote', { pi: s.turn, qi: a.qi, n: a.n });
+    }
   },
   shield: {
     can: s => !current(s).shield,
